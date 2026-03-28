@@ -74,9 +74,9 @@ export default function Sidebar() {
           <button
             onClick={toggleLanguage}
             className="px-2 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors shrink-0"
-            title={i18n.language === "zh" ? "Switch to English" : "切换为中文"}
+            title={(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "Switch to English" : "切换为中文"}
           >
-            {i18n.language === "zh" ? "EN" : "中"}
+            {(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "EN" : "中"}
           </button>
         </div>
       </div>

@@ -40,6 +40,7 @@ i18n
     },
     fallbackLng: "en",
     defaultNS: "common",
+    load: "languageOnly",
     detection: {
       order: ["localStorage"],
       caches: ["localStorage"],
