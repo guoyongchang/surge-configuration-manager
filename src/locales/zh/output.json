@@ -1,1 +1,29 @@
-{}
+{
+  "page": {
+    "title": "生成配置",
+    "subtitle": "定义最终 Surge 配置文件的模板逻辑和输出路径。",
+    "outputPathLabel": "输出路径",
+    "outputFilenameLabel": "输出文件名",
+    "outputFilenameHint": "每次生成都会覆盖此文件。备份文件单独存放在应用数据目录中。",
+    "regenerateLabel": "刷新后自动重新生成",
+    "regenerateHint": "本地文件变更后自动重新构建",
+    "minifyLabel": "压缩输出",
+    "minifyHint": "删除注释和空白字符",
+    "autoUploadLabel": "自动上传到远程",
+    "autoUploadHint": "将生成的文件推送到 Git 或 iCloud",
+    "previewBtn": "预览配置",
+    "generateBtn": "生成配置",
+    "generatingBtn": "生成中…",
+    "statusLabel": "状态：",
+    "statusReady": "就绪",
+    "lastBuildLabel": "上次构建：",
+    "yesterday": "昨天",
+    "buildHistoryTitle": "构建历史",
+    "clearAllBtn": "清空",
+    "noBuilds": "暂无构建记录。点击\"生成配置\"创建第一个配置文件。",
+    "noChange": "无变化",
+    "selectOutputDir": "选择输出目录",
+    "previewTitle": "配置预览",
+    "noPreviewData": "暂无配置数据，请先添加订阅和规则。"
+  }
+}

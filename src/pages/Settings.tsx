@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Save, Loader2, Settings2, Globe, Shield, BookMarked, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +38,8 @@ function SectionTextarea({
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation("settings");
+  const { t: tc } = useTranslation("common");
   const [general, setGeneral] = useState<GeneralSettings>({
     http_listen: "0.0.0.0:7890",
     socks5_listen: "0.0.0.0:7891",
@@ -103,7 +106,7 @@ export default function SettingsPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        Loading...
+        {tc("status.loading")}
       </div>
     );
   }
@@ -111,8 +114,8 @@ export default function SettingsPage() {
   return (
     <div className="p-6 w-full max-w-2xl">
       <div className="mb-6">
-        <div className="text-xs text-muted-foreground mb-1">Dashboard / Settings</div>
-        <h1 className="text-xl font-bold">Settings</h1>
+        <div className="text-xs text-muted-foreground mb-1">{t("page.breadcrumb")}</div>
+        <h1 className="text-xl font-bold">{t("page.title")}</h1>
       </div>
 
       {/* General Settings */}
@@ -120,16 +123,16 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2 mb-3">
           <Settings2 size={15} className="text-muted-foreground" />
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            General
+            {t("general.sectionTitle")}
           </h2>
         </div>
         <Card className="py-0 gap-0">
           <CardContent className="p-5 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>HTTP Listen</Label>
+                <Label>{t("general.httpListenLabel")}</Label>
                 <p className="text-xs text-muted-foreground mb-1.5">
-                  Local HTTP proxy address and port
+                  {t("general.httpListenHint")}
                 </p>
                 <Input
                   placeholder="0.0.0.0:7890"
@@ -143,9 +146,9 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <Label>SOCKS5 Listen</Label>
+                <Label>{t("general.socks5ListenLabel")}</Label>
                 <p className="text-xs text-muted-foreground mb-1.5">
-                  Local SOCKS5 proxy address and port
+                  {t("general.socks5ListenHint")}
                 </p>
                 <Input
                   placeholder="0.0.0.0:7891"
@@ -160,8 +163,8 @@ export default function SettingsPage() {
               </div>
             </div>
             <SectionTextarea
-              label="Extra [General] Lines"
-              description="Additional key=value entries for the [General] section, one per line."
+              label={t("general.extraLinesLabel")}
+              description={t("general.extraLinesHint")}
               value={extraLinesText}
               onChange={setExtraLinesText}
               placeholder={"internet-test-url = http://google.com/\nproxy-test-url = http://google.com/\nloglevel = notify"}
@@ -175,7 +178,7 @@ export default function SettingsPage() {
                 ) : (
                   <Save size={14} />
                 )}
-                {savedGeneral ? "Saved!" : "Save General"}
+                {savedGeneral ? tc("status.saved") : t("general.saveBtn")}
               </Button>
             </div>
           </CardContent>
@@ -187,14 +190,14 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2 mb-3">
           <Shield size={15} className="text-muted-foreground" />
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            MITM
+            {t("mitm.sectionTitle")}
           </h2>
         </div>
         <Card className="py-0 gap-0">
           <CardContent className="p-5 space-y-4">
             <SectionTextarea
-              label="[MITM] Section Content"
-              description="Raw content of the [MITM] section. Typically contains hostname = *.example.com and other MITM settings."
+              label={t("mitm.label")}
+              description={t("mitm.hint")}
               value={sections.mitm}
               onChange={(v) => setSections((prev) => ({ ...prev, mitm: v }))}
               placeholder={"hostname = *.google.com, *.apple.com\nskip-server-cert-verify = true"}
@@ -208,14 +211,14 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2 mb-3">
           <Globe size={15} className="text-muted-foreground" />
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Host
+            {t("host.sectionTitle")}
           </h2>
         </div>
         <Card className="py-0 gap-0">
           <CardContent className="p-5 space-y-4">
             <SectionTextarea
-              label="[Host] Section Content"
-              description="DNS mapping rules. Maps domain names to IP addresses or other domains."
+              label={t("host.label")}
+              description={t("host.hint")}
               value={sections.host}
               onChange={(v) => setSections((prev) => ({ ...prev, host: v }))}
               placeholder={"example.com = 1.2.3.4\nfoo.internal = 192.168.1.10"}
@@ -229,14 +232,14 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2 mb-3">
           <BookMarked size={15} className="text-muted-foreground" />
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            URL Rewrite
+            {t("urlRewrite.sectionTitle")}
           </h2>
         </div>
         <Card className="py-0 gap-0">
           <CardContent className="p-5 space-y-4">
             <SectionTextarea
-              label="[URL Rewrite] Section Content"
-              description="HTTP URL rewrite rules. Format: regex replacement type (302 / 307 / reject / header)."
+              label={t("urlRewrite.label")}
+              description={t("urlRewrite.hint")}
               value={sections.url_rewrite}
               onChange={(v) => setSections((prev) => ({ ...prev, url_rewrite: v }))}
               placeholder={"^http://example.com https://example.com 302"}
@@ -255,7 +258,7 @@ export default function SettingsPage() {
           ) : (
             <Save size={14} />
           )}
-          {savedSections ? "Saved!" : "Save MITM / Host / URL Rewrite"}
+          {savedSections ? tc("status.saved") : t("saveSectionsBtn")}
         </Button>
       </div>
     </div>

@@ -1,1 +1,32 @@
-{}
+{
+  "page": {
+    "breadcrumb": "首页 / 设置",
+    "title": "设置"
+  },
+  "general": {
+    "sectionTitle": "通用",
+    "httpListenLabel": "HTTP 监听",
+    "httpListenHint": "本地 HTTP 代理地址和端口",
+    "socks5ListenLabel": "SOCKS5 监听",
+    "socks5ListenHint": "本地 SOCKS5 代理地址和端口",
+    "extraLinesLabel": "额外 [General] 配置行",
+    "extraLinesHint": "[General] 区块的额外 key=value 配置，每行一条。",
+    "saveBtn": "保存通用设置"
+  },
+  "mitm": {
+    "sectionTitle": "MITM",
+    "label": "[MITM] 区块内容",
+    "hint": "[MITM] 区块的原始内容，通常包含 hostname = *.example.com 等 MITM 设置。"
+  },
+  "host": {
+    "sectionTitle": "Host",
+    "label": "[Host] 区块内容",
+    "hint": "DNS 映射规则，将域名映射到 IP 地址或其他域名。"
+  },
+  "urlRewrite": {
+    "sectionTitle": "URL Rewrite",
+    "label": "[URL Rewrite] 区块内容",
+    "hint": "HTTP URL 重写规则，格式：正则表达式 替换内容 类型（302 / 307 / reject / header）。"
+  },
+  "saveSectionsBtn": "保存 MITM / Host / URL Rewrite"
+}

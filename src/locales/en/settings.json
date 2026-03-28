@@ -1,1 +1,32 @@
-{}
+{
+  "page": {
+    "breadcrumb": "Dashboard / Settings",
+    "title": "Settings"
+  },
+  "general": {
+    "sectionTitle": "General",
+    "httpListenLabel": "HTTP Listen",
+    "httpListenHint": "Local HTTP proxy address and port",
+    "socks5ListenLabel": "SOCKS5 Listen",
+    "socks5ListenHint": "Local SOCKS5 proxy address and port",
+    "extraLinesLabel": "Extra [General] Lines",
+    "extraLinesHint": "Additional key=value entries for the [General] section, one per line.",
+    "saveBtn": "Save General"
+  },
+  "mitm": {
+    "sectionTitle": "MITM",
+    "label": "[MITM] Section Content",
+    "hint": "Raw content of the [MITM] section. Typically contains hostname = *.example.com and other MITM settings."
+  },
+  "host": {
+    "sectionTitle": "Host",
+    "label": "[Host] Section Content",
+    "hint": "DNS mapping rules. Maps domain names to IP addresses or other domains."
+  },
+  "urlRewrite": {
+    "sectionTitle": "URL Rewrite",
+    "label": "[URL Rewrite] Section Content",
+    "hint": "HTTP URL rewrite rules. Format: regex replacement type (302 / 307 / reject / header)."
+  },
+  "saveSectionsBtn": "Save MITM / Host / URL Rewrite"
+}
