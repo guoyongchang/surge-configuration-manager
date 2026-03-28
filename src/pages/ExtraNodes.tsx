@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Plus, Server, Trash2, Loader2,
   PlayCircle, CheckCircle2, XCircle, AlertCircle, CheckSquare, Square, RefreshCw,
@@ -129,6 +130,8 @@ function buildRawLine(proto: ProtoId, name: string, server: string, port: string
 }
 
 function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
+  const { t } = useTranslation("extraNodes");
+  const { t: tc } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"single" | "batch">("single");
 
@@ -222,10 +225,10 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogTrigger asChild>
-        <Button><Plus size={16} />添加节点</Button>
+        <Button><Plus size={16} />{t("dialog.trigger")}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>添加节点</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("dialog.title")}</DialogTitle></DialogHeader>
 
         {/* Main tab switcher */}
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -236,7 +239,7 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("single"); setError(""); }}
           >
-            逐个添加
+            {t("tabs.single")}
           </button>
           <button
             type="button"
@@ -245,14 +248,14 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("batch"); setError(""); }}
           >
-            批量添加
+            {t("tabs.batch")}
           </button>
         </div>
 
         {mainTab === "single" ? (
           <div className="space-y-3 py-1">
             <div>
-              <Label>协议</Label>
+              <Label>{t("single.protocol")}</Label>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {(Object.keys(PROTO_LABELS) as ProtoId[]).map((p) => (
                   <button key={p} type="button"
@@ -268,27 +271,27 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
               </div>
             </div>
             <div>
-              <Label>节点名称</Label>
+              <Label>{t("single.name")}</Label>
               <Input placeholder="e.g. HK-01" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2">
-                <Label>服务器</Label>
+                <Label>{t("single.server")}</Label>
                 <Input placeholder="1.2.3.4" value={server} onChange={(e) => setServer(e.target.value)} />
               </div>
               <div>
-                <Label>端口</Label>
+                <Label>{t("single.port")}</Label>
                 <Input type="number" value={port} onChange={(e) => setPort(e.target.value)} />
               </div>
             </div>
             {(proto === "socks5" || proto === "socks5-tls" || proto === "http" || proto === "https") && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label>用户名 <span className="text-muted-foreground font-normal text-xs">(可选)</span></Label>
+                  <Label>{t("single.username")} <span className="text-muted-foreground font-normal text-xs">({t("single.optional")})</span></Label>
                   <Input value={fields.username ?? ""} onChange={(e) => setField("username", e.target.value)} />
                 </div>
                 <div>
-                  <Label>密码 <span className="text-muted-foreground font-normal text-xs">(可选)</span></Label>
+                  <Label>{t("single.password")} <span className="text-muted-foreground font-normal text-xs">({t("single.optional")})</span></Label>
                   <Input value={fields.password ?? ""} onChange={(e) => setField("password", e.target.value)} />
                 </div>
               </div>
@@ -296,14 +299,14 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             {proto === "ss" && (
               <>
                 <div>
-                  <Label>加密方式</Label>
+                  <Label>{t("single.encryptMethod")}</Label>
                   <select className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={fields.method ?? "aes-128-gcm"} onChange={(e) => setField("method", e.target.value)}>
                     {SS_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <Label>密码</Label>
+                  <Label>{t("single.password")}</Label>
                   <Input value={fields.password ?? ""} onChange={(e) => setField("password", e.target.value)} />
                 </div>
               </>
@@ -316,14 +319,14 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>WS Path <span className="text-muted-foreground font-normal text-xs">(可选)</span></Label>
+                    <Label>WS Path <span className="text-muted-foreground font-normal text-xs">({t("single.optional")})</span></Label>
                     <Input placeholder="/path" value={fields.ws_path ?? ""} onChange={(e) => setField("ws_path", e.target.value)} />
                   </div>
                   <div>
-                    <Label>TLS <span className="text-muted-foreground font-normal text-xs">(可选)</span></Label>
+                    <Label>TLS <span className="text-muted-foreground font-normal text-xs">({t("single.optional")})</span></Label>
                     <select className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={fields.tls ?? ""} onChange={(e) => setField("tls", e.target.value)}>
-                      <option value="">不启用</option>
+                      <option value="">{t("single.disabled")}</option>
                       <option value="true">true</option>
                     </select>
                   </div>
@@ -333,15 +336,15 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             {(proto === "trojan" || proto === "hysteria2") && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label>密码</Label>
+                  <Label>{t("single.password")}</Label>
                   <Input value={fields.password ?? ""} onChange={(e) => setField("password", e.target.value)} />
                 </div>
                 <div>
-                  <Label>跳过证书验证</Label>
+                  <Label>{t("single.skipVerify")}</Label>
                   <select className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={fields.skip_verify ?? ""} onChange={(e) => setField("skip_verify", e.target.value)}>
-                    <option value="">否</option>
-                    <option value="true">是</option>
+                    <option value="">{t("single.no")}</option>
+                    <option value="true">{t("single.yes")}</option>
                   </select>
                 </div>
               </div>
@@ -359,7 +362,7 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
               </div>
             )}
             <div>
-              <Label>Refresh URL <span className="text-muted-foreground font-normal text-xs">(可选)</span></Label>
+              <Label>{t("single.refreshUrl")} <span className="text-muted-foreground font-normal text-xs">({t("single.optional")})</span></Label>
               <Input placeholder="https://example.com/refresh" value={refreshUrl} onChange={(e) => setRefreshUrl(e.target.value)} />
             </div>
             {rawLine && (
@@ -367,9 +370,9 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             )}
             {error && <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>}
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>取消</Button>
+              <Button variant="outline" onClick={handleClose}>{tc("actions.cancel")}</Button>
               <Button onClick={handleSubmitSingle} disabled={loading || !rawLine}>
-                {loading && <Loader2 size={14} className="animate-spin" />}添加
+                {loading && <Loader2 size={14} className="animate-spin" />}{t("batch.addBtn")}
               </Button>
             </DialogFooter>
           </div>
@@ -384,7 +387,7 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 }`}
                 onClick={() => { setBatchTab("socks5"); setError(""); }}
               >
-                SOCKS5
+                {t("batch.socks5Tab")}
               </button>
               <button
                 type="button"
@@ -393,17 +396,15 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 }`}
                 onClick={() => { setBatchTab("raw"); setError(""); }}
               >
-                原始行
+                {t("batch.rawTab")}
               </button>
             </div>
 
             {batchTab === "socks5" ? (
               <>
                 <div>
-                  <Label>节点列表</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">
-                    格式：<span className="font-mono bg-muted px-1 rounded">user:pass@host:port</span>，每行一个
-                  </p>
+                  <Label>{t("batch.nodeList")}</Label>
+                  <p className="text-xs text-muted-foreground mb-1.5">{t("batch.nodeListHint")}</p>
                   <textarea
                     className="w-full h-36 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                     placeholder={"big2024_75019-sesstime-10:N1iiJh@proxy-as.socks5.io:3000\nbig2024_75020-sesstime-10:N1iiJh@proxy-as.socks5.io:3000"}
@@ -412,10 +413,8 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                   />
                 </div>
                 <div>
-                  <Label>Refresh URL 模板 <span className="text-muted-foreground font-normal">(可选)</span></Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">
-                    <span className="font-mono bg-muted px-1 rounded">{"{user}"}</span> 替换为用户名（去掉 <span className="font-mono">-sesstime-XX</span>）
-                  </p>
+                  <Label>{t("batch.refreshTemplate")} <span className="text-muted-foreground font-normal">({t("single.optional")})</span></Label>
+                  <p className="text-xs text-muted-foreground mb-1.5">{t("batch.refreshTemplateHint", { placeholder: "{user}" })}</p>
                   <Input
                     placeholder="https://example.com/refresh?user={user}"
                     value={refreshTemplate}
@@ -427,12 +426,12 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                   <div className="flex items-center gap-3 text-xs">
                     {socks5Valid.length > 0 && (
                       <span className="flex items-center gap-1 text-success">
-                        <CheckCircle2 size={12} /> {socks5Valid.length} 有效
+                        <CheckCircle2 size={12} /> {t("batch.valid", { count: socks5Valid.length })}
                       </span>
                     )}
                     {socks5Errors.length > 0 && (
                       <span className="flex items-center gap-1 text-destructive">
-                        <XCircle size={12} /> {socks5Errors.length} 无效
+                        <XCircle size={12} /> {t("batch.invalid", { count: socks5Errors.length })}
                       </span>
                     )}
                   </div>
@@ -449,10 +448,8 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
               </>
             ) : (
               <div>
-                <Label>Surge 节点行</Label>
-                <p className="text-xs text-muted-foreground mb-1.5">
-                  粘贴完整的 Surge 代理行，每行一个节点，支持所有协议：
-                </p>
+                <Label>{t("batch.surgeLines")}</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">{t("batch.surgeLinesHint")}</p>
                 <div className="text-xs text-muted-foreground font-mono bg-muted rounded px-3 py-2 mb-2 space-y-0.5">
                   <div>HK-SS = ss, 1.2.3.4, 8388, encrypt-method=aes-128-gcm, password=xxx</div>
                   <div>JP-VMess = vmess, 5.6.7.8, 443, username=UUID, tls=true</div>
@@ -461,13 +458,13 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 </div>
                 <textarea
                   className="w-full h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-                  placeholder="节点名 = 协议, 服务器, 端口, 参数..."
+                  placeholder={t("batch.surgeLinesPlaceholder")}
                   value={rawLines}
                   onChange={(e) => setRawLines(e.target.value)}
                 />
                 {rawParsed.length > 0 && (
                   <p className="text-xs text-success mt-1 flex items-center gap-1">
-                    <CheckCircle2 size={12} /> 将添加 {rawParsed.length} 个节点
+                    <CheckCircle2 size={12} /> {t("batch.willAdd", { count: rawParsed.length })}
                   </p>
                 )}
               </div>
@@ -478,12 +475,12 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>取消</Button>
+              <Button variant="outline" onClick={handleClose}>{tc("actions.cancel")}</Button>
               <Button onClick={handleSubmitBatch} disabled={loading || !batchCanSubmit}>
                 {loading && <Loader2 size={14} className="animate-spin" />}
                 {batchTab === "socks5"
-                  ? `导入${socks5Valid.length > 0 ? ` ${socks5Valid.length} 个` : ""}`
-                  : `添加${rawParsed.length > 0 ? ` ${rawParsed.length} 个` : ""}`}
+                  ? (socks5Valid.length > 0 ? t("batch.importCount", { count: socks5Valid.length }) : t("batch.importBtn"))
+                  : (rawParsed.length > 0 ? t("batch.addCount", { count: rawParsed.length }) : t("batch.addBtn"))}
               </Button>
             </DialogFooter>
           </div>
@@ -498,18 +495,19 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
 type TestStatus = "idle" | "testing" | NodeTestResult;
 
 function TestBadge({ status }: { status: TestStatus }) {
+  const { t } = useTranslation("extraNodes");
   if (status === "idle") return null;
   if (status === "testing") {
     return (
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Loader2 size={12} className="animate-spin" />Testing…
+        <Loader2 size={12} className="animate-spin" />{t("test.testing")}
       </div>
     );
   }
   if (status.error) {
     return (
       <div className="flex items-center gap-1 text-xs text-destructive" title={status.error}>
-        <XCircle size={12} />{status.error.length > 20 ? "Failed" : status.error}
+        <XCircle size={12} />{status.error.length > 20 ? t("test.failed") : status.error}
       </div>
     );
   }
@@ -522,12 +520,12 @@ function TestBadge({ status }: { status: TestStatus }) {
         <span title={status.country ?? ""} className="text-base leading-none">{flag}</span>
         {pure ? (
           <span title="Clean IP" className="flex items-center gap-0.5 text-success">
-            <CheckCircle2 size={11} />Clean
+            <CheckCircle2 size={11} />{t("test.clean")}
           </span>
         ) : (
           <span title="Proxy/hosting IP detected" className="flex items-center gap-0.5 text-warning">
             <AlertCircle size={11} />
-            {status.is_hosting ? "Hosting" : "Proxy"}
+            {status.is_hosting ? t("test.hosting") : t("test.proxy")}
           </span>
         )}
       </div>
@@ -559,6 +557,8 @@ function saveHistory(results: Record<string, TestStatus>) {
 }
 
 export default function ExtraNodesPage() {
+  const { t } = useTranslation("extraNodes");
+  const { t: tc } = useTranslation("common");
   const [nodes, setNodes] = useState<ExtraNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [testResults, setTestResults] = useState<Record<string, TestStatus>>(() => loadHistory());
@@ -665,25 +665,25 @@ export default function ExtraNodesPage() {
     <div className="p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Dashboard / Extra Nodes</div>
-          <h1 className="text-xl font-bold">Extra Nodes</h1>
+          <div className="text-xs text-muted-foreground mb-1">{t("page.breadcrumb")}</div>
+          <h1 className="text-xl font-bold">{t("page.title")}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manually add SOCKS5 proxy nodes that aren't part of a subscription.
+            {t("page.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
           {selected.size > 0 && (
             <>
               <span className="text-xs text-muted-foreground mr-1">
-                {selected.size} selected
+                {t("page.selectedCount", { count: selected.size })}
               </span>
               <Button
                 variant="destructive"
                 size="icon"
                 title={`Delete ${selected.size} selected nodes`}
                 onClick={() => setConfirm({
-                  title: `Delete ${selected.size} node${selected.size > 1 ? "s" : ""}?`,
-                  description: "This action cannot be undone.",
+                  title: t("page.deleteTitle", { count: selected.size }),
+                  description: tc("confirm.cannotUndo"),
                   onConfirm: () => { setConfirm(null); handleBatchDelete(); },
                 })}
                 disabled={deleting}
@@ -708,20 +708,20 @@ export default function ExtraNodesPage() {
             {selected.size === nodes.length
               ? <CheckSquare size={14} className="text-primary" />
               : <Square size={14} />}
-            {selected.size === nodes.length ? "Deselect All" : "Select All"}
+            {selected.size === nodes.length ? t("page.deselectAll") : t("page.selectAll")}
           </button>
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <Loader2 size={20} className="animate-spin mr-2" />Loading...
+          <Loader2 size={20} className="animate-spin mr-2" />{tc("status.loading")}
         </div>
       ) : nodes.length === 0 ? (
         <div className="w-full py-10 border border-dashed border-border rounded-lg flex flex-col items-center gap-2 text-muted-foreground">
           <Server size={24} />
-          <div className="text-sm font-medium">No Extra Nodes</div>
-          <div className="text-xs">Add a custom SOCKS5 proxy node with optional refresh URL.</div>
+          <div className="text-sm font-medium">{t("page.empty")}</div>
+          <div className="text-xs">{t("page.emptyHint")}</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -799,8 +799,8 @@ export default function ExtraNodesPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setConfirm({
-                            title: "Remove node?",
-                            description: `"${node.name}" will be permanently removed.`,
+                            title: t("page.removeTitle"),
+                            description: t("page.removeDesc", { name: node.name }),
                             onConfirm: () => { setConfirm(null); handleRemove(node.id); },
                           });
                         }}

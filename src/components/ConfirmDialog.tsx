@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,8 +25,9 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
-  confirmLabel = "Delete",
+  confirmLabel,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation("common");
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -36,12 +38,12 @@ export function ConfirmDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-white hover:bg-destructive/90"
             onClick={onConfirm}
           >
-            {confirmLabel}
+            {confirmLabel ?? t("actions.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
