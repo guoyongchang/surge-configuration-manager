@@ -5,13 +5,27 @@ import SubscriptionsPage from "./pages/Subscriptions";
 import RulesPage from "./pages/Rules";
 import ExtraNodesPage from "./pages/ExtraNodes";
 import OutputPage from "./pages/Output";
+import SettingsPage from "./pages/Settings";
 import { Button } from "@/components/ui/button";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "@/lib/api";
-import { RefreshCw, X } from "lucide-react";
+import { RefreshCw, X, Sun, Moon } from "lucide-react";
 
 export default function App() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    return (localStorage.getItem("scm_theme") as "dark" | "light") ?? "light";
+  });
+
+  useEffect(() => {
+    const html = document.documentElement;
+    if (theme === "light") {
+      html.classList.add("light");
+    } else {
+      html.classList.remove("light");
+    }
+    localStorage.setItem("scm_theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     checkForUpdate()
@@ -36,7 +50,17 @@ export default function App() {
           <div className="text-sm text-muted-foreground">
             Surge Configuration Manager
           </div>
-          <Button size="sm">Generate Config</Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </Button>
+            <Button size="sm">Generate Config</Button>
+          </div>
         </header>
 
         {update && (
@@ -81,6 +105,7 @@ export default function App() {
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/nodes" element={<ExtraNodesPage />} />
             <Route path="/output" element={<OutputPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </div>
       </main>

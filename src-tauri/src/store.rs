@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use crate::models::AppData;
+use crate::subscription::extract_rule_lines;
 
 pub struct Store {
     path: PathBuf,
@@ -14,7 +15,7 @@ impl Store {
         fs::create_dir_all(&app_data_dir).ok();
         let path = app_data_dir.join("scm_data.json");
 
-        let data = if path.exists() {
+        let mut data: AppData = if path.exists() {
             match fs::read_to_string(&path) {
                 Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
                 Err(_) => AppData::default(),
@@ -22,6 +23,12 @@ impl Store {
         } else {
             AppData::default()
         };
+
+        // Re-derive rule_lines from raw_content so existing subscriptions
+        // (stored before this field was added) always have up-to-date rules.
+        for sub in &mut data.subscriptions {
+            sub.rule_lines = extract_rule_lines(&sub.raw_content);
+        }
 
         Store {
             path,
@@ -34,6 +41,11 @@ impl Store {
         let json = serde_json::to_string_pretty(&*data).map_err(|e| e.to_string())?;
         fs::write(&self.path, json).map_err(|e| e.to_string())?;
         Ok(())
+    }
+
+    /// Returns the app data directory (parent of `scm_data.json`).
+    pub fn app_data_dir(&self) -> PathBuf {
+        self.path.parent().expect("store path has no parent").to_path_buf()
     }
 }
 

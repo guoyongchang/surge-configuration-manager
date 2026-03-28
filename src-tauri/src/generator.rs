@@ -20,6 +20,9 @@ pub fn generate_config(data: &AppData) -> String {
 
     // [Proxy]
     out.push_str("[Proxy]\n");
+    // Track emitted node names to deduplicate across subscriptions and extra nodes
+    let mut seen_names: std::collections::HashSet<String> = std::collections::HashSet::new();
+
     // Emit subscription proxy nodes directly
     for sub in &data.subscriptions {
         let mut in_proxy = false;
@@ -45,14 +48,23 @@ pub fn generate_config(data: &AppData) -> String {
                     {
                         continue;
                     }
+                    // Deduplicate by node name
+                    if seen_names.contains(name) {
+                        continue;
+                    }
+                    seen_names.insert(name.to_string());
                 }
                 out.push_str(trimmed);
                 out.push('\n');
             }
         }
     }
-    // Extra nodes
+    // Extra nodes — also deduplicated
     for node in &data.extra_nodes {
+        if seen_names.contains(&node.name) {
+            continue;
+        }
+        seen_names.insert(node.name.clone());
         out.push_str(&node.raw_line);
         out.push('\n');
     }
@@ -60,7 +72,11 @@ pub fn generate_config(data: &AppData) -> String {
 
     // [Proxy Group]
     out.push_str("[Proxy Group]\n");
+    // Only the primary subscription contributes proxy groups
     for sub in &data.subscriptions {
+        if !sub.is_primary {
+            continue;
+        }
         for line in &sub.proxy_group_lines {
             out.push_str(line);
             out.push('\n');
@@ -72,6 +88,9 @@ pub fn generate_config(data: &AppData) -> String {
     out.push_str("[Rule]\n");
     // Individual rules first (higher priority)
     for rule in &data.individual_rules {
+        if !rule.enabled {
+            continue;
+        }
         if let Some(ref comment) = rule.comment {
             out.push_str(&format!(
                 "{},{},{} // {}\n",
@@ -83,10 +102,27 @@ pub fn generate_config(data: &AppData) -> String {
     }
     // Remote rule sets
     for rs in &data.remote_rule_sets {
+        if !rs.enabled {
+            continue;
+        }
         out.push_str(&format!(
             "RULE-SET,{},{},update-interval={}\n",
             rs.url, rs.policy, rs.update_interval
         ));
+    }
+    // Subscription-sourced rules — only from the primary subscription
+    for sub in &data.subscriptions {
+        if !sub.is_primary {
+            continue;
+        }
+        for line in &sub.rule_lines {
+            let key = format!("{}:{}", sub.id, line);
+            if data.disabled_sub_rule_keys.contains(&key) {
+                continue;
+            }
+            out.push_str(line);
+            out.push('\n');
+        }
     }
     out.push('\n');
 
@@ -136,6 +172,8 @@ mod tests {
             raw_content: raw_content.to_string(),
             node_names: vec![],
             proxy_group_lines: vec![],
+            rule_lines: vec![],
+            is_primary: true,
         }
     }
 
@@ -235,6 +273,8 @@ HK-01 = ss, 1.2.3.4, 443
             node_type: "socks5".to_string(),
             server: "127.0.0.1".to_string(),
             port: 1080,
+            username: None,
+            password: None,
             refresh_url: None,
             raw_line: "MyProxy = socks5, 127.0.0.1, 1080".to_string(),
         });
@@ -265,6 +305,7 @@ HK-01 = ss, 1.2.3.4, 443
             value: "google.com".to_string(),
             policy: "PROXY".to_string(),
             comment: None,
+            enabled: true,
         });
         let conf = generate_config(&data);
         assert!(conf.contains("DOMAIN-SUFFIX,google.com,PROXY\n"));
@@ -279,6 +320,7 @@ HK-01 = ss, 1.2.3.4, 443
             value: "192.168.0.0/16".to_string(),
             policy: "DIRECT".to_string(),
             comment: Some("LAN".to_string()),
+            enabled: true,
         });
         let conf = generate_config(&data);
         assert!(conf.contains("IP-CIDR,192.168.0.0/16,DIRECT // LAN\n"));
@@ -293,6 +335,7 @@ HK-01 = ss, 1.2.3.4, 443
             url: "https://example.com/reject.list".to_string(),
             policy: "REJECT".to_string(),
             update_interval: 86400,
+            enabled: true,
         });
         let conf = generate_config(&data);
         assert!(conf.contains(
@@ -309,6 +352,7 @@ HK-01 = ss, 1.2.3.4, 443
             value: "example.com".to_string(),
             policy: "PROXY".to_string(),
             comment: None,
+            enabled: true,
         });
         data.remote_rule_sets.push(RemoteRuleSet {
             id: Uuid::new_v4(),
@@ -316,6 +360,7 @@ HK-01 = ss, 1.2.3.4, 443
             url: "https://example.com/reject.list".to_string(),
             policy: "REJECT".to_string(),
             update_interval: 86400,
+            enabled: true,
         });
         let conf = generate_config(&data);
         let rule_pos = conf.find("DOMAIN,example.com,PROXY").unwrap();

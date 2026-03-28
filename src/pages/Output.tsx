@@ -6,11 +6,13 @@ import {
   XCircle,
   Loader2,
   Eye,
+  Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -132,7 +134,7 @@ export default function OutputPage() {
       <div className="flex gap-6">
         {/* Left column: Settings */}
         <div className="flex-1 space-y-5">
-          {/* Output Path */}
+          {/* Output Path + Filename */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
               Output Path
@@ -145,6 +147,25 @@ export default function OutputPage() {
                 <FolderOpen size={16} />
               </Button>
             </div>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">
+              Output Filename
+            </Label>
+            <Input
+              className="font-mono text-sm"
+              value={config.output_filename}
+              placeholder="surge.conf"
+              onChange={(e) => updateConfig({ output_filename: e.target.value })}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (!v) updateConfig({ output_filename: "surge.conf" });
+              }}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              This file is overwritten on every generate. Backups are stored separately in the app data folder.
+            </p>
           </div>
 
           {/* Toggles */}
@@ -251,9 +272,14 @@ export default function OutputPage() {
                     <CardContent className="flex items-center gap-3 px-3 py-2.5">
                       <StatusIcon status={build.status} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate">
-                          {build.filename}
-                        </div>
+                        {build.filename ? (
+                          <div className="flex items-center gap-1 text-xs font-medium">
+                            <Archive size={11} className="text-primary shrink-0" />
+                            <span className="font-mono truncate">{build.filename}</span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">No change</div>
+                        )}
                         <div className="text-xs text-muted-foreground truncate">
                           {build.description}
                         </div>

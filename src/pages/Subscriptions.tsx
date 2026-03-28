@@ -9,6 +9,7 @@ import {
   FileText,
   FolderOpen,
   AlertTriangle,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +28,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import type { Subscription } from "@/lib/api";
 import * as api from "@/lib/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 function StatusBadge({ status }: { status: Subscription["status"] }) {
   const variant =
@@ -84,10 +87,12 @@ function SubscriptionCard({
   sub,
   onRefresh,
   onRemove,
+  onSetPrimary,
 }: {
   sub: Subscription;
   onRefresh: (id: string) => void;
   onRemove: (id: string) => void;
+  onSetPrimary: (id: string) => void;
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const isFile = sub.source_type === "file";
@@ -99,11 +104,11 @@ function SubscriptionCard({
   };
 
   return (
-    <Card className="py-0 gap-0">
+    <Card className={`py-0 gap-0 transition-colors ${sub.is_primary ? "ring-1 ring-primary" : ""}`}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${sub.is_primary ? "bg-primary/25" : "bg-primary/15"}`}>
               {isFile ? (
                 <FileText size={20} className="text-primary" />
               ) : (
@@ -113,6 +118,12 @@ function SubscriptionCard({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold">{sub.name}</span>
+                {sub.is_primary && (
+                  <span className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                    <Crown size={10} />
+                    Primary
+                  </span>
+                )}
                 <Badge variant="outline" className="text-xs font-mono">
                   {isFile ? "Local" : "URL"}
                 </Badge>
@@ -140,6 +151,12 @@ function SubscriptionCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {!sub.is_primary && (
+                  <DropdownMenuItem onClick={() => onSetPrimary(sub.id)}>
+                    <Crown size={14} />
+                    Set as Primary
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleRefresh} disabled={refreshing}>
                   {refreshing ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -148,6 +165,7 @@ function SubscriptionCard({
                   )}
                   Refresh Now
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() => onRemove(sub.id)}
@@ -159,6 +177,18 @@ function SubscriptionCard({
             </DropdownMenu>
           </div>
         </div>
+
+        {sub.is_primary && (
+          <div className="flex items-center gap-2 mb-3 text-xs text-primary bg-primary/10 rounded-lg px-3 py-2">
+            <Crown size={12} />
+            <span>Primary subscription — contributes Proxy Groups and Rules to the generated config</span>
+          </div>
+        )}
+        {!sub.is_primary && sub.node_count > 0 && (
+          <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
+            <span>Secondary — nodes only (Proxy Groups and Rules are excluded)</span>
+          </div>
+        )}
 
         {sub.status === "error" && (
           <div className="flex items-center gap-2 mb-3 text-xs text-warning bg-warning/10 rounded-lg px-3 py-2">
@@ -336,6 +366,7 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
 export default function SubscriptionsPage() {
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirm, setConfirm] = useState<{ title: string; description?: string; onConfirm: () => void } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -366,8 +397,21 @@ export default function SubscriptionsPage() {
     setSubs((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const confirmRemove = (sub: Subscription) => {
+    setConfirm({
+      title: "Remove subscription?",
+      description: `"${sub.name}" and all its cached data will be removed.`,
+      onConfirm: () => { setConfirm(null); handleRemove(sub.id); },
+    });
+  };
+
+  const handleSetPrimary = async (id: string) => {
+    await api.setPrimarySubscription(id);
+    setSubs((prev) => prev.map((s) => ({ ...s, is_primary: s.id === id })));
+  };
+
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="text-xs text-muted-foreground mb-1">
@@ -405,11 +449,20 @@ export default function SubscriptionsPage() {
               key={sub.id}
               sub={sub}
               onRefresh={handleRefresh}
-              onRemove={handleRemove}
+              onRemove={() => confirmRemove(sub)}
+              onSetPrimary={handleSetPrimary}
             />
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirm !== null}
+        onOpenChange={(open) => { if (!open) setConfirm(null); }}
+        title={confirm?.title ?? ""}
+        description={confirm?.description}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+      />
     </div>
   );
 }

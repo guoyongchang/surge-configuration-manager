@@ -31,10 +31,21 @@ pub struct Subscription {
     pub node_names: Vec<String>,
     /// Parsed proxy group lines from [Proxy Group] section
     pub proxy_group_lines: Vec<String>,
+    /// Raw rule lines from [Rule] section
+    #[serde(default)]
+    pub rule_lines: Vec<String>,
+    /// Only one subscription can be primary; it contributes Proxy Group and Rules.
+    /// Non-primary subscriptions contribute nodes only.
+    #[serde(default)]
+    pub is_primary: bool,
 }
 
 fn default_sub_source() -> SubSource {
     SubSource::Url
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -52,6 +63,8 @@ pub struct RemoteRuleSet {
     pub url: String,
     pub policy: String,
     pub update_interval: u64,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,6 +74,8 @@ pub struct IndividualRule {
     pub value: String,
     pub policy: String,
     pub comment: Option<String>,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,6 +85,10 @@ pub struct ExtraNode {
     pub node_type: String,
     pub server: String,
     pub port: u16,
+    #[serde(default)]
+    pub username: Option<String>,
+    #[serde(default)]
+    pub password: Option<String>,
     pub refresh_url: Option<String>,
     pub raw_line: String,
 }
@@ -99,15 +118,22 @@ impl Default for GeneralSettings {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OutputConfig {
     pub output_path: String,
+    #[serde(default = "default_output_filename")]
+    pub output_filename: String,
     pub auto_regenerate: bool,
     pub minify: bool,
     pub auto_upload: bool,
+}
+
+fn default_output_filename() -> String {
+    "surge.conf".to_string()
 }
 
 impl Default for OutputConfig {
     fn default() -> Self {
         Self {
             output_path: "~/Library/Application Support/Surge/Profiles/".to_string(),
+            output_filename: default_output_filename(),
             auto_regenerate: true,
             minify: false,
             auto_upload: false,
@@ -145,5 +171,9 @@ pub struct AppData {
     pub host_section: String,
     pub url_rewrite_section: String,
     pub mitm_section: String,
+    /// Keys of subscription-sourced rules that the user has disabled
+    /// Format: "{subscription_id}:{rule_line}"
+    #[serde(default)]
+    pub disabled_sub_rule_keys: Vec<String>,
 }
 

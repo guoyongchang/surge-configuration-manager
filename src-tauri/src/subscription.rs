@@ -69,6 +69,24 @@ pub async fn try_fetch_subscription(url: &str) -> Result<String, String> {
     }
 }
 
+/// Extract rule lines from the [Rule] section of a subscription config.
+/// Used to re-derive rule_lines from raw_content on store load.
+pub fn extract_rule_lines(content: &str) -> Vec<String> {
+    let mut rule_lines = Vec::new();
+    let mut in_rule = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            in_rule = trimmed == "[Rule]";
+            continue;
+        }
+        if in_rule && !trimmed.is_empty() && !trimmed.starts_with('#') && !trimmed.starts_with("FINAL,") {
+            rule_lines.push(trimmed.to_string());
+        }
+    }
+    rule_lines
+}
+
 /// Parse a subscription .conf file content into a Subscription struct
 pub fn parse_subscription(
     name: &str,
@@ -78,6 +96,7 @@ pub fn parse_subscription(
 ) -> Subscription {
     let mut node_names: Vec<String> = Vec::new();
     let mut proxy_group_lines: Vec<String> = Vec::new();
+    let mut rule_lines: Vec<String> = Vec::new();
     let mut usage_used: f64 = 0.0;
     let mut usage_total: f64 = 0.0;
     let mut expires: Option<String> = None;
@@ -117,6 +136,12 @@ pub fn parse_subscription(
             "[Proxy Group]" => {
                 proxy_group_lines.push(trimmed.to_string());
             }
+            "[Rule]" => {
+                // Skip FINAL rules — they must be last and user controls final policy
+                if !trimmed.starts_with("FINAL,") {
+                    rule_lines.push(trimmed.to_string());
+                }
+            }
             _ => {}
         }
     }
@@ -136,6 +161,8 @@ pub fn parse_subscription(
         raw_content: content.to_string(),
         node_names,
         proxy_group_lines,
+        rule_lines,
+        is_primary: false,
     }
 }
 

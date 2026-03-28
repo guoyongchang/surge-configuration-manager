@@ -9,14 +9,14 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
 
   /* Custom app tokens */
-  --color-bg: #1A1A1F;
-  --color-surface: #242429;
-  --color-text-primary: #EDEDF0;
-  --color-text-secondary: #8B8B99;
+  --color-bg: #101012;
+  --color-surface: #18181C;
+  --color-text-primary: #EEEEEF;
+  --color-text-secondary: #88889A;
   --color-success: #22C55E;
   --color-danger: #EF4444;
-  --color-warning: #F97316;
-  --color-info: #0EA5E9;
+  --color-warning: #F59E0B;   /* amber — distinct from orange primary */
+  --color-info: #14B8A6;      /* teal — no more blue */
 
   /* shadcn theme mappings */
   --color-background: var(--background);
@@ -59,40 +59,70 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Dark-only theme — our app has no light mode */
+/* ── Dark theme (default) ──────────────────────────────────────── */
 :root {
-  --background: #1A1A1F;
-  --foreground: #EDEDF0;
-  --card: #242429;
-  --card-foreground: #EDEDF0;
-  --popover: #242429;
-  --popover-foreground: #EDEDF0;
-  --primary: #5E6AD2;
+  --background: #101012;
+  --foreground: #EEEEEF;
+  --card: #18181C;
+  --card-foreground: #EEEEEF;
+  --popover: #1E1E23;
+  --popover-foreground: #EEEEEF;
+  --primary: #FF5F1F;
   --primary-foreground: #FFFFFF;
-  --secondary: #2A2A30;
-  --secondary-foreground: #EDEDF0;
-  --muted: #2A2A30;
-  --muted-foreground: #8B8B99;
-  --accent: #5E6AD2;
+  --secondary: #222227;
+  --secondary-foreground: #EEEEEF;
+  --muted: #222227;
+  --muted-foreground: #88889A;
+  --accent: #FF5F1F;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: rgba(255, 255, 255, 0.06);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: #5E6AD2;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.09);
+  --ring: #FF5F1F;
   --radius: 0.625rem;
-  --chart-1: #5E6AD2;
+  --chart-1: #FF5F1F;
   --chart-2: #22C55E;
-  --chart-3: #F97316;
-  --chart-4: #0EA5E9;
+  --chart-3: #F59E0B;
+  --chart-4: #14B8A6;
   --chart-5: #EF4444;
-  --sidebar: #1E1E23;
-  --sidebar-foreground: #EDEDF0;
-  --sidebar-primary: #5E6AD2;
+  --sidebar: #0C0C0E;
+  --sidebar-foreground: #EEEEEF;
+  --sidebar-primary: #FF5F1F;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: rgba(94, 106, 210, 0.15);
-  --sidebar-accent-foreground: #5E6AD2;
+  --sidebar-accent: rgba(255, 95, 31, 0.14);
+  --sidebar-accent-foreground: #FF5F1F;
   --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #5E6AD2;
+  --sidebar-ring: #FF5F1F;
+}
+
+/* ── Light theme ───────────────────────────────────────────────── */
+html.light {
+  --background: #F9F8F5;
+  --foreground: #18181C;
+  --card: #FFFFFF;
+  --card-foreground: #18181C;
+  --popover: #FFFFFF;
+  --popover-foreground: #18181C;
+  --primary: #E04D00;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F0EFE8;
+  --secondary-foreground: #18181C;
+  --muted: #F0EFE8;
+  --muted-foreground: #6B6B78;
+  --accent: #E04D00;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.06);
+  --ring: #E04D00;
+  --sidebar: #EDE9DF;
+  --sidebar-foreground: #18181C;
+  --sidebar-primary: #E04D00;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(224, 77, 0, 0.10);
+  --sidebar-accent-foreground: #E04D00;
+  --sidebar-border: rgba(0, 0, 0, 0.06);
+  --sidebar-ring: #E04D00;
 }
 
 @layer base {
@@ -120,4 +150,10 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
 }

@@ -1,0 +1,263 @@
+import { useEffect, useState, useCallback } from "react";
+import { Save, Loader2, Settings2, Globe, Shield, BookMarked, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { GeneralSettings, AdvancedSections } from "@/lib/api";
+import * as api from "@/lib/api";
+
+function SectionTextarea({
+  label,
+  description,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  description?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      {description && (
+        <p className="text-xs text-muted-foreground mb-1.5">{description}</p>
+      )}
+      <textarea
+        className="w-full h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  const [general, setGeneral] = useState<GeneralSettings>({
+    http_listen: "0.0.0.0:7890",
+    socks5_listen: "0.0.0.0:7891",
+    extra_lines: [],
+  });
+  const [sections, setSections] = useState<AdvancedSections>({
+    mitm: "",
+    host: "",
+    url_rewrite: "",
+  });
+  const [loading, setLoading] = useState(true);
+  const [savingGeneral, setSavingGeneral] = useState(false);
+  const [savingSections, setSavingSections] = useState(false);
+  const [savedGeneral, setSavedGeneral] = useState(false);
+  const [savedSections, setSavedSections] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const [g, s] = await Promise.all([
+        api.getGeneralSettings(),
+        api.getAdvancedSections(),
+      ]);
+      setGeneral(g);
+      setSections(s);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleSaveGeneral = async () => {
+    setSavingGeneral(true);
+    try {
+      await api.updateGeneralSettings(general);
+      setSavedGeneral(true);
+      setTimeout(() => setSavedGeneral(false), 2000);
+    } finally {
+      setSavingGeneral(false);
+    }
+  };
+
+  const handleSaveSections = async () => {
+    setSavingSections(true);
+    try {
+      await api.updateAdvancedSections(sections);
+      setSavedSections(true);
+      setTimeout(() => setSavedSections(false), 2000);
+    } finally {
+      setSavingSections(false);
+    }
+  };
+
+  const extraLinesText = general.extra_lines.join("\n");
+  const setExtraLinesText = (text: string) =>
+    setGeneral((prev) => ({
+      ...prev,
+      extra_lines: text ? text.split("\n") : [],
+    }));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin mr-2" />
+        Loading...
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 w-full max-w-2xl">
+      <div className="mb-6">
+        <div className="text-xs text-muted-foreground mb-1">Dashboard / Settings</div>
+        <h1 className="text-xl font-bold">Settings</h1>
+      </div>
+
+      {/* General Settings */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Settings2 size={15} className="text-muted-foreground" />
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            General
+          </h2>
+        </div>
+        <Card className="py-0 gap-0">
+          <CardContent className="p-5 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>HTTP Listen</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">
+                  Local HTTP proxy address and port
+                </p>
+                <Input
+                  placeholder="0.0.0.0:7890"
+                  value={general.http_listen ?? ""}
+                  onChange={(e) =>
+                    setGeneral((prev) => ({
+                      ...prev,
+                      http_listen: e.target.value || null,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label>SOCKS5 Listen</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">
+                  Local SOCKS5 proxy address and port
+                </p>
+                <Input
+                  placeholder="0.0.0.0:7891"
+                  value={general.socks5_listen ?? ""}
+                  onChange={(e) =>
+                    setGeneral((prev) => ({
+                      ...prev,
+                      socks5_listen: e.target.value || null,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <SectionTextarea
+              label="Extra [General] Lines"
+              description="Additional key=value entries for the [General] section, one per line."
+              value={extraLinesText}
+              onChange={setExtraLinesText}
+              placeholder={"internet-test-url = http://google.com/\nproxy-test-url = http://google.com/\nloglevel = notify"}
+            />
+            <div className="flex justify-end">
+              <Button onClick={handleSaveGeneral} disabled={savingGeneral} size="sm">
+                {savingGeneral ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : savedGeneral ? (
+                  <RefreshCw size={14} />
+                ) : (
+                  <Save size={14} />
+                )}
+                {savedGeneral ? "Saved!" : "Save General"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* MITM */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Shield size={15} className="text-muted-foreground" />
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            MITM
+          </h2>
+        </div>
+        <Card className="py-0 gap-0">
+          <CardContent className="p-5 space-y-4">
+            <SectionTextarea
+              label="[MITM] Section Content"
+              description="Raw content of the [MITM] section. Typically contains hostname = *.example.com and other MITM settings."
+              value={sections.mitm}
+              onChange={(v) => setSections((prev) => ({ ...prev, mitm: v }))}
+              placeholder={"hostname = *.google.com, *.apple.com\nskip-server-cert-verify = true"}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Host */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Globe size={15} className="text-muted-foreground" />
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Host
+          </h2>
+        </div>
+        <Card className="py-0 gap-0">
+          <CardContent className="p-5 space-y-4">
+            <SectionTextarea
+              label="[Host] Section Content"
+              description="DNS mapping rules. Maps domain names to IP addresses or other domains."
+              value={sections.host}
+              onChange={(v) => setSections((prev) => ({ ...prev, host: v }))}
+              placeholder={"example.com = 1.2.3.4\nfoo.internal = 192.168.1.10"}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* URL Rewrite */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <BookMarked size={15} className="text-muted-foreground" />
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            URL Rewrite
+          </h2>
+        </div>
+        <Card className="py-0 gap-0">
+          <CardContent className="p-5 space-y-4">
+            <SectionTextarea
+              label="[URL Rewrite] Section Content"
+              description="HTTP URL rewrite rules. Format: regex replacement type (302 / 307 / reject / header)."
+              value={sections.url_rewrite}
+              onChange={(v) => setSections((prev) => ({ ...prev, url_rewrite: v }))}
+              placeholder={"^http://example.com https://example.com 302"}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Save advanced sections */}
+      <div className="flex justify-end mb-8">
+        <Button onClick={handleSaveSections} disabled={savingSections}>
+          {savingSections ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : savedSections ? (
+            <RefreshCw size={14} />
+          ) : (
+            <Save size={14} />
+          )}
+          {savedSections ? "Saved!" : "Save MITM / Host / URL Rewrite"}
+        </Button>
+      </div>
+    </div>
+  );
+}
