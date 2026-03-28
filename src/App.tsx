@@ -1,23 +1,80 @@
+import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import SubscriptionsPage from "./pages/Subscriptions";
 import RulesPage from "./pages/Rules";
 import ExtraNodesPage from "./pages/ExtraNodes";
 import OutputPage from "./pages/Output";
+import { Button } from "@/components/ui/button";
+import { checkForUpdate, installUpdate, type UpdateInfo } from "@/lib/api";
+import { RefreshCw, X } from "lucide-react";
 
 export default function App() {
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    checkForUpdate()
+      .then((info) => { if (info) setUpdate(info); })
+      .catch(() => {}); // silently ignore on startup
+  }, []);
+
+  const handleInstall = async () => {
+    setInstalling(true);
+    try {
+      await installUpdate(); // downloads, installs, then app.exit(0) — may not return
+    } catch {
+      setInstalling(false); // only reached if install failed
+    }
+  };
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-bg">
+    <div className="flex h-screen w-screen overflow-hidden bg-background">
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-border bg-bg/80 backdrop-blur">
-          <div className="text-sm text-text-secondary">
+        <header className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-border bg-background/80 backdrop-blur">
+          <div className="text-sm text-muted-foreground">
             Surge Configuration Manager
           </div>
-          <button className="px-4 py-1.5 bg-accent hover:bg-accent-hover text-white text-sm rounded-md font-medium transition-colors">
-            Generate Config
-          </button>
+          <Button size="sm">Generate Config</Button>
         </header>
+
+        {update && (
+          <div
+            className="shrink-0 flex items-center justify-between gap-4 px-4 py-2 text-sm border-b"
+            style={{
+              background: "color-mix(in srgb, var(--color-info) 10%, transparent)",
+              borderColor: "color-mix(in srgb, var(--color-info) 25%, transparent)",
+            }}
+          >
+            <span style={{ color: "var(--color-info)" }}>
+              New version <strong>v{update.version}</strong> is available
+              <span className="text-muted-foreground ml-2">(current: v{update.current_version})</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                style={{ borderColor: "color-mix(in srgb, var(--color-info) 40%, transparent)", color: "var(--color-info)" }}
+                onClick={handleInstall}
+                disabled={installing}
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${installing ? "animate-spin" : ""}`} />
+                {installing ? "Installing..." : "Install & Restart"}
+              </Button>
+              <button
+                onClick={() => setUpdate(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Dismiss"
+                disabled={installing}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={<SubscriptionsPage />} />

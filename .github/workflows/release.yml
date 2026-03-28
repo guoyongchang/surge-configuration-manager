@@ -1,0 +1,212 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+    inputs:
+      major_version:
+        description: '大版本号'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Generate version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate version from date
+        id: version
+        run: |
+          MAJOR="${{ github.event.inputs.major_version || '0' }}"
+          YYYYMMDD=$(date -u +%Y%m%d)
+          HHMMSS=$(( $(date -u +%-H) * 10000 + $(date -u +%-M) * 100 + $(date -u +%-S) ))
+          VERSION="${MAJOR}.${YYYYMMDD}.${HHMMSS}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Generated version: ${VERSION} (tag: v${VERSION})"
+
+      - name: Create GitHub Release with changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | head -1 || true)
+          RANGE="${PREV_TAG:+${PREV_TAG}..HEAD}"
+          RANGE="${RANGE:-HEAD~10..HEAD}"
+
+          FEATURES="" FIXES="" OTHERS=""
+          while IFS= read -r line; do
+            case "$line" in Merge*|"") continue ;; esac
+            if echo "$line" | grep -qiE '^feat'; then
+              clean=$(echo "$line" | sed -E 's/^feat(\(.*\))?:\s*//')
+              FEATURES="${FEATURES}- ${clean}\n"
+            elif echo "$line" | grep -qiE '^fix'; then
+              clean=$(echo "$line" | sed -E 's/^fix(\(.*\))?:\s*//')
+              FIXES="${FIXES}- ${clean}\n"
+            elif echo "$line" | grep -qiE '^refactor'; then
+              clean=$(echo "$line" | sed -E 's/^refactor(\(.*\))?:\s*//')
+              OTHERS="${OTHERS}- ${clean}\n"
+            fi
+          done < <(git log "$RANGE" --pretty=format:"%s" --no-merges 2>/dev/null || true)
+
+          CHANGELOG=""
+          [ -n "$FEATURES" ] && CHANGELOG="${CHANGELOG}### ✨ 新功能\n\n${FEATURES}\n"
+          [ -n "$FIXES"    ] && CHANGELOG="${CHANGELOG}### 🐛 修复\n\n${FIXES}\n"
+          [ -n "$OTHERS"   ] && CHANGELOG="${CHANGELOG}### 🔧 优化\n\n${OTHERS}\n"
+          [ -z "$CHANGELOG" ] && CHANGELOG="常规更新与改进\n"
+
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Surge Configuration Manager v${VERSION}" \
+            --notes "$(printf '## 更新内容\n\n%b\n---\n\n### 下载安装\n下载 `.dmg` 文件，拖入 Applications 文件夹。\n\n**首次安装（未签名应用）：**\n右键点击 app → 打开；或前往系统设置 → 隐私与安全性 → 仍要打开\n\n**自动更新：** 应用启动时自动检测新版本，点击 Install & Restart 即可。' "$CHANGELOG")"
+
+  build:
+    name: Build (macOS Universal)
+    needs: prepare
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust (universal targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
+          shared-key: release-build
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install
+
+      - name: Set version
+        env:
+          APP_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+            conf.version = process.env.APP_VERSION;
+            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
+          "
+          sed -i.bak "s/^version = \".*\"/version = \"$APP_VERSION\"/" src-tauri/Cargo.toml \
+            && rm -f src-tauri/Cargo.toml.bak
+          echo "Set version to $APP_VERSION"
+
+      - name: Build Tauri App
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx tauri build --target universal-apple-darwin
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+
+          DMG=$(find src-tauri/target -name "*.dmg" -type f | head -1 || true)
+          [ -n "$DMG" ] && cp "$DMG" "release-assets/Surge-Configuration-Manager-${TAG}-macOS.dmg"
+
+          TARBALL=$(find src-tauri/target -name "*.tar.gz" -not -name "*.sig" -type f | head -1 || true)
+          if [ -n "$TARBALL" ]; then
+            TARNAME="Surge-Configuration-Manager-${TAG}-macOS.tar.gz"
+            cp "$TARBALL" "release-assets/${TARNAME}"
+            [ -f "${TARBALL}.sig" ] && cp "${TARBALL}.sig" "release-assets/${TARNAME}.sig"
+          fi
+
+          for f in release-assets/*; do
+            [ -f "$f" ] && gh release upload "$TAG" "$f" --clobber --repo "$GITHUB_REPOSITORY"
+          done
+
+  assemble-latest-json:
+    name: Assemble latest.json
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          mkdir -p dl
+          gh release download "$TAG" --dir dl --repo "$GITHUB_REPOSITORY"
+          ls -la dl
+
+      - name: Generate and upload latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          PUB_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          BASE_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+
+          NOTES=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q '.body' 2>/dev/null || echo "Release $TAG")
+          NOTES_JSON=$(python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))' <<< "$NOTES")
+
+          SIG_FILE=$(find dl -name "*.tar.gz.sig" | head -1 || true)
+          TARBALL=$(find dl -name "*.tar.gz" -not -name "*.sig" | head -1 || true)
+
+          if [ -z "$SIG_FILE" ] || [ -z "$TARBALL" ]; then
+            echo "ERROR: .tar.gz or .sig not found"; ls -la dl; exit 1
+          fi
+
+          SIG=$(cat "$SIG_FILE")
+          URL="$BASE_URL/$(basename "$TARBALL")"
+
+          cat > latest.json <<EOF
+          {
+            "version": "$VERSION",
+            "notes": $NOTES_JSON,
+            "pub_date": "$PUB_DATE",
+            "platforms": {
+              "darwin-aarch64": { "signature": "$SIG", "url": "$URL" },
+              "darwin-x86_64":  { "signature": "$SIG", "url": "$URL" }
+            }
+          }
+          EOF
+
+          echo "=== latest.json ===" && cat latest.json
+          gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"

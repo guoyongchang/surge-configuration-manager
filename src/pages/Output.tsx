@@ -1,75 +1,129 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   FolderOpen,
   Zap,
   CheckCircle,
   XCircle,
-  Clock,
-  ChevronDown,
+  Loader2,
+  Eye,
 } from "lucide-react";
-
-interface BuildRecord {
-  id: string;
-  filename: string;
-  description: string;
-  time: string;
-  status: "success" | "error" | "pending";
-}
-
-const mockBuilds: BuildRecord[] = [
-  {
-    id: "1",
-    filename: "main_v1.4.0.conf",
-    description: "Based on 1,847 Merged rules",
-    time: "10:51",
-    status: "success",
-  },
-  {
-    id: "2",
-    filename: "backup_3oct.conf",
-    description: "Based on 1,847 Merged rules",
-    time: "17:16",
-    status: "success",
-  },
-  {
-    id: "3",
-    filename: "trial_config.conf",
-    description: "Build 3: Http_only at line 43",
-    time: "N/A",
-    status: "error",
-  },
-  {
-    id: "4",
-    filename: "legacy_v3.conf",
-    description: "Restored v3 Configuration",
-    time: "Yesterday",
-    status: "success",
-  },
-];
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import type { OutputConfig, BuildRecord } from "@/lib/api";
+import * as api from "@/lib/api";
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   if (status === "success")
     return <CheckCircle size={16} className="text-success" />;
-  if (status === "error") return <XCircle size={16} className="text-danger" />;
-  return <Clock size={16} className="text-warning" />;
+  return <XCircle size={16} className="text-danger" />;
+}
+
+function timeDisplay(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 86400000) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  return "Yesterday";
 }
 
 export default function OutputPage() {
-  const [template] = useState("Modern_Minimalist_v9.conf");
-  const [outputPath] = useState(
-    "~/Library/Application Support/Surge/Profiles/"
-  );
-  const [autoRegenerate, setAutoRegenerate] = useState(true);
-  const [minifyOutput, setMinifyOutput] = useState(false);
-  const [autoUpload, setAutoUpload] = useState(true);
+  const [config, setConfig] = useState<OutputConfig | null>(null);
+  const [builds, setBuilds] = useState<BuildRecord[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewContent, setPreviewContent] = useState("");
+  const [lastBuildTime, setLastBuildTime] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const [cfg, history] = await Promise.all([
+        api.getOutputConfig(),
+        api.getBuildHistory(),
+      ]);
+      setConfig(cfg);
+      setBuilds(history);
+      if (history.length > 0) {
+        setLastBuildTime(history[0].time);
+      }
+    } catch {
+      /* first load */
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const updateConfig = async (partial: Partial<OutputConfig>) => {
+    if (!config) return;
+    const updated = { ...config, ...partial };
+    setConfig(updated);
+    await api.updateOutputConfig(updated);
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const record = await api.generateConfig();
+      setBuilds((prev) => [record, ...prev].slice(0, 20));
+      setLastBuildTime(record.time);
+    } catch (e) {
+      console.error("Generate failed:", e);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handlePickFolder = async () => {
+    const selected = await openDialog({
+      directory: true,
+      title: "Select Output Directory",
+    });
+    if (selected) {
+      updateConfig({ output_path: selected as string });
+    }
+  };
+
+  const handlePreview = async () => {
+    try {
+      const content = await api.previewConfig();
+      setPreviewContent(content);
+      setPreviewOpen(true);
+    } catch (e) {
+      console.error("Preview failed:", e);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    await api.clearBuildHistory();
+    setBuilds([]);
+  };
+
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin mr-2" />
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-text-primary">
-          Build Configuration
-        </h1>
-        <p className="text-xs text-text-secondary mt-1">
+        <h1 className="text-xl font-bold">Build Configuration</h1>
+        <p className="text-xs text-muted-foreground mt-1">
           Define your template logic and file destinations for the final Surge
           profile.
         </p>
@@ -78,147 +132,155 @@ export default function OutputPage() {
       <div className="flex gap-6">
         {/* Left column: Settings */}
         <div className="flex-1 space-y-5">
-          {/* Template */}
-          <div>
-            <label className="text-xs text-text-secondary mb-1.5 block">
-              Template
-            </label>
-            <button className="w-full flex items-center justify-between bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary hover:border-accent/30 transition-colors">
-              <span>{template}</span>
-              <ChevronDown size={14} className="text-text-secondary" />
-            </button>
-            <div className="text-xs text-text-secondary mt-1">
-              Using the latest official template and variables.
-            </div>
-          </div>
-
           {/* Output Path */}
           <div>
-            <label className="text-xs text-text-secondary mb-1.5 block">
+            <Label className="text-xs text-muted-foreground mb-1.5 block">
               Output Path
-            </label>
+            </Label>
             <div className="flex gap-2">
-              <div className="flex-1 bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary font-mono truncate">
-                {outputPath}
+              <div className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm font-mono truncate">
+                {config.output_path}
               </div>
-              <button className="px-3 bg-surface border border-border rounded-md text-text-secondary hover:text-text-primary transition-colors">
+              <Button variant="outline" size="icon" onClick={handlePickFolder}>
                 <FolderOpen size={16} />
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Toggles */}
           <div className="space-y-4">
-            <ToggleRow
-              label="Regenerate on refresh"
-              description="Automatically rebuild on local file change"
-              checked={autoRegenerate}
-              onChange={setAutoRegenerate}
-            />
-            <ToggleRow
-              label="Minify Output"
-              description="Remove comments and whitespace"
-              checked={minifyOutput}
-              onChange={setMinifyOutput}
-            />
-            <ToggleRow
-              label="Auto-upload to Remote"
-              description="Push generated file to Git or iCloud"
-              checked={autoUpload}
-              onChange={setAutoUpload}
-            />
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm">Regenerate on refresh</div>
+                <div className="text-xs text-muted-foreground">
+                  Automatically rebuild on local file change
+                </div>
+              </div>
+              <Switch
+                checked={config.auto_regenerate}
+                onCheckedChange={(v) => updateConfig({ auto_regenerate: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm">Minify Output</div>
+                <div className="text-xs text-muted-foreground">
+                  Remove comments and whitespace
+                </div>
+              </div>
+              <Switch
+                checked={config.minify}
+                onCheckedChange={(v) => updateConfig({ minify: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm">Auto-upload to Remote</div>
+                <div className="text-xs text-muted-foreground">
+                  Push generated file to Git or iCloud
+                </div>
+              </div>
+              <Switch
+                checked={config.auto_upload}
+                onCheckedChange={(v) => updateConfig({ auto_upload: v })}
+              />
+            </div>
           </div>
+
+          {/* Preview button */}
+          <Button variant="outline" onClick={handlePreview} className="w-full">
+            <Eye size={16} />
+            Preview Config
+          </Button>
         </div>
 
         {/* Right column: Generate + History */}
         <div className="w-80 space-y-4">
           {/* Generate button */}
-          <button className="w-full py-8 bg-accent hover:bg-accent-hover rounded-lg flex flex-col items-center gap-2 transition-colors">
-            <Zap size={28} className="text-white" />
-            <span className="text-white font-semibold text-lg">
-              Generate Config
-            </span>
-          </button>
+          <Button
+            size="lg"
+            className="w-full h-auto py-8 flex-col gap-2 text-lg font-semibold"
+            onClick={handleGenerate}
+            disabled={generating}
+          >
+            {generating ? (
+              <Loader2 size={28} className="animate-spin" />
+            ) : (
+              <Zap size={28} />
+            )}
+            {generating ? "Generating..." : "Generate Config"}
+          </Button>
 
           {/* Status */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-text-secondary">Status:</span>
-              <span className="text-success font-medium">● Ready</span>
+              <span className="text-muted-foreground">Status:</span>
+              <span className="text-success font-medium">Ready</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-text-secondary">Last Build:</span>
-              <span className="text-text-primary">2m 45s ago</span>
-            </div>
+            {lastBuildTime && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground">Last Build:</span>
+                <span>{timeDisplay(lastBuildTime)}</span>
+              </div>
+            )}
           </div>
 
           {/* Build History */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-text-primary">
-                Build History
-              </h3>
-              <button className="text-xs text-accent hover:text-accent-hover transition-colors">
-                Clear All
-              </button>
-            </div>
-            <div className="space-y-2">
-              {mockBuilds.map((build) => (
-                <div
-                  key={build.id}
-                  className="flex items-center gap-3 bg-surface border border-border rounded-md px-3 py-2.5"
+              <h3 className="text-sm font-semibold">Build History</h3>
+              {builds.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="text-primary"
+                  onClick={handleClearHistory}
                 >
-                  <StatusIcon status={build.status} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-text-primary truncate">
-                      {build.filename}
-                    </div>
-                    <div className="text-xs text-text-secondary truncate">
-                      {build.description}
-                    </div>
-                  </div>
-                  <span className="text-xs text-text-secondary shrink-0">
-                    {build.time}
-                  </span>
-                </div>
-              ))}
+                  Clear All
+                </Button>
+              )}
             </div>
+            {builds.length === 0 ? (
+              <div className="text-xs text-muted-foreground text-center py-6">
+                No builds yet. Click Generate to create your first config.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {builds.map((build) => (
+                  <Card key={build.id} className="py-0 gap-0">
+                    <CardContent className="flex items-center gap-3 px-3 py-2.5">
+                      <StatusIcon status={build.status} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium truncate">
+                          {build.filename}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {build.description}
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {timeDisplay(build.time)}
+                      </span>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function ToggleRow({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-sm text-text-primary">{label}</div>
-        <div className="text-xs text-text-secondary">{description}</div>
-      </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`w-10 h-6 rounded-full relative transition-colors ${
-          checked ? "bg-accent" : "bg-white/10"
-        }`}
-      >
-        <span
-          className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-            checked ? "left-5" : "left-1"
-          }`}
-        />
-      </button>
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Config Preview</DialogTitle>
+          </DialogHeader>
+          <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
+            {previewContent || "No config data. Add subscriptions and rules first."}
+          </pre>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

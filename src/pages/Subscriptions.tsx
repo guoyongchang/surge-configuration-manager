@@ -1,196 +1,415 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Plus,
   RefreshCw,
-  MoreHorizontal,
   CloudDownload,
   ExternalLink,
   Trash2,
+  Loader2,
+  FileText,
+  FolderOpen,
+  AlertTriangle,
 } from "lucide-react";
-
-interface Subscription {
-  id: string;
-  name: string;
-  url: string;
-  nodeCount: number;
-  lastRefreshed: string;
-  interval: string;
-  status: "active" | "standby" | "error";
-  usageUsed: number;
-  usageTotal: number;
-  expires: string;
-}
-
-const mockSubscriptions: Subscription[] = [
-  {
-    id: "1",
-    name: "ImmTelecom",
-    url: "https://im.teldfm...cuid=CK98b...",
-    nodeCount: 104,
-    lastRefreshed: "2h ago",
-    interval: "12h",
-    status: "active",
-    usageUsed: 366.64,
-    usageTotal: 1000,
-    expires: "2026-12-27",
-  },
-  {
-    id: "2",
-    name: "GlobalPass Premium",
-    url: "https://global-pre...",
-    nodeCount: 47,
-    lastRefreshed: "1d ago",
-    interval: "24h",
-    status: "standby",
-    usageUsed: 82.4,
-    usageTotal: 500,
-    expires: "2026-06-15",
-  },
-];
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import type { Subscription } from "@/lib/api";
+import * as api from "@/lib/api";
 
 function StatusBadge({ status }: { status: Subscription["status"] }) {
-  const styles = {
-    active: "text-success",
-    standby: "text-text-secondary",
-    error: "text-danger",
-  };
+  const variant =
+    status === "active"
+      ? "default"
+      : status === "error"
+        ? "destructive"
+        : "secondary";
   return (
-    <span className={`text-xs font-medium ${styles[status]}`}>
-      ● {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
+    <Badge variant={variant} className="text-xs">
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </Badge>
   );
 }
 
-function UsageBar({
-  used,
-  total,
-}: {
-  used: number;
-  total: number;
-}) {
-  const pct = Math.min((used / total) * 100, 100);
-  const color = pct > 80 ? "bg-danger" : pct > 60 ? "bg-warning" : "bg-accent";
+function UsageBar({ used, total }: { used: number; total: number }) {
+  const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+  const color =
+    pct > 80 ? "bg-danger" : pct > 60 ? "bg-warning" : "bg-primary";
   return (
     <div className="w-full">
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full ${color}`}
           style={{ width: `${pct}%` }}
         />
       </div>
       <div className="flex justify-between mt-1">
-        <span className="text-xs text-text-secondary">
+        <span className="text-xs text-muted-foreground">
           {used.toFixed(1)} / {total.toFixed(1)} GB used
-        </span>
-        <span className="text-xs text-text-secondary">
-          Expires {total > 0 ? "" : "N/A"}
         </span>
       </div>
     </div>
   );
 }
 
-function SubscriptionCard({ sub }: { sub: Subscription }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+function timeAgo(iso: string | null): string {
+  if (!iso) return "Never";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function SubscriptionCard({
+  sub,
+  onRefresh,
+  onRemove,
+}: {
+  sub: Subscription;
+  onRefresh: (id: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [refreshing, setRefreshing] = useState(false);
+  const isFile = sub.source_type === "file";
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await onRefresh(sub.id);
+    setRefreshing(false);
+  };
 
   return (
-    <div className="bg-surface rounded-lg border border-border p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center">
-            <CloudDownload size={20} className="text-accent" />
+    <Card className="py-0 gap-0">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+              {isFile ? (
+                <FileText size={20} className="text-primary" />
+              ) : (
+                <CloudDownload size={20} className="text-primary" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">{sub.name}</span>
+                <Badge variant="outline" className="text-xs font-mono">
+                  {isFile ? "Local" : "URL"}
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground truncate max-w-xs">
+                {sub.url}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs font-mono">
+              {sub.node_count} nodes
+            </Badge>
+            {!isFile && (
+              <Button variant="ghost" size="icon-xs" asChild>
+                <a href={sub.url} target="_blank" rel="noreferrer">
+                  <ExternalLink size={14} />
+                </a>
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-xs">
+                  <MoreHorizontal size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleRefresh} disabled={refreshing}>
+                  {refreshing ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <RefreshCw size={14} />
+                  )}
+                  Refresh Now
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onRemove(sub.id)}
+                >
+                  <Trash2 size={14} />
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {sub.status === "error" && (
+          <div className="flex items-center gap-2 mb-3 text-xs text-warning bg-warning/10 rounded-lg px-3 py-2">
+            <AlertTriangle size={14} />
+            <span>Last refresh failed — using previously cached content</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
+          <div>
+            <div className="text-muted-foreground mb-0.5">Last Refreshed</div>
+            <div className="font-medium">{timeAgo(sub.last_refreshed)}</div>
           </div>
           <div>
-            <div className="text-sm font-semibold text-text-primary">
-              {sub.name}
+            <div className="text-muted-foreground mb-0.5">
+              {isFile ? "Source" : "Interval"}
             </div>
-            <div className="text-xs text-text-secondary truncate max-w-xs">
-              {sub.url}
+            <div className="font-medium">
+              {isFile ? "Local File" : `${sub.interval_secs / 3600}h`}
             </div>
           </div>
+          <div>
+            <div className="text-muted-foreground mb-0.5">Status</div>
+            <StatusBadge status={sub.status} />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-text-secondary bg-white/5 px-2 py-0.5 rounded">
-            {sub.nodeCount} nodes
-          </span>
-          <button className="p-1 text-text-secondary hover:text-text-primary transition-colors">
-            <ExternalLink size={14} />
-          </button>
-          <div className="relative">
+
+        <UsageBar used={sub.usage_used_gb} total={sub.usage_total_gb} />
+        {sub.expires && (
+          <div className="text-right mt-0.5">
+            <span className="text-xs text-muted-foreground">
+              Expires {sub.expires}
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [sourceType, setSourceType] = useState<"url" | "file">("url");
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handlePickFile = async () => {
+    const selected = await openDialog({
+      title: "Select Surge Config File",
+      filters: [{ name: "Config", extensions: ["conf", "txt", "list"] }],
+    });
+    if (selected) {
+      setUrl(selected as string);
+      if (!name.trim()) {
+        const filename = (selected as string).split("/").pop() || "";
+        setName(filename.replace(/\.(conf|txt|list)$/, ""));
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !url.trim()) return;
+    setLoading(true);
+    setError("");
+    try {
+      await api.addSubscription(name.trim(), url.trim(), sourceType);
+      setOpen(false);
+      setName("");
+      setUrl("");
+      setSourceType("url");
+      onAdded();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus size={16} />
+          Add Subscription
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Subscription</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {/* Source Type Toggle */}
+          <div className="flex gap-2">
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-1 text-text-secondary hover:text-text-primary transition-colors"
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+                sourceType === "url"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => { setSourceType("url"); setUrl(""); }}
             >
-              <MoreHorizontal size={16} />
+              <CloudDownload size={16} />
+              From URL
             </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-7 bg-surface border border-border rounded-md shadow-lg py-1 z-10 min-w-[140px]">
-                <button className="w-full text-left px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 flex items-center gap-2">
-                  <RefreshCw size={14} /> Refresh Now
-                </button>
-                <button className="w-full text-left px-3 py-1.5 text-sm text-danger hover:bg-white/5 flex items-center gap-2">
-                  <Trash2 size={14} /> Remove
-                </button>
-              </div>
-            )}
+            <button
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+                sourceType === "file"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => { setSourceType("file"); setUrl(""); }}
+            >
+              <FileText size={16} />
+              From File
+            </button>
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
-        <div>
-          <div className="text-text-secondary mb-0.5">Last Refreshed</div>
-          <div className="text-text-primary font-medium">{sub.lastRefreshed}</div>
-        </div>
-        <div>
-          <div className="text-text-secondary mb-0.5">Interval</div>
-          <div className="text-text-primary font-medium">{sub.interval}</div>
-        </div>
-        <div>
-          <div className="text-text-secondary mb-0.5">Status</div>
-          <StatusBadge status={sub.status} />
-        </div>
-      </div>
+          <div>
+            <Label>Name</Label>
+            <Input
+              placeholder="e.g. ImmTelecom"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
 
-      <UsageBar used={sub.usageUsed} total={sub.usageTotal} />
-      <div className="text-right mt-0.5">
-        <span className="text-xs text-text-secondary">
-          Expires {sub.expires}
-        </span>
-      </div>
-    </div>
+          {sourceType === "url" ? (
+            <div>
+              <Label>Subscription URL</Label>
+              <Input
+                placeholder="https://..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div>
+              <Label>File Path</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Select a .conf file..."
+                  value={url}
+                  readOnly
+                  className="flex-1"
+                />
+                <Button variant="outline" size="icon" onClick={handlePickFile}>
+                  <FolderOpen size={16} />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-xs text-destructive bg-destructive/10 rounded p-2">
+              {error}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading && <Loader2 size={14} className="animate-spin" />}
+            Add
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 export default function SubscriptionsPage() {
+  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await api.getSubscriptions();
+      setSubs(data);
+    } catch {
+      /* noop on first load */
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleRefresh = async (id: string) => {
+    try {
+      const updated = await api.refreshSubscription(id);
+      setSubs((prev) => prev.map((s) => (s.id === id ? updated : s)));
+    } catch (e) {
+      console.error("Refresh failed:", e);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    await api.removeSubscription(id);
+    setSubs((prev) => prev.filter((s) => s.id !== id));
+  };
+
   return (
     <div className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-xs text-text-secondary mb-1">
+          <div className="text-xs text-muted-foreground mb-1">
             Dashboard / Subscriptions
           </div>
-          <h1 className="text-xl font-bold text-text-primary">Subscriptions</h1>
+          <h1 className="text-xl font-bold">Subscriptions</h1>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm rounded-md font-medium transition-colors">
-          <Plus size={16} />
-          Add Subscription
+        <AddSubscriptionDialog onAdded={load} />
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <Loader2 size={20} className="animate-spin mr-2" />
+          Loading...
+        </div>
+      ) : subs.length === 0 ? (
+        <button
+          className="w-full py-10 border border-dashed border-border rounded-lg flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+          onClick={() =>
+            document
+              .querySelector<HTMLButtonElement>("[data-slot=dialog-trigger]")
+              ?.click()
+          }
+        >
+          <CloudDownload size={24} />
+          <div className="text-sm font-medium">Add New Source</div>
+          <div className="text-xs">
+            Connect a Surge subscription URL to manage proxy nodes.
+          </div>
         </button>
-      </div>
-
-      <div className="space-y-4">
-        {mockSubscriptions.map((sub) => (
-          <SubscriptionCard key={sub.id} sub={sub} />
-        ))}
-      </div>
-
-      <button className="mt-6 w-full py-10 border border-dashed border-border rounded-lg flex flex-col items-center gap-2 text-text-secondary hover:text-text-primary hover:border-accent/30 transition-colors">
-        <CloudDownload size={24} />
-        <div className="text-sm font-medium">Add New Source</div>
-        <div className="text-xs">
-          Connect a new Surge or Shadowrocket subscription URL to manage nodes.
+      ) : (
+        <div className="space-y-4">
+          {subs.map((sub) => (
+            <SubscriptionCard
+              key={sub.id}
+              sub={sub}
+              onRefresh={handleRefresh}
+              onRemove={handleRemove}
+            />
+          ))}
         </div>
-      </button>
+      )}
     </div>
   );
 }
