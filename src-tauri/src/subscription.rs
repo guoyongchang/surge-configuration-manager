@@ -26,8 +26,7 @@ pub async fn fetch_subscription(url: &str) -> Result<String, String> {
 
 /// Read subscription content from a local file
 pub fn read_subscription_file(path: &str) -> Result<String, String> {
-    std::fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read file: {}", e))
+    std::fs::read_to_string(path).map_err(|e| format!("Failed to read file: {}", e))
 }
 
 /// Check if content looks like a valid Surge subscription/config
@@ -80,7 +79,11 @@ pub fn extract_rule_lines(content: &str) -> Vec<String> {
             in_rule = trimmed == "[Rule]";
             continue;
         }
-        if in_rule && !trimmed.is_empty() && !trimmed.starts_with('#') && !trimmed.starts_with("FINAL,") {
+        if in_rule
+            && !trimmed.is_empty()
+            && !trimmed.starts_with('#')
+            && !trimmed.starts_with("FINAL,")
+        {
             rule_lines.push(trimmed.to_string());
         }
     }

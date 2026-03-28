@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Plus,
   RefreshCw,
@@ -72,15 +73,15 @@ function UsageBar({ used, total }: { used: number; total: number }) {
   );
 }
 
-function timeAgo(iso: string | null): string {
-  if (!iso) return "Never";
+function timeAgo(iso: string | null, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (!iso) return t("status.never", { ns: "common" });
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("status.justNow", { ns: "common" });
+  if (mins < 60) return t("timeAgo.minsAgo", { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  if (hours < 24) return t("timeAgo.hoursAgo", { count: hours });
+  return t("timeAgo.daysAgo", { count: Math.floor(hours / 24) });
 }
 
 function SubscriptionCard({
@@ -95,6 +96,7 @@ function SubscriptionCard({
   onSetPrimary: (id: string) => void;
 }) {
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useTranslation("subscriptions");
   const isFile = sub.source_type === "file";
 
   const handleRefresh = async () => {
@@ -121,11 +123,11 @@ function SubscriptionCard({
                 {sub.is_primary && (
                   <span className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/20 text-primary">
                     <Crown size={10} />
-                    Primary
+                    {t("card.primary")}
                   </span>
                 )}
                 <Badge variant="outline" className="text-xs font-mono">
-                  {isFile ? "Local" : "URL"}
+                  {isFile ? t("card.local") : t("card.url")}
                 </Badge>
               </div>
               <div className="text-xs text-muted-foreground truncate max-w-xs">
@@ -135,7 +137,7 @@ function SubscriptionCard({
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs font-mono">
-              {sub.node_count} nodes
+              {t("card.nodesCount", { count: sub.node_count })}
             </Badge>
             {!isFile && (
               <Button variant="ghost" size="icon-xs" asChild>
@@ -154,7 +156,7 @@ function SubscriptionCard({
                 {!sub.is_primary && (
                   <DropdownMenuItem onClick={() => onSetPrimary(sub.id)}>
                     <Crown size={14} />
-                    Set as Primary
+                    {t("card.setPrimary")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={handleRefresh} disabled={refreshing}>
@@ -163,7 +165,7 @@ function SubscriptionCard({
                   ) : (
                     <RefreshCw size={14} />
                   )}
-                  Refresh Now
+                  {t("card.refreshNow")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -171,7 +173,7 @@ function SubscriptionCard({
                   onClick={() => onRemove(sub.id)}
                 >
                   <Trash2 size={14} />
-                  Remove
+                  {t("card.remove")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -181,37 +183,37 @@ function SubscriptionCard({
         {sub.is_primary && (
           <div className="flex items-center gap-2 mb-3 text-xs text-primary bg-primary/10 rounded-lg px-3 py-2">
             <Crown size={12} />
-            <span>Primary subscription — contributes Proxy Groups and Rules to the generated config</span>
+            <span>{t("card.primaryInfo")}</span>
           </div>
         )}
         {!sub.is_primary && sub.node_count > 0 && (
           <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
-            <span>Secondary — nodes only (Proxy Groups and Rules are excluded)</span>
+            <span>{t("card.secondaryInfo")}</span>
           </div>
         )}
 
         {sub.status === "error" && (
           <div className="flex items-center gap-2 mb-3 text-xs text-warning bg-warning/10 rounded-lg px-3 py-2">
             <AlertTriangle size={14} />
-            <span>Last refresh failed — using previously cached content</span>
+            <span>{t("card.refreshError")}</span>
           </div>
         )}
 
         <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
           <div>
-            <div className="text-muted-foreground mb-0.5">Last Refreshed</div>
-            <div className="font-medium">{timeAgo(sub.last_refreshed)}</div>
+            <div className="text-muted-foreground mb-0.5">{t("card.lastRefreshed")}</div>
+            <div className="font-medium">{timeAgo(sub.last_refreshed, t)}</div>
           </div>
           <div>
             <div className="text-muted-foreground mb-0.5">
-              {isFile ? "Source" : "Interval"}
+              {isFile ? t("card.source") : t("card.interval")}
             </div>
             <div className="font-medium">
-              {isFile ? "Local File" : `${sub.interval_secs / 3600}h`}
+              {isFile ? t("card.localFile") : `${sub.interval_secs / 3600}h`}
             </div>
           </div>
           <div>
-            <div className="text-muted-foreground mb-0.5">Status</div>
+            <div className="text-muted-foreground mb-0.5">{t("card.status")}</div>
             <StatusBadge status={sub.status} />
           </div>
         </div>
@@ -220,7 +222,7 @@ function SubscriptionCard({
         {sub.expires && (
           <div className="text-right mt-0.5">
             <span className="text-xs text-muted-foreground">
-              Expires {sub.expires}
+              {t("card.expires", { date: sub.expires })}
             </span>
           </div>
         )}
@@ -236,10 +238,12 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { t } = useTranslation("subscriptions");
+  const { t: tc } = useTranslation("common");
 
   const handlePickFile = async () => {
     const selected = await openDialog({
-      title: "Select Surge Config File",
+      title: t("dialog.filePickerTitle"),
       filters: [{ name: "Config", extensions: ["conf", "txt", "list"] }],
     });
     if (selected) {
@@ -274,12 +278,12 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
       <DialogTrigger asChild>
         <Button>
           <Plus size={16} />
-          Add Subscription
+          {t("dialog.triggerLabel")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Subscription</DialogTitle>
+          <DialogTitle>{t("dialog.addTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           {/* Source Type Toggle */}
@@ -293,7 +297,7 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
               onClick={() => { setSourceType("url"); setUrl(""); }}
             >
               <CloudDownload size={16} />
-              From URL
+              {t("dialog.fromUrl")}
             </button>
             <button
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
@@ -304,14 +308,14 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
               onClick={() => { setSourceType("file"); setUrl(""); }}
             >
               <FileText size={16} />
-              From File
+              {t("dialog.fromFile")}
             </button>
           </div>
 
           <div>
-            <Label>Name</Label>
+            <Label>{t("dialog.nameLabel")}</Label>
             <Input
-              placeholder="e.g. ImmTelecom"
+              placeholder={t("dialog.namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -319,19 +323,19 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
 
           {sourceType === "url" ? (
             <div>
-              <Label>Subscription URL</Label>
+              <Label>{t("dialog.urlLabel")}</Label>
               <Input
-                placeholder="https://..."
+                placeholder={t("dialog.urlPlaceholder")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
             </div>
           ) : (
             <div>
-              <Label>File Path</Label>
+              <Label>{t("dialog.fileLabel")}</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Select a .conf file..."
+                  placeholder={t("dialog.filePlaceholder")}
                   value={url}
                   readOnly
                   className="flex-1"
@@ -351,11 +355,11 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            {tc("actions.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            Add
+            {tc("actions.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -367,6 +371,8 @@ export default function SubscriptionsPage() {
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirm, setConfirm] = useState<{ title: string; description?: string; onConfirm: () => void } | null>(null);
+  const { t } = useTranslation("subscriptions");
+  const { t: tc } = useTranslation("common");
 
   const load = useCallback(async () => {
     try {
@@ -399,8 +405,8 @@ export default function SubscriptionsPage() {
 
   const confirmRemove = (sub: Subscription) => {
     setConfirm({
-      title: "Remove subscription?",
-      description: `"${sub.name}" and all its cached data will be removed.`,
+      title: t("page.removeTitle"),
+      description: t("page.removeDesc", { name: sub.name }),
       onConfirm: () => { setConfirm(null); handleRemove(sub.id); },
     });
   };
@@ -415,9 +421,9 @@ export default function SubscriptionsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="text-xs text-muted-foreground mb-1">
-            Dashboard / Subscriptions
+            {t("page.breadcrumb")}
           </div>
-          <h1 className="text-xl font-bold">Subscriptions</h1>
+          <h1 className="text-xl font-bold">{t("page.title")}</h1>
         </div>
         <AddSubscriptionDialog onAdded={load} />
       </div>
@@ -425,7 +431,7 @@ export default function SubscriptionsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <Loader2 size={20} className="animate-spin mr-2" />
-          Loading...
+          {tc("status.loading")}
         </div>
       ) : subs.length === 0 ? (
         <button
@@ -437,9 +443,9 @@ export default function SubscriptionsPage() {
           }
         >
           <CloudDownload size={24} />
-          <div className="text-sm font-medium">Add New Source</div>
+          <div className="text-sm font-medium">{t("page.emptyTitle")}</div>
           <div className="text-xs">
-            Connect a Surge subscription URL to manage proxy nodes.
+            {t("page.emptyHint")}
           </div>
         </button>
       ) : (

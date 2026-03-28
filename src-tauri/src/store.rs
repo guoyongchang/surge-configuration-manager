@@ -45,7 +45,10 @@ impl Store {
 
     /// Returns the app data directory (parent of `scm_data.json`).
     pub fn app_data_dir(&self) -> PathBuf {
-        self.path.parent().expect("store path has no parent").to_path_buf()
+        self.path
+            .parent()
+            .expect("store path has no parent")
+            .to_path_buf()
     }
 }
 

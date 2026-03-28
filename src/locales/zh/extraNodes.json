@@ -1,0 +1,63 @@
+{
+  "page": {
+    "breadcrumb": "首页 / 额外节点",
+    "title": "额外节点",
+    "subtitle": "手动添加不属于任何订阅的代理节点。",
+    "selectedCount": "已选 {{count}} 个",
+    "deleteTitle": "删除 {{count}} 个节点？",
+    "deselectAll": "取消全选",
+    "selectAll": "全选",
+    "empty": "暂无额外节点",
+    "emptyHint": "添加自定义代理节点，支持可选的刷新 URL。",
+    "removeTitle": "删除节点？",
+    "removeDesc": "\"{{name}}\" 将被永久删除。"
+  },
+  "dialog": {
+    "trigger": "添加节点",
+    "title": "添加节点"
+  },
+  "tabs": {
+    "single": "逐个添加",
+    "batch": "批量添加"
+  },
+  "single": {
+    "protocol": "协议",
+    "name": "节点名称",
+    "server": "服务器",
+    "port": "端口",
+    "username": "用户名",
+    "password": "密码",
+    "encryptMethod": "加密方式",
+    "skipVerify": "跳过证书验证",
+    "refreshUrl": "Refresh URL",
+    "optional": "可选",
+    "disabled": "不启用",
+    "yes": "是",
+    "no": "否"
+  },
+  "batch": {
+    "socks5Tab": "SOCKS5",
+    "rawTab": "原始行",
+    "nodeList": "节点列表",
+    "nodeListHint": "格式：user:pass@host:port，每行一个",
+    "refreshTemplate": "Refresh URL 模板",
+    "refreshTemplateHint": "{{placeholder}} 替换为用户名（去掉 -sesstime-XX）",
+    "surgeLines": "Surge 节点行",
+    "surgeLinesHint": "粘贴完整的 Surge 代理行，每行一个节点，支持所有协议：",
+    "surgeLinesPlaceholder": "节点名 = 协议, 服务器, 端口, 参数...",
+    "valid": "{{count}} 有效",
+    "invalid": "{{count}} 无效",
+    "willAdd": "将添加 {{count}} 个节点",
+    "importCount": "导入 {{count}} 个",
+    "importBtn": "导入",
+    "addCount": "添加 {{count}} 个",
+    "addBtn": "添加"
+  },
+  "test": {
+    "testing": "测试中…",
+    "failed": "失败",
+    "clean": "纯净",
+    "hosting": "托管",
+    "proxy": "代理"
+  }
+}

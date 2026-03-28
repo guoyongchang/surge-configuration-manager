@@ -1,0 +1,29 @@
+{
+  "page": {
+    "title": "Build Configuration",
+    "subtitle": "Define your template logic and file destinations for the final Surge profile.",
+    "outputPathLabel": "Output Path",
+    "outputFilenameLabel": "Output Filename",
+    "outputFilenameHint": "This file is overwritten on every generate. Backups are stored separately in the app data folder.",
+    "regenerateLabel": "Regenerate on refresh",
+    "regenerateHint": "Automatically rebuild on local file change",
+    "minifyLabel": "Minify Output",
+    "minifyHint": "Remove comments and whitespace",
+    "autoUploadLabel": "Auto-upload to Remote",
+    "autoUploadHint": "Push generated file to Git or iCloud",
+    "previewBtn": "Preview Config",
+    "generateBtn": "Generate Config",
+    "generatingBtn": "Generating...",
+    "statusLabel": "Status:",
+    "statusReady": "Ready",
+    "lastBuildLabel": "Last Build:",
+    "yesterday": "Yesterday",
+    "buildHistoryTitle": "Build History",
+    "clearAllBtn": "Clear All",
+    "noBuilds": "No builds yet. Click Generate to create your first config.",
+    "noChange": "No change",
+    "selectOutputDir": "Select Output Directory",
+    "previewTitle": "Config Preview",
+    "noPreviewData": "No config data. Add subscriptions and rules first."
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Plus, Trash2, Shield, Loader2, Upload,
   CheckCircle2, XCircle, CheckSquare, Square, GripVertical, ChevronDown,
@@ -103,6 +104,7 @@ function PolicyPicker({
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation("rules");
 
   const allOptions = useMemo(() => {
     const staticSet = new Set(STATIC_POLICIES);
@@ -134,7 +136,7 @@ function PolicyPicker({
         className="w-full flex items-center gap-2 border border-input rounded-md bg-transparent px-3 py-2 text-sm text-left hover:bg-accent/5"
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="flex-1 truncate">{value || "Select policy…"}</span>
+        <span className="flex-1 truncate">{value || t("policyPicker.placeholder")}</span>
         <ChevronDown size={14} className="text-muted-foreground shrink-0" />
       </button>
       {open && (
@@ -142,7 +144,7 @@ function PolicyPicker({
           <div className="p-2 border-b border-border">
             <Input
               autoFocus
-              placeholder="Search policy or node…"
+              placeholder={t("policyPicker.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-7 text-xs"
@@ -160,7 +162,7 @@ function PolicyPicker({
               </button>
             ))}
             {filtered.length === 0 && (
-              <div className="px-3 py-2 text-xs text-muted-foreground">No results</div>
+              <div className="px-3 py-2 text-xs text-muted-foreground">{t("policyPicker.noResults")}</div>
             )}
           </div>
         </div>
@@ -204,6 +206,8 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
   const [defaultPolicy, setDefaultPolicy] = useState("DIRECT");
   const [nodeNames, setNodeNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation("rules");
+  const { t: tc } = useTranslation("common");
 
   useEffect(() => {
     if (open) api.getAllNodeNames().then(setNodeNames).catch(() => {});
@@ -230,16 +234,16 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="text-primary">
-          <Upload size={14} /> Batch Import
+          <Upload size={14} /> {t("batchImport.trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Batch Import Rules</DialogTitle>
+          <DialogTitle>{t("batchImport.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label>Rules (one per line)</Label>
+            <Label>{t("batchImport.rulesLabel")}</Label>
             <p className="text-xs text-muted-foreground mb-1.5">
               <span className="font-mono bg-muted px-1 rounded">TYPE,value,POLICY</span>
               {" · "}
@@ -257,16 +261,16 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Default Type</Label>
+              <Label>{t("batchImport.defaultTypeLabel")}</Label>
               <Select value={defaultType} onValueChange={setDefaultType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {RULE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {RULE_TYPES.map((ruleType) => <SelectItem key={ruleType} value={ruleType}>{ruleType}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Default Policy</Label>
+              <Label>{t("batchImport.defaultPolicyLabel")}</Label>
               <PolicyPicker value={defaultPolicy} onChange={setDefaultPolicy} nodeNames={nodeNames} />
             </div>
           </div>
@@ -277,12 +281,12 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
               <div className="flex items-center gap-3 text-xs">
                 {valid.length > 0 && (
                   <span className="flex items-center gap-1 text-success">
-                    <CheckCircle2 size={12} /> {valid.length} valid
+                    <CheckCircle2 size={12} /> {t("batchImport.valid", { count: valid.length })}
                   </span>
                 )}
                 {errors.length > 0 && (
                   <span className="flex items-center gap-1 text-destructive">
-                    <XCircle size={12} /> {errors.length} invalid
+                    <XCircle size={12} /> {t("batchImport.invalid", { count: errors.length })}
                   </span>
                 )}
               </div>
@@ -299,10 +303,10 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{tc("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading || valid.length === 0}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            Import {valid.length > 0 ? `${valid.length} Rules` : ""}
+            {valid.length > 0 ? t("batchImport.importRules", { count: valid.length }) : t("batchImport.importBtn")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -317,6 +321,8 @@ function AddRuleSetDialog({ onAdded }: { onAdded: () => void }) {
   const [policy, setPolicy] = useState("Proxies");
   const [nodeNames, setNodeNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation("rules");
+  const { t: tc } = useTranslation("common");
 
   useEffect(() => {
     if (open) api.getAllNodeNames().then(setNodeNames).catch(() => {});
@@ -340,40 +346,40 @@ function AddRuleSetDialog({ onAdded }: { onAdded: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="text-primary">
-          <Plus size={14} /> Add Rule Set
+          <Plus size={14} /> {t("addRuleSet.trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Remote Rule Set</DialogTitle>
+          <DialogTitle>{t("addRuleSet.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label>Name</Label>
+            <Label>{t("addRuleSet.nameLabel")}</Label>
             <Input
-              placeholder="e.g. AI Services"
+              placeholder={t("addRuleSet.namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <Label>Rule List URL</Label>
+            <Label>{t("addRuleSet.urlLabel")}</Label>
             <Input
-              placeholder="https://raw.githubusercontent.com/..."
+              placeholder={t("addRuleSet.urlPlaceholder")}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
           </div>
           <div>
-            <Label>Policy</Label>
+            <Label>{t("addRuleSet.policyLabel")}</Label>
             <PolicyPicker value={policy} onChange={setPolicy} nodeNames={nodeNames} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{tc("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            Add
+            {tc("actions.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -389,6 +395,8 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
   const [comment, setComment] = useState("");
   const [nodeNames, setNodeNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation("rules");
+  const { t: tc } = useTranslation("common");
 
   useEffect(() => {
     if (open) api.getAllNodeNames().then(setNodeNames).catch(() => {});
@@ -417,27 +425,27 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="text-primary">
-          <Plus size={14} /> Add Individual Rule
+          <Plus size={14} /> {t("addRule.trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Individual Rule</DialogTitle>
+          <DialogTitle>{t("addRule.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label>Type</Label>
+            <Label>{t("addRule.typeLabel")}</Label>
             <Select value={ruleType} onValueChange={setRuleType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {RULE_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                {RULE_TYPES.map((rt) => (
+                  <SelectItem key={rt} value={rt}>{rt}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Value</Label>
+            <Label>{t("addRule.valueLabel")}</Label>
             <Input
               placeholder={
                 ruleType === "DOMAIN"
@@ -453,11 +461,11 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
             />
           </div>
           <div>
-            <Label>Policy</Label>
+            <Label>{t("addRule.policyLabel")}</Label>
             <PolicyPicker value={policy} onChange={setPolicy} nodeNames={nodeNames} />
           </div>
           <div>
-            <Label>Comment (optional)</Label>
+            <Label>{t("addRule.commentLabel")}</Label>
             <Input
               placeholder="e.g. block tracking"
               value={comment}
@@ -466,10 +474,10 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{tc("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            Add
+            {tc("actions.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -591,6 +599,8 @@ export default function RulesPage() {
   const [deletingRules, setDeletingRules] = useState(false);
   const [deletingRuleSets, setDeletingRuleSets] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description?: string; onConfirm: () => void } | null>(null);
+  const { t } = useTranslation("rules");
+  const { t: tc } = useTranslation("common");
 
   const load = useCallback(async () => {
     try {
@@ -672,16 +682,16 @@ export default function RulesPage() {
 
   const confirmRemoveRuleSet = (rs: RemoteRuleSet) => {
     setConfirm({
-      title: "Remove rule set?",
-      description: `"${rs.name}" will be permanently removed.`,
+      title: t("page.removeRuleSetTitle"),
+      description: t("page.removeRuleSetDesc", { name: rs.name }),
       onConfirm: () => { setConfirm(null); handleRemoveRuleSet(rs.id); },
     });
   };
 
   const confirmRemoveRule = (rule: IndividualRule) => {
     setConfirm({
-      title: "Remove rule?",
-      description: `${rule.rule_type}, ${rule.value} will be permanently removed.`,
+      title: t("page.removeRuleTitle"),
+      description: t("page.removeRuleDesc", { type: rule.rule_type, value: rule.value }),
       onConfirm: () => { setConfirm(null); handleRemoveRule(rule.id); },
     });
   };
@@ -728,16 +738,16 @@ export default function RulesPage() {
 
   const confirmBatchDeleteRules = () => {
     setConfirm({
-      title: `Delete ${selectedRules.size} rule${selectedRules.size > 1 ? "s" : ""}?`,
-      description: "This action cannot be undone.",
+      title: t("page.batchDeleteRulesTitle", { count: selectedRules.size }),
+      description: tc("confirm.cannotUndo"),
       onConfirm: () => { setConfirm(null); handleBatchDeleteRules(); },
     });
   };
 
   const confirmBatchDeleteRuleSets = () => {
     setConfirm({
-      title: `Delete ${selectedRuleSets.size} rule set${selectedRuleSets.size > 1 ? "s" : ""}?`,
-      description: "This action cannot be undone.",
+      title: t("page.batchDeleteRuleSetsTitle", { count: selectedRuleSets.size }),
+      description: tc("confirm.cannotUndo"),
       onConfirm: () => { setConfirm(null); handleBatchDeleteRuleSets(); },
     });
   };
@@ -762,7 +772,7 @@ export default function RulesPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        Loading...
+        {tc("status.loading")}
       </div>
     );
   }
@@ -770,7 +780,7 @@ export default function RulesPage() {
   return (
     <div className="p-6 w-full">
       <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-xl font-bold">Rules</h1>
+        <h1 className="text-xl font-bold">{t("page.title")}</h1>
         <Badge variant="secondary">{totalCount}</Badge>
       </div>
 
@@ -779,7 +789,7 @@ export default function RulesPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Remote Rule Sets
+              {t("page.ruleSetsTitle")}
             </h2>
             {selectedRuleSets.size > 0 && (
               <Button variant="destructive" size="icon-xs" title={`Delete ${selectedRuleSets.size} selected`} onClick={confirmBatchDeleteRuleSets} disabled={deletingRuleSets}>
@@ -806,7 +816,7 @@ export default function RulesPage() {
           </DndContext>
           {ruleSets.length === 0 && subRuleSets.length === 0 && (
             <div className="text-xs text-muted-foreground py-4 text-center">
-              No remote rule sets yet.
+              {t("page.emptyRuleSets")}
             </div>
           )}
           {subRuleSets.length > 0 && (
@@ -814,7 +824,7 @@ export default function RulesPage() {
               {ruleSets.length > 0 && (
                 <div className="flex items-center gap-2 my-3">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">From Subscriptions</span>
+                  <span className="text-xs text-muted-foreground">{t("page.fromSubscriptions")}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
               )}
@@ -856,7 +866,7 @@ export default function RulesPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Individual Rules
+              {t("page.individualTitle")}
             </h2>
             {selectedRules.size > 0 && (
               <Button variant="destructive" size="icon-xs" title={`Delete ${selectedRules.size} selected`} onClick={confirmBatchDeleteRules} disabled={deletingRules}>
@@ -886,7 +896,7 @@ export default function RulesPage() {
           </DndContext>
           {rules.length === 0 && subIndividualRules.length === 0 && (
             <div className="text-xs text-muted-foreground py-4 text-center">
-              No individual rules yet.
+              {t("page.emptyIndividual")}
             </div>
           )}
           {subIndividualRules.length > 0 && (
@@ -894,7 +904,7 @@ export default function RulesPage() {
               {rules.length > 0 && (
                 <div className="flex items-center gap-2 my-2">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">From Subscriptions</span>
+                  <span className="text-xs text-muted-foreground">{t("page.fromSubscriptions")}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
               )}

@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   CloudDownload,
   ListFilter,
@@ -8,14 +9,19 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { to: "/", icon: CloudDownload, label: "Subscriptions" },
-  { to: "/rules", icon: ListFilter, label: "Rules" },
-  { to: "/nodes", icon: Server, label: "Extra Nodes" },
-  { to: "/output", icon: FileOutput, label: "Output" },
-];
+  { to: "/", icon: CloudDownload, labelKey: "nav.subscriptions" },
+  { to: "/rules", icon: ListFilter, labelKey: "nav.rules" },
+  { to: "/nodes", icon: Server, labelKey: "nav.extraNodes" },
+  { to: "/output", icon: FileOutput, labelKey: "nav.output" },
+] as const;
 
 export default function Sidebar() {
   const location = useLocation();
+  const { t, i18n } = useTranslation("common");
+
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === "zh" ? "en" : "zh");
+  };
 
   return (
     <aside className="flex flex-col w-60 h-full bg-sidebar border-r border-sidebar-border shrink-0">
@@ -50,20 +56,29 @@ export default function Sidebar() {
               }`}
             >
               <item.icon size={18} />
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </NavLink>
           );
         })}
       </nav>
 
       <div className="px-3 pb-4">
-        <NavLink
-          to="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors"
-        >
-          <Settings size={18} />
-          <span>Settings</span>
-        </NavLink>
+        <div className="flex items-center gap-1">
+          <NavLink
+            to="/settings"
+            className="flex flex-1 items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors"
+          >
+            <Settings size={18} />
+            <span>{t("nav.settings")}</span>
+          </NavLink>
+          <button
+            onClick={toggleLanguage}
+            className="px-2 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors shrink-0"
+            title={(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "Switch to English" : "切换为中文"}
+          >
+            {(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "EN" : "中"}
+          </button>
+        </div>
       </div>
     </aside>
   );

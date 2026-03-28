@@ -97,7 +97,10 @@ pub fn generate_config(data: &AppData) -> String {
                 rule.rule_type, rule.value, rule.policy, comment
             ));
         } else {
-            out.push_str(&format!("{},{},{}\n", rule.rule_type, rule.value, rule.policy));
+            out.push_str(&format!(
+                "{},{},{}\n",
+                rule.rule_type, rule.value, rule.policy
+            ));
         }
     }
     // Remote rule sets
@@ -338,9 +341,8 @@ HK-01 = ss, 1.2.3.4, 443
             enabled: true,
         });
         let conf = generate_config(&data);
-        assert!(conf.contains(
-            "RULE-SET,https://example.com/reject.list,REJECT,update-interval=86400\n"
-        ));
+        assert!(conf
+            .contains("RULE-SET,https://example.com/reject.list,REJECT,update-interval=86400\n"));
     }
 
     #[test]

@@ -81,7 +81,10 @@ pub async fn add_subscription(
     };
 
     if !subscription::is_valid_subscription_content(&content) {
-        return Err("Content is not a valid Surge subscription (no [Proxy] section with nodes found)".to_string());
+        return Err(
+            "Content is not a valid Surge subscription (no [Proxy] section with nodes found)"
+                .to_string(),
+        );
     }
 
     let sub = subscription::parse_subscription(&name, &url, st, &content);
@@ -94,11 +97,15 @@ pub async fn add_subscription(
 }
 
 #[tauri::command]
-pub async fn refresh_subscription(id: String, store: State<'_, Store>) -> Result<Subscription, String> {
+pub async fn refresh_subscription(
+    id: String,
+    store: State<'_, Store>,
+) -> Result<Subscription, String> {
     let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     let (url, source_type) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        let sub = data.subscriptions
+        let sub = data
+            .subscriptions
             .iter()
             .find(|s| s.id == uuid)
             .ok_or_else(|| "Subscription not found".to_string())?;
@@ -122,7 +129,8 @@ pub async fn refresh_subscription(id: String, store: State<'_, Store>) -> Result
         match fetch_result {
             Some(content) => {
                 // New content is valid — update everything
-                let parsed = subscription::parse_subscription(&sub.name, &url, source_type, &content);
+                let parsed =
+                    subscription::parse_subscription(&sub.name, &url, source_type, &content);
                 sub.raw_content = parsed.raw_content;
                 sub.node_names = parsed.node_names;
                 sub.node_count = parsed.node_count;
@@ -308,7 +316,10 @@ pub fn batch_add_extra_nodes(
                     "{} = {}, {}, {}, {}, {}",
                     input.name, input.node_type, input.server, input.port, u, p
                 ),
-                _ => format!("{} = {}, {}, {}", input.name, input.node_type, input.server, input.port),
+                _ => format!(
+                    "{} = {}, {}, {}",
+                    input.name, input.node_type, input.server, input.port
+                ),
             };
             let node = ExtraNode {
                 id: Uuid::new_v4(),
@@ -397,7 +408,10 @@ struct IpApiResponse {
 }
 
 #[tauri::command]
-pub async fn test_extra_node(id: String, store: State<'_, Store>) -> Result<NodeTestResult, String> {
+pub async fn test_extra_node(
+    id: String,
+    store: State<'_, Store>,
+) -> Result<NodeTestResult, String> {
     let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     let (server, port, username, password) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
@@ -406,7 +420,12 @@ pub async fn test_extra_node(id: String, store: State<'_, Store>) -> Result<Node
             .iter()
             .find(|n| n.id == uuid)
             .ok_or_else(|| "Node not found".to_string())?;
-        (node.server.clone(), node.port, node.username.clone(), node.password.clone())
+        (
+            node.server.clone(),
+            node.port,
+            node.username.clone(),
+            node.password.clone(),
+        )
     };
 
     let proxy_url = match (&username, &password) {
@@ -461,13 +480,27 @@ pub async fn test_extra_node(id: String, store: State<'_, Store>) -> Result<Node
             error: None,
         }),
         Ok(_) => Ok(NodeTestResult {
-            id, latency_ms: Some(latency_ms), ip: None, country: None, country_code: None,
-            city: None, isp: None, is_proxy: None, is_hosting: None,
+            id,
+            latency_ms: Some(latency_ms),
+            ip: None,
+            country: None,
+            country_code: None,
+            city: None,
+            isp: None,
+            is_proxy: None,
+            is_hosting: None,
             error: Some("IP lookup failed".to_string()),
         }),
         Err(e) => Ok(NodeTestResult {
-            id, latency_ms: Some(latency_ms), ip: None, country: None, country_code: None,
-            city: None, isp: None, is_proxy: None, is_hosting: None,
+            id,
+            latency_ms: Some(latency_ms),
+            ip: None,
+            country: None,
+            country_code: None,
+            city: None,
+            isp: None,
+            is_proxy: None,
+            is_hosting: None,
             error: Some(format!("Parse error: {}", e)),
         }),
     }
@@ -483,7 +516,9 @@ pub async fn refresh_extra_node(id: String, store: State<'_, Store>) -> Result<S
             .iter()
             .find(|n| n.id == uuid)
             .ok_or_else(|| "Node not found".to_string())?;
-        node.refresh_url.clone().ok_or_else(|| "No refresh URL configured".to_string())?
+        node.refresh_url
+            .clone()
+            .ok_or_else(|| "No refresh URL configured".to_string())?
     };
 
     let client = reqwest::Client::builder()
@@ -582,7 +617,6 @@ pub fn add_node_from_raw_line(
     Ok(node)
 }
 
-
 #[tauri::command]
 pub fn remove_extra_node(id: String, store: State<'_, Store>) -> Result<(), String> {
     let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
@@ -607,7 +641,10 @@ pub fn batch_remove_extra_nodes(ids: Vec<String>, store: State<'_, Store>) -> Re
 }
 
 #[tauri::command]
-pub fn batch_remove_individual_rules(ids: Vec<String>, store: State<'_, Store>) -> Result<(), String> {
+pub fn batch_remove_individual_rules(
+    ids: Vec<String>,
+    store: State<'_, Store>,
+) -> Result<(), String> {
     let uuids: Vec<Uuid> = ids
         .iter()
         .map(|id| Uuid::parse_str(id).map_err(|e| e.to_string()))
@@ -620,7 +657,10 @@ pub fn batch_remove_individual_rules(ids: Vec<String>, store: State<'_, Store>) 
 }
 
 #[tauri::command]
-pub fn batch_remove_remote_rule_sets(ids: Vec<String>, store: State<'_, Store>) -> Result<(), String> {
+pub fn batch_remove_remote_rule_sets(
+    ids: Vec<String>,
+    store: State<'_, Store>,
+) -> Result<(), String> {
     let uuids: Vec<Uuid> = ids
         .iter()
         .map(|id| Uuid::parse_str(id).map_err(|e| e.to_string()))
@@ -713,7 +753,10 @@ pub fn get_general_settings(store: State<'_, Store>) -> Result<GeneralSettings, 
 }
 
 #[tauri::command]
-pub fn update_general_settings(settings: GeneralSettings, store: State<'_, Store>) -> Result<(), String> {
+pub fn update_general_settings(
+    settings: GeneralSettings,
+    store: State<'_, Store>,
+) -> Result<(), String> {
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
         data.general_settings = settings;
@@ -739,7 +782,10 @@ pub fn get_advanced_sections(store: State<'_, Store>) -> Result<AdvancedSections
 }
 
 #[tauri::command]
-pub fn update_advanced_sections(sections: AdvancedSections, store: State<'_, Store>) -> Result<(), String> {
+pub fn update_advanced_sections(
+    sections: AdvancedSections,
+    store: State<'_, Store>,
+) -> Result<(), String> {
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
         data.mitm_section = sections.mitm;
@@ -789,8 +835,7 @@ pub fn generate_config(store: State<'_, Store>) -> Result<BuildRecord, String> {
     };
 
     let full_path = PathBuf::from(&output_dir).join(&output_filename);
-    fs::write(&full_path, &content)
-        .map_err(|e| format!("Failed to write config: {}", e))?;
+    fs::write(&full_path, &content).map_err(|e| format!("Failed to write config: {}", e))?;
 
     // Backup dir lives inside the app data directory
     let backup_dir = store.app_data_dir().join("backups");
@@ -814,8 +859,7 @@ pub fn generate_config(store: State<'_, Store>) -> Result<BuildRecord, String> {
     let backup_filename = if content_changed {
         let name = format!("scm_{}.conf", chrono::Utc::now().format("%Y%m%d_%H%M%S"));
         let backup_path = backup_dir.join(&name);
-        fs::write(&backup_path, &content)
-            .map_err(|e| format!("Failed to write backup: {}", e))?;
+        fs::write(&backup_path, &content).map_err(|e| format!("Failed to write backup: {}", e))?;
         name
     } else {
         String::new()

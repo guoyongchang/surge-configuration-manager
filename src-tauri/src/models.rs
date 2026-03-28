@@ -176,4 +176,3 @@ pub struct AppData {
     #[serde(default)]
     pub disabled_sub_rule_keys: Vec<String>,
 }
-

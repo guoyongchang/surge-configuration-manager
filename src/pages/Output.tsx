@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FolderOpen,
   Zap,
@@ -29,17 +30,19 @@ function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   return <XCircle size={16} className="text-danger" />;
 }
 
-function timeDisplay(iso: string): string {
+function timeDisplay(iso: string, t: (key: string) => string): string {
   const d = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   if (diffMs < 86400000) {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  return "Yesterday";
+  return t("page.yesterday");
 }
 
 export default function OutputPage() {
+  const { t } = useTranslation("output");
+  const { t: tc } = useTranslation("common");
   const [config, setConfig] = useState<OutputConfig | null>(null);
   const [builds, setBuilds] = useState<BuildRecord[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -90,7 +93,7 @@ export default function OutputPage() {
   const handlePickFolder = async () => {
     const selected = await openDialog({
       directory: true,
-      title: "Select Output Directory",
+      title: t("page.selectOutputDir"),
     });
     if (selected) {
       updateConfig({ output_path: selected as string });
@@ -116,7 +119,7 @@ export default function OutputPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        Loading...
+        {tc("status.loading")}
       </div>
     );
   }
@@ -124,10 +127,9 @@ export default function OutputPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold">Build Configuration</h1>
+        <h1 className="text-xl font-bold">{t("page.title")}</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Define your template logic and file destinations for the final Surge
-          profile.
+          {t("page.subtitle")}
         </p>
       </div>
 
@@ -137,7 +139,7 @@ export default function OutputPage() {
           {/* Output Path + Filename */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              Output Path
+              {t("page.outputPathLabel")}
             </Label>
             <div className="flex gap-2">
               <div className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm font-mono truncate">
@@ -151,7 +153,7 @@ export default function OutputPage() {
 
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              Output Filename
+              {t("page.outputFilenameLabel")}
             </Label>
             <Input
               className="font-mono text-sm"
@@ -164,7 +166,7 @@ export default function OutputPage() {
               }}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              This file is overwritten on every generate. Backups are stored separately in the app data folder.
+              {t("page.outputFilenameHint")}
             </p>
           </div>
 
@@ -172,9 +174,9 @@ export default function OutputPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">Regenerate on refresh</div>
+                <div className="text-sm">{t("page.regenerateLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  Automatically rebuild on local file change
+                  {t("page.regenerateHint")}
                 </div>
               </div>
               <Switch
@@ -184,9 +186,9 @@ export default function OutputPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">Minify Output</div>
+                <div className="text-sm">{t("page.minifyLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  Remove comments and whitespace
+                  {t("page.minifyHint")}
                 </div>
               </div>
               <Switch
@@ -196,9 +198,9 @@ export default function OutputPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">Auto-upload to Remote</div>
+                <div className="text-sm">{t("page.autoUploadLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  Push generated file to Git or iCloud
+                  {t("page.autoUploadHint")}
                 </div>
               </div>
               <Switch
@@ -211,7 +213,7 @@ export default function OutputPage() {
           {/* Preview button */}
           <Button variant="outline" onClick={handlePreview} className="w-full">
             <Eye size={16} />
-            Preview Config
+            {t("page.previewBtn")}
           </Button>
         </div>
 
@@ -229,19 +231,19 @@ export default function OutputPage() {
             ) : (
               <Zap size={28} />
             )}
-            {generating ? "Generating..." : "Generate Config"}
+            {generating ? t("page.generatingBtn") : t("page.generateBtn")}
           </Button>
 
           {/* Status */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">Status:</span>
-              <span className="text-success font-medium">Ready</span>
+              <span className="text-muted-foreground">{t("page.statusLabel")}</span>
+              <span className="text-success font-medium">{t("page.statusReady")}</span>
             </div>
             {lastBuildTime && (
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Last Build:</span>
-                <span>{timeDisplay(lastBuildTime)}</span>
+                <span className="text-muted-foreground">{t("page.lastBuildLabel")}</span>
+                <span>{timeDisplay(lastBuildTime, t)}</span>
               </div>
             )}
           </div>
@@ -249,7 +251,7 @@ export default function OutputPage() {
           {/* Build History */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">Build History</h3>
+              <h3 className="text-sm font-semibold">{t("page.buildHistoryTitle")}</h3>
               {builds.length > 0 && (
                 <Button
                   variant="ghost"
@@ -257,13 +259,13 @@ export default function OutputPage() {
                   className="text-primary"
                   onClick={handleClearHistory}
                 >
-                  Clear All
+                  {t("page.clearAllBtn")}
                 </Button>
               )}
             </div>
             {builds.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-6">
-                No builds yet. Click Generate to create your first config.
+                {t("page.noBuilds")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -278,14 +280,14 @@ export default function OutputPage() {
                             <span className="font-mono truncate">{build.filename}</span>
                           </div>
                         ) : (
-                          <div className="text-xs text-muted-foreground">No change</div>
+                          <div className="text-xs text-muted-foreground">{t("page.noChange")}</div>
                         )}
                         <div className="text-xs text-muted-foreground truncate">
                           {build.description}
                         </div>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
-                        {timeDisplay(build.time)}
+                        {timeDisplay(build.time, t)}
                       </span>
                     </CardContent>
                   </Card>
@@ -300,10 +302,10 @@ export default function OutputPage() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>Config Preview</DialogTitle>
+            <DialogTitle>{t("page.previewTitle")}</DialogTitle>
           </DialogHeader>
           <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
-            {previewContent || "No config data. Add subscriptions and rules first."}
+            {previewContent || t("page.noPreviewData")}
           </pre>
         </DialogContent>
       </Dialog>
