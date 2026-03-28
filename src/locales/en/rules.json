@@ -1,1 +1,51 @@
-{}
+{
+  "page": {
+    "title": "Rules",
+    "ruleSetsTitle": "Remote Rule Sets",
+    "individualTitle": "Individual Rules",
+    "emptyRuleSets": "No remote rule sets yet.",
+    "emptyIndividual": "No individual rules yet.",
+    "fromSubscriptions": "From Subscriptions",
+    "removeRuleSetTitle": "Remove rule set?",
+    "removeRuleSetDesc": "\"{{name}}\" will be permanently removed.",
+    "removeRuleTitle": "Remove rule?",
+    "removeRuleDesc": "{{type}}, {{value}} will be permanently removed.",
+    "batchDeleteRulesTitle": "Delete {{count}} rule?",
+    "batchDeleteRulesTitle_plural": "Delete {{count}} rules?",
+    "batchDeleteRuleSetsTitle": "Delete {{count}} rule set?",
+    "batchDeleteRuleSetsTitle_plural": "Delete {{count}} rule sets?"
+  },
+  "addRuleSet": {
+    "trigger": "Add Rule Set",
+    "title": "Add Remote Rule Set",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. AI Services",
+    "urlLabel": "Rule List URL",
+    "urlPlaceholder": "https://raw.githubusercontent.com/...",
+    "policyLabel": "Policy"
+  },
+  "addRule": {
+    "trigger": "Add Individual Rule",
+    "title": "Add Individual Rule",
+    "typeLabel": "Type",
+    "valueLabel": "Value",
+    "policyLabel": "Policy",
+    "commentLabel": "Comment (optional)"
+  },
+  "batchImport": {
+    "trigger": "Batch Import",
+    "title": "Batch Import Rules",
+    "rulesLabel": "Rules (one per line)",
+    "defaultTypeLabel": "Default Type",
+    "defaultPolicyLabel": "Default Policy",
+    "valid": "{{count}} valid",
+    "invalid": "{{count}} invalid",
+    "importRules": "Import {{count}} Rules",
+    "importBtn": "Import"
+  },
+  "policyPicker": {
+    "placeholder": "Select policy…",
+    "searchPlaceholder": "Search policy or node…",
+    "noResults": "No results"
+  }
+}

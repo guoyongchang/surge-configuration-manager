@@ -1,1 +1,46 @@
-{}
+{
+  "page": {
+    "breadcrumb": "首页 / 订阅",
+    "title": "订阅",
+    "emptyTitle": "添加新来源",
+    "emptyHint": "连接 Surge 订阅 URL 以管理代理节点。",
+    "removeTitle": "删除订阅？",
+    "removeDesc": "\"{{name}}\" 及其所有缓存数据将被删除。"
+  },
+  "dialog": {
+    "triggerLabel": "添加订阅",
+    "addTitle": "添加订阅",
+    "fromUrl": "从 URL 导入",
+    "fromFile": "从文件导入",
+    "nameLabel": "名称",
+    "namePlaceholder": "例如：ImmTelecom",
+    "urlLabel": "订阅 URL",
+    "urlPlaceholder": "https://...",
+    "fileLabel": "文件路径",
+    "filePlaceholder": "选择 .conf 文件...",
+    "filePickerTitle": "选择 Surge 配置文件"
+  },
+  "card": {
+    "primary": "主订阅",
+    "local": "本地",
+    "url": "URL",
+    "nodesCount": "{{count}} 个节点",
+    "setPrimary": "设为主订阅",
+    "refreshNow": "立即刷新",
+    "remove": "删除",
+    "primaryInfo": "主订阅 — 代理组和规则将写入生成的配置文件",
+    "secondaryInfo": "副订阅 — 仅包含节点（代理组和规则不会写入）",
+    "refreshError": "上次刷新失败 — 使用上次缓存的内容",
+    "lastRefreshed": "最近刷新",
+    "source": "来源",
+    "interval": "间隔",
+    "status": "状态",
+    "localFile": "本地文件",
+    "expires": "到期：{{date}}"
+  },
+  "timeAgo": {
+    "minsAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小时前",
+    "daysAgo": "{{count}} 天前"
+  }
+}
