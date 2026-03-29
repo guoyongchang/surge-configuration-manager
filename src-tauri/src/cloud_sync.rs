@@ -1,6 +1,8 @@
 use chrono::{DateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 
 use crate::models::{CloudBackupFile, CloudSyncSettings};
 
@@ -30,6 +32,39 @@ struct GithubCreateResponse {
 #[derive(Debug, Deserialize)]
 struct GithubCommit {
     sha: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudSyncManifest {
+    pub version: u32,
+    pub files: HashMap<String, ManifestFileEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ManifestFileEntry {
+    pub sha: String,
+}
+
+impl CloudSyncManifest {
+    pub fn new() -> Self {
+        Self {
+            version: 1,
+            files: HashMap::new(),
+        }
+    }
+
+    /// Compute SHA-256 hex of a JSON string
+    pub fn compute_sha(content: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(content.as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+}
+
+impl Default for CloudSyncManifest {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 pub struct CloudSyncClient {
@@ -67,6 +102,10 @@ impl CloudSyncClient {
         headers.insert(
             reqwest::header::ACCEPT,
             "application/vnd.github+json".parse().unwrap(),
+        );
+        headers.insert(
+            reqwest::header::USER_AGENT,
+            "Surge-Configuration-Manager/1.0".parse().unwrap(),
         );
         headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
         headers
