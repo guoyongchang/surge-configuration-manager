@@ -1,69 +1,44 @@
 import { invoke } from "@tauri-apps/api/core";
+import { open as openFilePickerDialog } from "@tauri-apps/plugin-dialog";
+import type {
+  Subscription,
+  RemoteRuleSet,
+  IndividualRule,
+  ExtraNode,
+  OutputConfig,
+  BuildRecord,
+  NodeTestResult,
+  BatchNodeInput,
+  BatchRuleInput,
+  UpdateInfo,
+  GeneralSettings,
+  AdvancedSections,
+} from "@/types";
 
-// ── Types matching Rust models ──
+export type {
+  Subscription,
+  RemoteRuleSet,
+  IndividualRule,
+  ExtraNode,
+  OutputConfig,
+  BuildRecord,
+  NodeTestResult,
+  BatchNodeInput,
+  BatchRuleInput,
+  UpdateInfo,
+  GeneralSettings,
+  AdvancedSections,
+} from "@/types";
 
-export interface Subscription {
-  id: string;
-  name: string;
-  url: string;
-  source_type: "url" | "file";
-  node_count: number;
-  last_refreshed: string | null;
-  interval_secs: number;
-  status: "active" | "standby" | "error";
-  usage_used_gb: number;
-  usage_total_gb: number;
-  expires: string | null;
-  raw_content: string;
-  node_names: string[];
-  proxy_group_lines: string[];
-  rule_lines: string[];
-  is_primary: boolean;
-}
+// ── File / Folder Dialog ──
 
-export interface RemoteRuleSet {
-  id: string;
-  name: string;
-  url: string;
-  policy: string;
-  update_interval: number;
-  enabled: boolean;
-}
+export const pickFile = (options: {
+  title?: string;
+  filters?: Array<{ name: string; extensions: string[] }>;
+}) => openFilePickerDialog(options);
 
-export interface IndividualRule {
-  id: string;
-  rule_type: string;
-  value: string;
-  policy: string;
-  comment: string | null;
-  enabled: boolean;
-}
-
-export interface ExtraNode {
-  id: string;
-  name: string;
-  node_type: string;
-  server: string;
-  port: number;
-  refresh_url: string | null;
-  raw_line: string;
-}
-
-export interface OutputConfig {
-  output_path: string;
-  output_filename: string;
-  auto_regenerate: boolean;
-  minify: boolean;
-  auto_upload: boolean;
-}
-
-export interface BuildRecord {
-  id: string;
-  filename: string;
-  description: string;
-  time: string;
-  status: "success" | "error";
-}
+export const pickFolder = (options: { title?: string }) =>
+  openFilePickerDialog({ ...options, directory: true });
 
 // ── Subscriptions ──
 
@@ -179,34 +154,11 @@ export const batchRemoveIndividualRules = (ids: string[]) =>
 export const batchRemoveRemoteRuleSets = (ids: string[]) =>
   invoke<void>("batch_remove_remote_rule_sets", { ids });
 
-export interface NodeTestResult {
-  id: string;
-  latency_ms: number | null;
-  ip: string | null;
-  country: string | null;
-  country_code: string | null;
-  city: string | null;
-  isp: string | null;
-  is_proxy: boolean | null;
-  is_hosting: boolean | null;
-  error: string | null;
-}
-
 export const testExtraNode = (id: string) =>
   invoke<NodeTestResult>("test_extra_node", { id });
 
 export const refreshExtraNode = (id: string) =>
   invoke<string>("refresh_extra_node", { id });
-
-export interface BatchNodeInput {
-  name: string;
-  nodeType: string;
-  server: string;
-  port: number;
-  username?: string;
-  password?: string;
-  refreshUrl?: string;
-}
 
 export const batchAddExtraNodes = (nodes: BatchNodeInput[]) =>
   invoke<ExtraNode[]>("batch_add_extra_nodes", {
@@ -220,13 +172,6 @@ export const batchAddExtraNodes = (nodes: BatchNodeInput[]) =>
       refresh_url: n.refreshUrl ?? null,
     })),
   });
-
-export interface BatchRuleInput {
-  ruleType: string;
-  value: string;
-  policy: string;
-  comment?: string;
-}
 
 export const batchAddIndividualRules = (rules: BatchRuleInput[]) =>
   invoke<IndividualRule[]>("batch_add_individual_rules", {
@@ -259,12 +204,6 @@ export const previewConfig = () => invoke<string>("preview_config");
 
 // ── Update ──
 
-export interface UpdateInfo {
-  version: string;
-  current_version: string;
-  body: string;
-}
-
 /** Returns UpdateInfo when a new version is available, null otherwise. */
 export const checkForUpdate = () => invoke<UpdateInfo | null>("check_for_update");
 
@@ -272,18 +211,6 @@ export const checkForUpdate = () => invoke<UpdateInfo | null>("check_for_update"
 export const installUpdate = () => invoke<void>("install_update");
 
 // ── General Settings ──
-
-export interface GeneralSettings {
-  http_listen: string | null;
-  socks5_listen: string | null;
-  extra_lines: string[];
-}
-
-export interface AdvancedSections {
-  mitm: string;
-  host: string;
-  url_rewrite: string;
-}
 
 export const setPrimarySubscription = (id: string) =>
   invoke<void>("set_primary_subscription", { id });

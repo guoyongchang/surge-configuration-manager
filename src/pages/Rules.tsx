@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { RemoteRuleSet, IndividualRule, BatchRuleInput, Subscription } from "@/lib/api";
+import type { RemoteRuleSet, IndividualRule, BatchRuleInput, Subscription } from "@/types";
 import * as api from "@/lib/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 

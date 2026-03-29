@@ -13,7 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import type { ExtraNode, BatchNodeInput, NodeTestResult } from "@/lib/api";
+import type { ExtraNode, BatchNodeInput, NodeTestResult } from "@/types";
 import * as api from "@/lib/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 

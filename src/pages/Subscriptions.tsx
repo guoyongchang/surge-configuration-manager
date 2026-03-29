@@ -33,8 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import type { Subscription } from "@/lib/api";
+import type { Subscription } from "@/types";
 import * as api from "@/lib/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -242,7 +241,7 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
   const { t: tc } = useTranslation("common");
 
   const handlePickFile = async () => {
-    const selected = await openDialog({
+    const selected = await api.pickFile({
       title: t("dialog.filePickerTitle"),
       filters: [{ name: "Config", extensions: ["conf", "txt", "list"] }],
     });

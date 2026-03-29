@@ -20,8 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import type { OutputConfig, BuildRecord } from "@/lib/api";
+import type { OutputConfig, BuildRecord } from "@/types";
 import * as api from "@/lib/api";
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
@@ -91,8 +90,7 @@ export default function OutputPage() {
   };
 
   const handlePickFolder = async () => {
-    const selected = await openDialog({
-      directory: true,
+    const selected = await api.pickFolder({
       title: t("page.selectOutputDir"),
     });
     if (selected) {
