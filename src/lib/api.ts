@@ -14,6 +14,9 @@ import type {
   GeneralSettings,
   AdvancedSections,
   BackupInfo,
+  CloudSyncSettings,
+  CloudSyncState,
+  SyncConflictInfo,
 } from "@/types";
 
 export type {
@@ -30,6 +33,9 @@ export type {
   GeneralSettings,
   AdvancedSections,
   BackupInfo,
+  CloudSyncSettings,
+  CloudSyncState,
+  SyncConflictInfo,
 } from "@/types";
 
 // ── File / Folder Dialog ──
@@ -238,3 +244,20 @@ export const getBackupContent = (filename: string) =>
 
 export const rollbackToBackup = (filename: string) =>
   invoke<void>("rollback_to_backup", { filename });
+
+// ── Cloud Sync ──
+
+export const getCloudSyncSettings = () =>
+  invoke<CloudSyncSettings>("get_cloud_sync_settings");
+
+export const updateCloudSyncSettings = (settings: CloudSyncSettings) =>
+  invoke<void>("update_cloud_sync_settings", { settings });
+
+export const syncToCloud = () =>
+  invoke<CloudSyncState>("sync_to_cloud");
+
+export const syncFromCloud = () =>
+  invoke<void>("sync_from_cloud");
+
+export const checkSyncConflict = () =>
+  invoke<SyncConflictInfo | null>("check_sync_conflict");
