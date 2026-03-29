@@ -97,3 +97,52 @@ Subscriptions support two source types (`SubSource::Url` | `SubSource::File`). O
 - Tauri capabilities are in `src-tauri/capabilities/default.json` — includes `fs:default` and `dialog:default`
 - Compact Card usage: always add `className="py-0 gap-0"` to shadcn `<Card>` in list items (default padding is too large)
 - Frontend icons: `lucide-react` exclusively
+
+## Architecture Layer Rules (ENFORCED BY CI)
+
+The frontend uses strict layer separation enforced by `eslint-plugin-boundaries`. Violations cause CI failure.
+
+```
+UI Layer       src/pages/**  src/components/**
+               Can import: service, types, ui-lib
+               CANNOT import: @tauri-apps/* directly
+
+Service Layer  src/lib/**  src/hooks/**
+               Can import: types only
+               CANNOT import: pages, components
+
+Types Layer    src/types/**
+               CANNOT import any internal modules
+
+UI Library     src/components/ui/**  (shadcn — generated)
+               Not imported by service layer
+```
+
+**Rules:**
+1. Never `import { invoke } from "@tauri-apps/api/core"` in pages or components — use `src/lib/api.ts`
+2. Never `import` from `@tauri-apps/plugin-*` in pages or components — wrap in `src/lib/api.ts`
+3. New type definitions go in `src/types/` — not in page files or api.ts
+4. Service layer (`src/lib/`) never imports from `src/pages/` or `src/components/`
+
+## Requirement Execution Rules (MANDATORY)
+
+For every feature implementation:
+
+1. A spec file must exist at `docs/specs/YYYY-MM-DD-<feature>.md` with AC-XX acceptance criteria
+2. Convert each AC into a concrete sub-task before writing any code
+3. After each sub-task: run `pnpm test` and confirm pass
+4. Every AC must have evidence (test output or command result) — never claim "done" without evidence
+5. Final gate: `pnpm test` fully green before any commit
+
+## Test Commands
+
+```bash
+# Run all frontend tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with coverage
+pnpm test:coverage
+```
