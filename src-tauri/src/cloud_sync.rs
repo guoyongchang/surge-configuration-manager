@@ -230,10 +230,15 @@ impl CloudSyncClient {
         cloud: Option<&CloudSyncManifest>,
     ) -> Vec<String> {
         let mut changed = Vec::new();
-        let cloud_ref = cloud.unwrap_or(local);
+
+        // First push: cloud is None means all files are new — push everything
+        let cloud = match cloud {
+            Some(c) => c,
+            None => return local.files.keys().cloned().collect(),
+        };
 
         for (path, local_entry) in &local.files {
-            if let Some(cloud_entry) = cloud_ref.files.get(path) {
+            if let Some(cloud_entry) = cloud.files.get(path) {
                 if local_entry.sha != cloud_entry.sha {
                     changed.push(path.clone());
                 }
@@ -243,7 +248,7 @@ impl CloudSyncClient {
         }
 
         // Also check for files in cloud but not in local
-        for path in cloud_ref.files.keys() {
+        for path in cloud.files.keys() {
             if !local.files.contains_key(path) {
                 changed.push(path.clone());
             }
