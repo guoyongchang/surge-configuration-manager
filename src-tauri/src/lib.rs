@@ -1,3 +1,4 @@
+mod cloud_sync;
 mod commands;
 mod generator;
 mod models;
@@ -68,6 +69,11 @@ pub fn run() {
             commands::get_backups,
             commands::get_backup_content,
             commands::rollback_to_backup,
+            commands::get_cloud_sync_settings,
+            commands::update_cloud_sync_settings,
+            commands::sync_to_cloud,
+            commands::sync_from_cloud,
+            commands::check_sync_conflict,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
