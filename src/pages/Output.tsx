@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FolderOpen,
@@ -117,6 +117,21 @@ export default function OutputPage() {
   const [backupDiff, setBackupDiff] = useState<ReturnType<typeof diffLines>>([]);
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
+
+  const leftScrollRef = useRef<HTMLDivElement>(null);
+  const rightScrollRef = useRef<HTMLDivElement>(null);
+  const syncingRef = useRef(false);
+
+  const handleDiffScroll = useCallback((source: "left" | "right") => {
+    const sourceEl = source === "left" ? leftScrollRef.current : rightScrollRef.current;
+    const targetEl = source === "left" ? rightScrollRef.current : leftScrollRef.current;
+    if (!sourceEl || !targetEl || syncingRef.current) return;
+    syncingRef.current = true;
+    targetEl.scrollTop = sourceEl.scrollTop;
+    requestAnimationFrame(() => {
+      syncingRef.current = false;
+    });
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -468,15 +483,19 @@ export default function OutputPage() {
 
       {/* Backup Preview Dialog — side-by-side diff */}
       <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
-        <DialogContent className="max-w-5xl max-h-[80vh]">
+        <DialogContent className="max-w-[80vw] max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
             <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
           </DialogHeader>
           <div className="flex text-xs font-mono leading-5 border border-border rounded-lg overflow-hidden">
             {/* Left: backup */}
-            <div className="flex-1 overflow-auto max-h-[60vh] bg-card">
-              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground">
+            <div
+              ref={leftScrollRef}
+              onScroll={() => handleDiffScroll("left")}
+              className="flex-1 overflow-auto max-h-[65vh] bg-card"
+            >
+              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
                 Backup
               </div>
               {buildSideBySideRows(backupDiff).map((row, idx) => {
@@ -497,10 +516,14 @@ export default function OutputPage() {
               })}
             </div>
             {/* Divider */}
-            <div className="w-px bg-border" />
+            <div className="w-px bg-border shrink-0" />
             {/* Right: current */}
-            <div className="flex-1 overflow-auto max-h-[60vh] bg-card">
-              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground">
+            <div
+              ref={rightScrollRef}
+              onScroll={() => handleDiffScroll("right")}
+              className="flex-1 overflow-auto max-h-[65vh] bg-card"
+            >
+              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
                 Current
               </div>
               {buildSideBySideRows(backupDiff).map((row, idx) => {
