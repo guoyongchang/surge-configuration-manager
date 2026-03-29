@@ -116,3 +116,24 @@ export interface BackupInfo {
   size_bytes: number;
   created: string;
 }
+
+export interface CloudSyncSettings {
+  enabled: boolean;
+  github_pat: string | null;
+  repo_url: string | null;       // "owner/repo"
+  auto_sync: boolean;
+  last_synced_at: string | null;
+}
+
+export interface CloudSyncState {
+  is_configured: boolean;
+  last_synced_at: string | null;
+  status: string;
+}
+
+export interface SyncConflictInfo {
+  local_sha: string | null;
+  cloud_sha: string;
+  local_content: string;
+  cloud_content: string;
+}

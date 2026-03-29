@@ -165,6 +165,47 @@ pub struct BackupInfo {
     pub created: DateTime<Utc>,
 }
 
+/// Metadata for a backup file stored in cloud (GitHub)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudBackupFile {
+    pub path: String, // e.g. "subscriptions/data.json"
+    pub sha: String,  // GitHub file SHA
+    pub local_modified: Option<DateTime<Utc>>,
+    pub cloud_modified: Option<DateTime<Utc>>,
+}
+
+/// Cloud sync settings for GitHub integration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudSyncSettings {
+    pub enabled: bool,
+    pub github_pat: Option<String>,
+    pub repo_url: Option<String>, // e.g. "owner/repo"
+    pub auto_sync: bool,
+    pub last_synced_at: Option<DateTime<Utc>>,
+}
+
+impl Default for CloudSyncSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            github_pat: None,
+            repo_url: None,
+            auto_sync: false,
+            last_synced_at: None,
+        }
+    }
+}
+
+/// Sync status for cloud operations
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum SyncStatus {
+    Idle,
+    Syncing,
+    Conflict,
+    Error(String),
+}
+
 /// The entire app state that gets persisted to disk
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppData {
@@ -183,4 +224,7 @@ pub struct AppData {
     /// Format: "{subscription_id}:{rule_line}"
     #[serde(default)]
     pub disabled_sub_rule_keys: Vec<String>,
+    /// Cloud sync settings for GitHub integration
+    #[serde(default)]
+    pub cloud_sync_settings: CloudSyncSettings,
 }

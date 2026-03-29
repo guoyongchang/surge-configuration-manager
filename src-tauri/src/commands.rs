@@ -972,6 +972,171 @@ pub fn rollback_to_backup(filename: String, store: State<'_, Store>) -> Result<(
     Ok(())
 }
 
+// ── Cloud Sync ──
+
+#[derive(serde::Serialize)]
+pub struct CloudSyncState {
+    pub is_configured: bool,
+    pub last_synced_at: Option<DateTime<Utc>>,
+    pub status: String,
+}
+
+#[tauri::command]
+pub fn get_cloud_sync_settings(store: State<'_, Store>) -> Result<CloudSyncSettings, String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    Ok(data.cloud_sync_settings.clone())
+}
+
+#[tauri::command]
+pub fn update_cloud_sync_settings(
+    settings: CloudSyncSettings,
+    store: State<'_, Store>,
+) -> Result<(), String> {
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings = settings;
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, String> {
+    let settings = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.clone()
+    };
+
+    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+        return Err("Cloud sync not configured".to_string());
+    }
+
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+
+    // Serialize all app data as JSON
+    let app_data_json = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        serde_json::to_string(&*data).map_err(|e| e.to_string())?
+    };
+
+    // Check if file exists and get SHA
+    let existing = client
+        .get_file_info("scm_data.json")
+        .await
+        .map_err(|e| e.to_string())?;
+    let sha = existing.map(|(s, _)| s);
+
+    // Push to GitHub
+    client
+        .put_file("scm_data.json", &app_data_json, sha)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Update last_synced_at
+    let now = chrono::Utc::now();
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.last_synced_at = Some(now);
+    }
+    store.save()?;
+
+    Ok(CloudSyncState {
+        is_configured: true,
+        last_synced_at: Some(now),
+        status: "idle".to_string(),
+    })
+}
+
+#[tauri::command]
+pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
+    let settings = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.clone()
+    };
+
+    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+        return Err("Cloud sync not configured".to_string());
+    }
+
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+    let content = client
+        .get_file_content("scm_data.json")
+        .await
+        .map_err(|e| e.to_string())?;
+    let cloud_data: AppData =
+        serde_json::from_str(&content).map_err(|e| format!("Invalid cloud data format: {}", e))?;
+
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        *data = cloud_data;
+    }
+    store.save()?;
+
+    Ok(())
+}
+
+#[derive(serde::Serialize)]
+pub struct SyncConflictInfo {
+    pub local_sha: Option<String>,
+    pub cloud_sha: String,
+    pub local_content: String,
+    pub cloud_content: String,
+}
+
+#[tauri::command]
+pub async fn check_sync_conflict(
+    store: State<'_, Store>,
+) -> Result<Option<SyncConflictInfo>, String> {
+    let settings = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.clone()
+    };
+
+    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+        return Ok(None);
+    }
+
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+    let existing = client
+        .get_file_info("scm_data.json")
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let Some((cloud_sha, _)) = existing else {
+        return Ok(None);
+    };
+
+    let local_content = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        serde_json::to_string(&*data).map_err(|e| e.to_string())?
+    };
+
+    // Compute local SHA (simple hash-based approximation)
+    let local_sha = Some(sha256_string(&local_content));
+
+    if local_sha.as_ref() != Some(&cloud_sha) {
+        let cloud_content = client
+            .get_file_content("scm_data.json")
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(Some(SyncConflictInfo {
+            local_sha,
+            cloud_sha,
+            local_content,
+            cloud_content,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+fn sha256_string(input: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    input.hash(&mut hasher);
+    format!("{:016x}", hasher.finish())
+}
+
 fn shellexpand_tilde(path: &str) -> String {
     if path.starts_with("~/") {
         if let Some(home) = std::env::var_os("HOME") {

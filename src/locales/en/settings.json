@@ -28,5 +28,23 @@
     "label": "[URL Rewrite] Section Content",
     "hint": "HTTP URL rewrite rules. Format: regex replacement type (302 / 307 / reject / header)."
   },
+  "cloudSync": {
+    "sectionTitle": "Cloud Sync",
+    "enableLabel": "Enable Cloud Sync",
+    "enableHint": "Sync configuration to a GitHub private repository",
+    "patLabel": "GitHub Personal Access Token",
+    "patHint": "Requires 'repo' scope. Create at GitHub → Settings → Developer settings → Personal access tokens",
+    "repoUrlLabel": "Repository",
+    "repoUrlHint": "Format: owner/repo-name (the repository must already exist)",
+    "autoSyncLabel": "Auto-sync after Generate",
+    "autoSyncHint": "Automatically push to cloud after generating configuration",
+    "lastSynced": "Last synced",
+    "saveBtn": "Save Settings",
+    "syncNow": "Sync Now",
+    "conflictTitle": "Sync Conflict Detected",
+    "conflictHint": "Both local and cloud have changes. Choose which version to keep:",
+    "keepLocal": "Keep Local",
+    "keepCloud": "Keep Cloud"
+  },
   "saveSectionsBtn": "Save MITM / Host / URL Rewrite"
 }
