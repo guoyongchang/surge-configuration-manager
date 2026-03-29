@@ -35,6 +35,8 @@ export function CloudSyncConflictDialog({
     try {
       await fn();
       onOpenChange(false);
+    } catch (e) {
+      console.error("Conflict resolution failed:", e);
     } finally {
       setResolving(false);
     }
