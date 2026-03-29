@@ -122,6 +122,8 @@ pub struct OutputConfig {
     pub output_filename: String,
     pub auto_regenerate: bool,
     pub minify: bool,
+    #[allow(dead_code)]
+    #[serde(skip)]
     pub auto_upload: bool,
 }
 
@@ -157,6 +159,66 @@ pub enum BuildStatus {
     Error,
 }
 
+/// Simple metadata for a backup file on disk
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackupInfo {
+    pub filename: String,
+    pub size_bytes: u64,
+    pub created: DateTime<Utc>,
+}
+
+/// Metadata for a backup file stored in cloud (GitHub)
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudBackupFile {
+    pub path: String, // e.g. "subscriptions/data.json"
+    pub sha: String,  // GitHub file SHA
+    pub local_modified: Option<DateTime<Utc>>,
+    pub cloud_modified: Option<DateTime<Utc>>,
+}
+
+/// Cloud sync settings for GitHub integration
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CloudSyncSettings {
+    pub enabled: bool,
+    pub github_pat: Option<String>,
+    pub repo_url: Option<String>, // e.g. "owner/repo"
+    pub auto_sync: bool,
+    pub last_synced_at: Option<DateTime<Utc>>,
+}
+
+/// Sync status for cloud operations
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum SyncStatus {
+    Idle,
+    Syncing,
+    Conflict,
+    Error(String),
+}
+
+/// A single host entry for the [Host] section
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HostEntry {
+    pub id: Uuid,
+    pub domain: String,
+    pub ip: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+/// A single URL rewrite entry for the [URL Rewrite] section
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UrlRewriteEntry {
+    pub id: Uuid,
+    pub pattern: String,
+    pub replacement: String,
+    pub redirect_type: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
 /// The entire app state that gets persisted to disk
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppData {
@@ -167,12 +229,19 @@ pub struct AppData {
     pub general_settings: GeneralSettings,
     pub output_config: OutputConfig,
     pub build_history: Vec<BuildRecord>,
-    /// Extra sections like [Host], [URL Rewrite], [MITM] stored as raw text
-    pub host_section: String,
-    pub url_rewrite_section: String,
+    /// Extra sections like [MITM] stored as raw text
     pub mitm_section: String,
+    /// Structured host entries for the [Host] section
+    #[serde(default)]
+    pub hosts: Vec<HostEntry>,
+    /// Structured URL rewrite entries for the [URL Rewrite] section
+    #[serde(default)]
+    pub url_rewrites: Vec<UrlRewriteEntry>,
     /// Keys of subscription-sourced rules that the user has disabled
     /// Format: "{subscription_id}:{rule_line}"
     #[serde(default)]
     pub disabled_sub_rule_keys: Vec<String>,
+    /// Cloud sync settings for GitHub integration
+    #[serde(default)]
+    pub cloud_sync_settings: CloudSyncSettings,
 }

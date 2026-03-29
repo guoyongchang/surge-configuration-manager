@@ -87,16 +87,24 @@ mod tests {
 
     #[test]
     fn test_save_and_reload_roundtrip() {
+        use crate::models::HostEntry;
         let dir = temp_store_dir();
         {
             let store = Store::new(dir.clone());
-            store.data.lock().unwrap().host_section = "test.example.com = 1.2.3.4".to_string();
+            store.data.lock().unwrap().hosts.push(HostEntry {
+                id: Uuid::new_v4(),
+                domain: "test.example.com".to_string(),
+                ip: "1.2.3.4".to_string(),
+                enabled: true,
+            });
             store.save().expect("save should succeed");
         }
         {
             let store2 = Store::new(dir.clone());
             let data = store2.data.lock().unwrap();
-            assert_eq!(data.host_section, "test.example.com = 1.2.3.4");
+            assert_eq!(data.hosts.len(), 1);
+            assert_eq!(data.hosts[0].domain, "test.example.com");
+            assert_eq!(data.hosts[0].ip, "1.2.3.4");
         }
         fs::remove_dir_all(&dir).ok();
     }

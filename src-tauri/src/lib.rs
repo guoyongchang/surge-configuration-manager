@@ -1,3 +1,4 @@
+mod cloud_sync;
 mod commands;
 mod generator;
 mod models;
@@ -65,6 +66,28 @@ pub fn run() {
             commands::update_general_settings,
             commands::get_advanced_sections,
             commands::update_advanced_sections,
+            commands::get_hosts,
+            commands::add_host,
+            commands::update_host,
+            commands::remove_host,
+            commands::toggle_host,
+            commands::batch_add_hosts,
+            commands::batch_remove_hosts,
+            commands::get_url_rewrites,
+            commands::add_url_rewrite,
+            commands::update_url_rewrite,
+            commands::remove_url_rewrite,
+            commands::toggle_url_rewrite,
+            commands::batch_add_url_rewrites,
+            commands::batch_remove_url_rewrites,
+            commands::get_backups,
+            commands::get_backup_content,
+            commands::rollback_to_backup,
+            commands::get_cloud_sync_settings,
+            commands::update_cloud_sync_settings,
+            commands::sync_to_cloud,
+            commands::sync_from_cloud,
+            commands::check_sync_conflict,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

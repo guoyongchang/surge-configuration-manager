@@ -110,3 +110,54 @@ export interface AdvancedSections {
   host: string;
   url_rewrite: string;
 }
+
+export interface BackupInfo {
+  filename: string;
+  size_bytes: number;
+  created: string;
+}
+
+export interface CloudSyncSettings {
+  enabled: boolean;
+  github_pat: string | null;
+  repo_url: string | null;       // "owner/repo"
+  auto_sync: boolean;
+  last_synced_at: string | null;
+}
+
+export interface CloudSyncState {
+  is_configured: boolean;
+  last_synced_at: string | null;
+  status: string;
+}
+
+export interface SyncConflictInfo {
+  local_sha: string | null;
+  cloud_sha: string;
+  local_content: string;
+  cloud_content: string;
+}
+
+export interface CloudSyncManifestFileEntry {
+  sha: string;
+}
+
+export interface CloudSyncManifest {
+  version: number;
+  files: Record<string, CloudSyncManifestFileEntry>;
+}
+
+export interface HostEntry {
+  id: string;
+  domain: string;
+  ip: string;
+  enabled: boolean;
+}
+
+export interface UrlRewriteEntry {
+  id: string;
+  pattern: string;
+  replacement: string;
+  redirect_type: string;
+  enabled: boolean;
+}

@@ -8,6 +8,7 @@ import {
   Loader2,
   Eye,
   Archive,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,8 +21,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { OutputConfig, BuildRecord } from "@/types";
+import { DiffEditor } from "@monaco-editor/react";
+import type { OutputConfig, BuildRecord, BackupInfo, CloudSyncSettings, SyncConflictInfo } from "@/types";
 import * as api from "@/lib/api";
+import { CloudSyncConflictDialog } from "@/components/CloudSyncConflictDialog";
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   if (status === "success")
@@ -36,27 +39,38 @@ function timeDisplay(iso: string, t: (key: string) => string): string {
   if (diffMs < 86400000) {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  return t("page.yesterday");
+  return t("output_page_yesterday");
 }
 
 export default function OutputPage() {
-  const { t } = useTranslation("output");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
   const [config, setConfig] = useState<OutputConfig | null>(null);
   const [builds, setBuilds] = useState<BuildRecord[]>([]);
   const [generating, setGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
   const [lastBuildTime, setLastBuildTime] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [backupPreviewOpen, setBackupPreviewOpen] = useState(false);
+  const [backupOriginal, setBackupOriginal] = useState("");
+  const [backupModified, setBackupModified] = useState("");
+  const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
+  const [syncConflictOpen, setSyncConflictOpen] = useState(false);
+  const [conflictInfo, setConflictInfo] = useState<SyncConflictInfo | null>(null);
+  const [cloudSync, setCloudSync] = useState<CloudSyncSettings | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [cfg, history] = await Promise.all([
+      const [cfg, history, cs] = await Promise.all([
         api.getOutputConfig(),
         api.getBuildHistory(),
+        api.getCloudSyncSettings(),
       ]);
       setConfig(cfg);
       setBuilds(history);
+      setCloudSync(cs);
       if (history.length > 0) {
         setLastBuildTime(history[0].time);
       }
@@ -82,6 +96,19 @@ export default function OutputPage() {
       const record = await api.generateConfig();
       setBuilds((prev) => [record, ...prev].slice(0, 20));
       setLastBuildTime(record.time);
+
+      // Auto-sync if enabled
+      if (cloudSync?.enabled && cloudSync?.auto_sync) {
+        const conflict = await api.checkSyncConflict();
+        if (conflict) {
+          setConflictInfo(conflict);
+          setSyncConflictOpen(true);
+        } else {
+          await api.syncToCloud();
+          const cs = await api.getCloudSyncSettings();
+          setCloudSync(cs);
+        }
+      }
     } catch (e) {
       console.error("Generate failed:", e);
     } finally {
@@ -91,7 +118,7 @@ export default function OutputPage() {
 
   const handlePickFolder = async () => {
     const selected = await api.pickFolder({
-      title: t("page.selectOutputDir"),
+      title: t("output_page_selectOutputDir"),
     });
     if (selected) {
       updateConfig({ output_path: selected as string });
@@ -113,11 +140,24 @@ export default function OutputPage() {
     setBuilds([]);
   };
 
+  const handleKeepLocal = async () => {
+    if (!conflictInfo) return;
+    await api.syncToCloud();
+    const cs = await api.getCloudSyncSettings();
+    setCloudSync(cs);
+  };
+
+  const handleKeepCloud = async () => {
+    await api.syncFromCloud();
+    const cs = await api.getCloudSyncSettings();
+    setCloudSync(cs);
+  };
+
   if (!config) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status.loading")}
+        {t("status.loading")}
       </div>
     );
   }
@@ -125,9 +165,9 @@ export default function OutputPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold">{t("page.title")}</h1>
+        <h1 className="text-xl font-bold">{t("output_page_title")}</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          {t("page.subtitle")}
+          {t("output_page_subtitle")}
         </p>
       </div>
 
@@ -137,7 +177,7 @@ export default function OutputPage() {
           {/* Output Path + Filename */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              {t("page.outputPathLabel")}
+              {t("output_page_outputPathLabel")}
             </Label>
             <div className="flex gap-2">
               <div className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm font-mono truncate">
@@ -151,7 +191,7 @@ export default function OutputPage() {
 
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              {t("page.outputFilenameLabel")}
+              {t("output_page_outputFilenameLabel")}
             </Label>
             <Input
               className="font-mono text-sm"
@@ -164,7 +204,7 @@ export default function OutputPage() {
               }}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {t("page.outputFilenameHint")}
+              {t("output_page_outputFilenameHint")}
             </p>
           </div>
 
@@ -172,9 +212,9 @@ export default function OutputPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">{t("page.regenerateLabel")}</div>
+                <div className="text-sm">{t("output_page_regenerateLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t("page.regenerateHint")}
+                  {t("output_page_regenerateHint")}
                 </div>
               </div>
               <Switch
@@ -184,9 +224,9 @@ export default function OutputPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">{t("page.minifyLabel")}</div>
+                <div className="text-sm">{t("output_page_minifyLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t("page.minifyHint")}
+                  {t("output_page_minifyHint")}
                 </div>
               </div>
               <Switch
@@ -194,24 +234,12 @@ export default function OutputPage() {
                 onCheckedChange={(v) => updateConfig({ minify: v })}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm">{t("page.autoUploadLabel")}</div>
-                <div className="text-xs text-muted-foreground">
-                  {t("page.autoUploadHint")}
-                </div>
-              </div>
-              <Switch
-                checked={config.auto_upload}
-                onCheckedChange={(v) => updateConfig({ auto_upload: v })}
-              />
-            </div>
           </div>
 
           {/* Preview button */}
           <Button variant="outline" onClick={handlePreview} className="w-full">
             <Eye size={16} />
-            {t("page.previewBtn")}
+            {t("output_page_previewBtn")}
           </Button>
         </div>
 
@@ -229,18 +257,18 @@ export default function OutputPage() {
             ) : (
               <Zap size={28} />
             )}
-            {generating ? t("page.generatingBtn") : t("page.generateBtn")}
+            {generating ? t("output_page_generatingBtn") : t("output_page_generateBtn")}
           </Button>
 
           {/* Status */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">{t("page.statusLabel")}</span>
-              <span className="text-success font-medium">{t("page.statusReady")}</span>
+              <span className="text-muted-foreground">{t("output_page_statusLabel")}</span>
+              <span className="text-success font-medium">{t("output_page_statusReady")}</span>
             </div>
             {lastBuildTime && (
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">{t("page.lastBuildLabel")}</span>
+                <span className="text-muted-foreground">{t("output_page_lastBuildLabel")}</span>
                 <span>{timeDisplay(lastBuildTime, t)}</span>
               </div>
             )}
@@ -249,7 +277,7 @@ export default function OutputPage() {
           {/* Build History */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">{t("page.buildHistoryTitle")}</h3>
+              <h3 className="text-sm font-semibold">{t("output_page_buildHistoryTitle")}</h3>
               {builds.length > 0 && (
                 <Button
                   variant="ghost"
@@ -257,13 +285,13 @@ export default function OutputPage() {
                   className="text-primary"
                   onClick={handleClearHistory}
                 >
-                  {t("page.clearAllBtn")}
+                  {t("output_page_clearAllBtn")}
                 </Button>
               )}
             </div>
             {builds.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-6">
-                {t("page.noBuilds")}
+                {t("output_page_noBuilds")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -278,7 +306,7 @@ export default function OutputPage() {
                             <span className="font-mono truncate">{build.filename}</span>
                           </div>
                         ) : (
-                          <div className="text-xs text-muted-foreground">{t("page.noChange")}</div>
+                          <div className="text-xs text-muted-foreground">{t("output_page_noChange")}</div>
                         )}
                         <div className="text-xs text-muted-foreground truncate">
                           {build.description}
@@ -293,20 +321,182 @@ export default function OutputPage() {
               </div>
             )}
           </div>
+          {/* History Versions button */}
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const list = await api.getBackups();
+                setBackups(list);
+                setHistoryOpen(true);
+              } catch (e) {
+                console.error("Failed to load backups:", e);
+              }
+            }}
+            className="w-full"
+          >
+            <History size={16} />
+            {t("output_page_historyVersionsBtn")}
+          </Button>
         </div>
       </div>
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh]">
+        <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>{t("page.previewTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page_previewTitle")}</DialogTitle>
           </DialogHeader>
           <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
-            {previewContent || t("page.noPreviewData")}
+            {previewContent || t("output_page_noPreviewData")}
           </pre>
         </DialogContent>
       </Dialog>
+
+      {/* History Versions Dialog */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{t("output_page_historyVersionsTitle")}</DialogTitle>
+          </DialogHeader>
+          {backups.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">
+              {t("output_page_noBackups")}
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-auto">
+              {backups.map((backup) => (
+                <Card key={backup.filename} className="py-0 gap-0">
+                  <CardContent className="flex items-center gap-3 px-3 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 text-xs font-medium">
+                        <Archive size={11} className="text-primary shrink-0" />
+                        <span className="font-mono truncate">{backup.filename}</span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-muted-foreground">
+                          {t("output_page_backupCreated")}: {new Date(backup.created).toLocaleString()}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {t("output_page_backupSize")}:{" "}
+                          {backup.size_bytes < 1024
+                            ? `${backup.size_bytes} B`
+                            : backup.size_bytes < 1024 * 1024
+                              ? `${(backup.size_bytes / 1024).toFixed(1)} KB`
+                              : `${(backup.size_bytes / (1024 * 1024)).toFixed(1)} MB`}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const [original, modified] = await Promise.all([
+                            api.getBackupContent(backup.filename),
+                            api.previewConfig(),
+                          ]);
+                          setBackupOriginal(original);
+                          setBackupModified(modified);
+                          setBackupPreviewOpen(true);
+                        } catch (e) {
+                          console.error("Preview failed:", e);
+                        }
+                      }}
+                    >
+                      <Eye size={12} />
+                      {t("output_page_backupPreview")}
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedBackup(backup.filename);
+                        setRollbackConfirmOpen(true);
+                      }}
+                    >
+                      {t("output_page_rollback")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Backup Preview Dialog — Monaco DiffEditor */}
+      <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
+        <DialogContent
+          style={{ maxWidth: "90vw" }}
+          className="!w-[90vw] max-h-[85vh]"
+        >
+          <DialogHeader className="mb-2">
+            <DialogTitle>{t("output_page_backupPreview")}</DialogTitle>
+            <p className="text-xs text-muted-foreground">{t("output_page_diffHint")}</p>
+          </DialogHeader>
+          <div style={{ height: "65vh" }} className="border border-border rounded-lg overflow-hidden">
+            <DiffEditor
+              original={backupOriginal}
+              modified={backupModified}
+              language="plaintext"
+              theme="vs-dark"
+              options={{
+                readOnly: true,
+                renderSideBySide: true,
+                scrollBeyondLastLine: false,
+                minimap: { enabled: false },
+                lineNumbers: "on",
+                folding: true,
+                wordWrap: "off",
+                automaticLayout: true,
+                fixedOverflowWidgets: true,
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rollback Confirm Dialog */}
+      <Dialog open={rollbackConfirmOpen} onOpenChange={setRollbackConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("output_page_rollbackConfirmTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("output_page_rollbackConfirm")}</p>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setRollbackConfirmOpen(false)}>
+              {t("output_page_cancel")}
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedBackup) return;
+                try {
+                  await api.rollbackToBackup(selectedBackup);
+                  setRollbackConfirmOpen(false);
+                  setHistoryOpen(false);
+                } catch (e) {
+                  console.error("Rollback failed:", e);
+                }
+              }}
+            >
+              {t("output_page_rollback")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cloud Sync Conflict Dialog */}
+      {cloudSync?.enabled && (
+        <CloudSyncConflictDialog
+          open={syncConflictOpen}
+          onOpenChange={setSyncConflictOpen}
+          localContent={conflictInfo?.local_content ?? ""}
+          cloudContent={conflictInfo?.cloud_content ?? ""}
+          onKeepLocal={handleKeepLocal}
+          onKeepCloud={handleKeepCloud}
+        />
+      )}
     </div>
   );
 }

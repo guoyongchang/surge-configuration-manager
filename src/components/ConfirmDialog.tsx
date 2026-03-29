@@ -27,7 +27,7 @@ export function ConfirmDialog({
   onConfirm,
   confirmLabel,
 }: ConfirmDialogProps) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>

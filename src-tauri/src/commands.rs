@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use std::fs;
 use std::path::PathBuf;
 
@@ -767,8 +768,8 @@ pub fn update_general_settings(
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct AdvancedSections {
     pub mitm: String,
-    pub host: String,
-    pub url_rewrite: String,
+    pub hosts: Vec<HostEntry>,
+    pub url_rewrites: Vec<UrlRewriteEntry>,
 }
 
 #[tauri::command]
@@ -776,8 +777,8 @@ pub fn get_advanced_sections(store: State<'_, Store>) -> Result<AdvancedSections
     let data = store.data.lock().map_err(|e| e.to_string())?;
     Ok(AdvancedSections {
         mitm: data.mitm_section.clone(),
-        host: data.host_section.clone(),
-        url_rewrite: data.url_rewrite_section.clone(),
+        hosts: data.hosts.clone(),
+        url_rewrites: data.url_rewrites.clone(),
     })
 }
 
@@ -789,8 +790,227 @@ pub fn update_advanced_sections(
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
         data.mitm_section = sections.mitm;
-        data.host_section = sections.host;
-        data.url_rewrite_section = sections.url_rewrite;
+        data.hosts = sections.hosts;
+        data.url_rewrites = sections.url_rewrites;
+    }
+    store.save()
+}
+
+// ── Hosts ──
+
+#[tauri::command]
+pub fn get_hosts(store: State<'_, Store>) -> Result<Vec<HostEntry>, String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    Ok(data.hosts.clone())
+}
+
+#[tauri::command]
+pub fn add_host(domain: String, ip: String, store: State<'_, Store>) -> Result<HostEntry, String> {
+    let host = HostEntry {
+        id: Uuid::new_v4(),
+        domain,
+        ip,
+        enabled: true,
+    };
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.hosts.push(host.clone());
+    }
+    store.save()?;
+    Ok(host)
+}
+
+#[tauri::command]
+pub fn update_host(
+    id: String,
+    domain: String,
+    ip: String,
+    enabled: bool,
+    store: State<'_, Store>,
+) -> Result<HostEntry, String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    let mut updated = None;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(host) = data.hosts.iter_mut().find(|h| h.id == uuid) {
+            host.domain = domain;
+            host.ip = ip;
+            host.enabled = enabled;
+            updated = Some(host.clone());
+        }
+    }
+    store.save()?;
+    updated.ok_or_else(|| "Host not found".to_string())
+}
+
+#[tauri::command]
+pub fn remove_host(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.hosts.retain(|h| h.id != uuid);
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn toggle_host(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(host) = data.hosts.iter_mut().find(|h| h.id == uuid) {
+            host.enabled = !host.enabled;
+        }
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn batch_add_hosts(
+    entries: Vec<(String, String)>,
+    store: State<'_, Store>,
+) -> Result<Vec<HostEntry>, String> {
+    let mut added = Vec::new();
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        for (domain, ip) in entries {
+            let host = HostEntry {
+                id: Uuid::new_v4(),
+                domain,
+                ip,
+                enabled: true,
+            };
+            added.push(host.clone());
+            data.hosts.push(host);
+        }
+    }
+    store.save()?;
+    Ok(added)
+}
+
+#[tauri::command]
+pub fn batch_remove_hosts(ids: Vec<String>, store: State<'_, Store>) -> Result<(), String> {
+    let uuids: Vec<Uuid> = ids
+        .iter()
+        .map(|id| Uuid::parse_str(id).map_err(|e| e.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.hosts.retain(|h| !uuids.contains(&h.id));
+    }
+    store.save()
+}
+
+// ── URL Rewrites ──
+
+#[tauri::command]
+pub fn get_url_rewrites(store: State<'_, Store>) -> Result<Vec<UrlRewriteEntry>, String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    Ok(data.url_rewrites.clone())
+}
+
+#[tauri::command]
+pub fn add_url_rewrite(
+    pattern: String,
+    replacement: String,
+    redirect_type: String,
+    store: State<'_, Store>,
+) -> Result<UrlRewriteEntry, String> {
+    let entry = UrlRewriteEntry {
+        id: Uuid::new_v4(),
+        pattern,
+        replacement,
+        redirect_type,
+        enabled: true,
+    };
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.url_rewrites.push(entry.clone());
+    }
+    store.save()?;
+    Ok(entry)
+}
+
+#[tauri::command]
+pub fn update_url_rewrite(
+    id: String,
+    pattern: String,
+    replacement: String,
+    redirect_type: String,
+    enabled: bool,
+    store: State<'_, Store>,
+) -> Result<UrlRewriteEntry, String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    let mut updated = None;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(entry) = data.url_rewrites.iter_mut().find(|r| r.id == uuid) {
+            entry.pattern = pattern;
+            entry.replacement = replacement;
+            entry.redirect_type = redirect_type;
+            entry.enabled = enabled;
+            updated = Some(entry.clone());
+        }
+    }
+    store.save()?;
+    updated.ok_or_else(|| "URL rewrite not found".to_string())
+}
+
+#[tauri::command]
+pub fn remove_url_rewrite(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.url_rewrites.retain(|r| r.id != uuid);
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn toggle_url_rewrite(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(entry) = data.url_rewrites.iter_mut().find(|r| r.id == uuid) {
+            entry.enabled = !entry.enabled;
+        }
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn batch_add_url_rewrites(
+    entries: Vec<(String, String, String)>,
+    store: State<'_, Store>,
+) -> Result<Vec<UrlRewriteEntry>, String> {
+    let mut added = Vec::new();
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        for (pattern, replacement, redirect_type) in entries {
+            let entry = UrlRewriteEntry {
+                id: Uuid::new_v4(),
+                pattern,
+                replacement,
+                redirect_type,
+                enabled: true,
+            };
+            added.push(entry.clone());
+            data.url_rewrites.push(entry);
+        }
+    }
+    store.save()?;
+    Ok(added)
+}
+
+#[tauri::command]
+pub fn batch_remove_url_rewrites(ids: Vec<String>, store: State<'_, Store>) -> Result<(), String> {
+    let uuids: Vec<Uuid> = ids
+        .iter()
+        .map(|id| Uuid::parse_str(id).map_err(|e| e.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.url_rewrites.retain(|r| !uuids.contains(&r.id));
     }
     store.save()
 }
@@ -912,6 +1132,399 @@ pub fn clear_build_history(store: State<'_, Store>) -> Result<(), String> {
 pub fn preview_config(store: State<'_, Store>) -> Result<String, String> {
     let data = store.data.lock().map_err(|e| e.to_string())?;
     Ok(generator::generate_config(&data))
+}
+
+// ── Backup / Version Rollback ──
+
+#[tauri::command]
+pub fn get_backups(store: State<'_, Store>) -> Result<Vec<BackupInfo>, String> {
+    let backup_dir = store.app_data_dir().join("backups");
+    let entries =
+        fs::read_dir(&backup_dir).map_err(|e| format!("Cannot read backup dir: {}", e))?;
+
+    let mut backups: Vec<BackupInfo> = entries
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("conf"))
+        .filter_map(|entry| {
+            let path = entry.path();
+            let metadata = entry.metadata().ok()?;
+            let filename = path.file_name()?.to_str()?.to_string();
+            let created = metadata.created().ok()?;
+            let created: DateTime<Utc> = created.into();
+            Some(BackupInfo {
+                filename,
+                size_bytes: metadata.len(),
+                created,
+            })
+        })
+        .collect();
+
+    backups.sort_by_key(|b| std::cmp::Reverse(b.created));
+    Ok(backups)
+}
+
+#[tauri::command]
+pub fn get_backup_content(filename: String, store: State<'_, Store>) -> Result<String, String> {
+    let backup_path = store.app_data_dir().join("backups").join(&filename);
+    fs::read_to_string(&backup_path)
+        .map_err(|e| format!("Cannot read backup file '{}': {}", filename, e))
+}
+
+#[tauri::command]
+pub fn rollback_to_backup(filename: String, store: State<'_, Store>) -> Result<(), String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    let backup_path = store.app_data_dir().join("backups").join(&filename);
+    let content = fs::read_to_string(&backup_path)
+        .map_err(|e| format!("Cannot read backup file '{}': {}", filename, e))?;
+
+    let output_dir = shellexpand_tilde(&data.output_config.output_path);
+    fs::create_dir_all(&output_dir).map_err(|e| format!("Cannot create output dir: {}", e))?;
+
+    let output_filename = if data.output_config.output_filename.is_empty() {
+        "surge.conf".to_string()
+    } else {
+        data.output_config.output_filename.clone()
+    };
+
+    let full_path = PathBuf::from(&output_dir).join(&output_filename);
+    fs::write(&full_path, &content).map_err(|e| format!("Failed to write config: {}", e))?;
+    Ok(())
+}
+
+// ── Cloud Sync ──
+
+#[derive(serde::Serialize)]
+pub struct CloudSyncState {
+    pub is_configured: bool,
+    pub last_synced_at: Option<DateTime<Utc>>,
+    pub status: String,
+}
+
+#[tauri::command]
+pub fn get_cloud_sync_settings(store: State<'_, Store>) -> Result<CloudSyncSettings, String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    Ok(data.cloud_sync_settings.clone())
+}
+
+#[tauri::command]
+pub fn update_cloud_sync_settings(
+    settings: CloudSyncSettings,
+    store: State<'_, Store>,
+) -> Result<(), String> {
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings = settings;
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, String> {
+    use std::collections::HashMap;
+
+    let settings = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.clone()
+    };
+
+    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+        return Err("Cloud sync not configured".to_string());
+    }
+
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+
+    // Serialize each section
+    let (
+        subscriptions_json,
+        rules_remote_json,
+        rules_individual_json,
+        nodes_json,
+        output_config_json,
+        hosts_json,
+        url_rewrites_json,
+    ) = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        let subscriptions_json =
+            serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json =
+            serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json =
+            serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json =
+            serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json =
+            serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
+        let hosts_json = serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
+        let url_rewrites_json =
+            serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
+        (
+            subscriptions_json,
+            rules_remote_json,
+            rules_individual_json,
+            nodes_json,
+            output_config_json,
+            hosts_json,
+            url_rewrites_json,
+        )
+    };
+
+    // Build local manifest
+    let local_manifest = client.build_local_manifest(
+        &subscriptions_json,
+        &rules_remote_json,
+        &rules_individual_json,
+        &nodes_json,
+        &output_config_json,
+        &hosts_json,
+        &url_rewrites_json,
+    );
+
+    // Get cloud manifest (if exists)
+    let cloud_manifest: Option<crate::cloud_sync::CloudSyncManifest> =
+        match client.get_file_content("manifest.json").await {
+            Ok(content) => serde_json::from_str(&content).ok(),
+            Err(_) => None,
+        };
+
+    // Find changed files
+    let changed_paths = client.diff_manifests(&local_manifest, cloud_manifest.as_ref());
+
+    // Push each changed file
+    let file_contents: HashMap<String, String> = [
+        ("subscriptions/data.json".to_string(), subscriptions_json),
+        ("rules/remote.json".to_string(), rules_remote_json),
+        ("rules/individual.json".to_string(), rules_individual_json),
+        ("nodes/data.json".to_string(), nodes_json),
+        ("output/config.json".to_string(), output_config_json),
+        ("hosts/data.json".to_string(), hosts_json),
+        ("url_rewrites/data.json".to_string(), url_rewrites_json),
+    ]
+    .into_iter()
+    .collect();
+
+    let local_manifest_json =
+        serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
+
+    for path in &changed_paths {
+        // Skip cloud-only files (no local content to push)
+        if !local_manifest.files.contains_key(path) {
+            continue;
+        }
+        let content = file_contents.get(path).map(|s| s.as_str()).unwrap_or("");
+        // put_file queries current SHA from GitHub internally
+        client.put_file(path, content, None).await?;
+    }
+
+    // Push manifest - put_file handles SHA lookup internally
+    client
+        .put_file("manifest.json", &local_manifest_json, None)
+        .await?;
+
+    // Update last_synced_at
+    let now = chrono::Utc::now();
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.last_synced_at = Some(now);
+    }
+    store.save()?;
+
+    Ok(CloudSyncState {
+        is_configured: true,
+        last_synced_at: Some(now),
+        status: "idle".to_string(),
+    })
+}
+
+#[tauri::command]
+pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
+    let settings = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.clone()
+    };
+
+    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+        return Err("Cloud sync not configured".to_string());
+    }
+
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+
+    // Get cloud manifest
+    let cloud_manifest_json = client.get_file_content("manifest.json").await?;
+    let cloud_manifest: crate::cloud_sync::CloudSyncManifest =
+        serde_json::from_str(&cloud_manifest_json)
+            .map_err(|e| format!("Invalid cloud manifest: {}", e))?;
+
+    // Fetch and parse each file
+    let subscriptions: Vec<crate::models::Subscription> =
+        if cloud_manifest.files.contains_key("subscriptions/data.json") {
+            let content = client.get_file_content("subscriptions/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid subscriptions: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    let remote_rule_sets: Vec<crate::models::RemoteRuleSet> =
+        if cloud_manifest.files.contains_key("rules/remote.json") {
+            let content = client.get_file_content("rules/remote.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid remote rules: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    let individual_rules: Vec<crate::models::IndividualRule> =
+        if cloud_manifest.files.contains_key("rules/individual.json") {
+            let content = client.get_file_content("rules/individual.json").await?;
+            serde_json::from_str(&content)
+                .map_err(|e| format!("Invalid individual rules: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    let extra_nodes: Vec<crate::models::ExtraNode> =
+        if cloud_manifest.files.contains_key("nodes/data.json") {
+            let content = client.get_file_content("nodes/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid nodes: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    let output_config: crate::models::OutputConfig =
+        if cloud_manifest.files.contains_key("output/config.json") {
+            let content = client.get_file_content("output/config.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid output config: {}", e))?
+        } else {
+            crate::models::OutputConfig::default()
+        };
+
+    let hosts: Vec<crate::models::HostEntry> =
+        if cloud_manifest.files.contains_key("hosts/data.json") {
+            let content = client.get_file_content("hosts/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid hosts: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    let url_rewrites: Vec<crate::models::UrlRewriteEntry> =
+        if cloud_manifest.files.contains_key("url_rewrites/data.json") {
+            let content = client.get_file_content("url_rewrites/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid url_rewrites: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    // Update local store
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.subscriptions = subscriptions;
+        data.remote_rule_sets = remote_rule_sets;
+        data.individual_rules = individual_rules;
+        data.extra_nodes = extra_nodes;
+        data.output_config = output_config;
+        data.hosts = hosts;
+        data.url_rewrites = url_rewrites;
+    }
+    store.save()?;
+
+    Ok(())
+}
+
+#[derive(serde::Serialize)]
+pub struct SyncConflictInfo {
+    pub local_sha: Option<String>,
+    pub cloud_sha: String,
+    pub local_content: String,
+    pub cloud_content: String,
+}
+
+#[tauri::command]
+pub async fn check_sync_conflict(
+    store: State<'_, Store>,
+) -> Result<Option<SyncConflictInfo>, String> {
+    let settings = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.clone()
+    };
+
+    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+        return Ok(None);
+    }
+
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+
+    // Build local manifest
+    let (
+        subscriptions_json,
+        rules_remote_json,
+        rules_individual_json,
+        nodes_json,
+        output_config_json,
+        hosts_json,
+        url_rewrites_json,
+    ) = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        let subscriptions_json =
+            serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json =
+            serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json =
+            serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json =
+            serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json =
+            serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
+        let hosts_json = serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
+        let url_rewrites_json =
+            serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
+        (
+            subscriptions_json,
+            rules_remote_json,
+            rules_individual_json,
+            nodes_json,
+            output_config_json,
+            hosts_json,
+            url_rewrites_json,
+        )
+    };
+
+    let local_manifest = client.build_local_manifest(
+        &subscriptions_json,
+        &rules_remote_json,
+        &rules_individual_json,
+        &nodes_json,
+        &output_config_json,
+        &hosts_json,
+        &url_rewrites_json,
+    );
+
+    // Get cloud manifest
+    let cloud_manifest_json = match client.get_file_content("manifest.json").await {
+        Ok(content) => content,
+        Err(_) => return Ok(None), // No cloud data = no conflict
+    };
+
+    let _cloud_manifest: crate::cloud_sync::CloudSyncManifest =
+        match serde_json::from_str(&cloud_manifest_json) {
+            Ok(m) => m,
+            Err(_) => return Ok(None),
+        };
+
+    let local_manifest_json =
+        serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
+
+    // Compute manifest SHA using CloudSyncManifest::compute_sha
+    let local_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&local_manifest_json);
+    let cloud_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&cloud_manifest_json);
+
+    if local_sha != cloud_sha {
+        Ok(Some(SyncConflictInfo {
+            local_sha: Some(local_sha),
+            cloud_sha,
+            local_content: local_manifest_json,
+            cloud_content: cloud_manifest_json,
+        }))
+    } else {
+        Ok(None)
+    }
 }
 
 fn shellexpand_tilde(path: &str) -> String {

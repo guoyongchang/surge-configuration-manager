@@ -3913,10 +3913,12 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 name = "surge-configuration-manager"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
