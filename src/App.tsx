@@ -6,6 +6,11 @@ import RulesPage from "./pages/Rules";
 import ExtraNodesPage from "./pages/ExtraNodes";
 import OutputPage from "./pages/Output";
 import SettingsPage from "./pages/Settings";
+import HttpListenPage from "./pages/HttpListenPage";
+import MitmPage from "./pages/MitmPage";
+import HostPage from "./pages/HostPage";
+import UrlRewritePage from "./pages/UrlRewritePage";
+import CloudSyncPage from "./pages/CloudSyncPage";
 import { Button } from "@/components/ui/button";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "@/lib/api";
 import { RefreshCw, X, Sun, Moon } from "lucide-react";
@@ -106,6 +111,11 @@ export default function App() {
             <Route path="/nodes" element={<ExtraNodesPage />} />
             <Route path="/output" element={<OutputPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/http-listen" element={<HttpListenPage />} />
+            <Route path="/mitm" element={<MitmPage />} />
+            <Route path="/hosts" element={<HostPage />} />
+            <Route path="/url-rewrites" element={<UrlRewritePage />} />
+            <Route path="/cloud-sync" element={<CloudSyncPage />} />
           </Routes>
         </div>
       </main>

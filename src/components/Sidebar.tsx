@@ -5,7 +5,11 @@ import {
   ListFilter,
   Server,
   FileOutput,
-  Settings,
+  Network,
+  Shield,
+  Globe,
+  BookMarked,
+  Cloud,
 } from "lucide-react";
 
 const navItems = [
@@ -13,6 +17,11 @@ const navItems = [
   { to: "/rules", icon: ListFilter, labelKey: "nav.rules" },
   { to: "/nodes", icon: Server, labelKey: "nav.extraNodes" },
   { to: "/output", icon: FileOutput, labelKey: "nav.output" },
+  { to: "/http-listen", icon: Network, labelKey: "nav.httpListen" },
+  { to: "/mitm", icon: Shield, labelKey: "nav.mitm" },
+  { to: "/hosts", icon: Globe, labelKey: "nav.hosts" },
+  { to: "/url-rewrites", icon: BookMarked, labelKey: "nav.urlRewrites" },
+  { to: "/cloud-sync", icon: Cloud, labelKey: "nav.cloudSync" },
 ] as const;
 
 export default function Sidebar() {
@@ -63,22 +72,13 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-3 pb-4">
-        <div className="flex items-center gap-1">
-          <NavLink
-            to="/settings"
-            className="flex flex-1 items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors"
-          >
-            <Settings size={18} />
-            <span>{t("nav.settings")}</span>
-          </NavLink>
-          <button
-            onClick={toggleLanguage}
-            className="px-2 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors shrink-0"
-            title={(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "Switch to English" : "切换为中文"}
-          >
-            {(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "EN" : "中"}
-          </button>
-        </div>
+        <button
+          onClick={toggleLanguage}
+          className="px-2 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50 transition-colors"
+          title={(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "Switch to English" : "切换为中文"}
+        >
+          {(i18n.resolvedLanguage ?? i18n.language) === "zh" ? "EN" : "中"}
+        </button>
       </div>
     </aside>
   );
