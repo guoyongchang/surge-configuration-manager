@@ -483,7 +483,10 @@ export default function OutputPage() {
 
       {/* Backup Preview Dialog — side-by-side diff */}
       <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
-        <DialogContent className="!w-[80vw] max-w-none max-h-[80vh]">
+        <DialogContent
+          style={{ maxWidth: "80vw" }}
+          className="!w-[80vw] max-h-[80vh]"
+        >
           <DialogHeader className="mb-2">
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
             <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
