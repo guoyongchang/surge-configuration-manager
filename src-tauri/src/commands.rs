@@ -1017,11 +1017,11 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
     // Serialize each section
     let (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        let subscriptions_json = serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
-        let rules_remote_json = serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
-        let rules_individual_json = serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
-        let nodes_json = serde_json::to_string(&data.extra_nodes).map_err(|e| e.to_string())?;
-        let output_config_json = serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
+        let subscriptions_json = serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json = serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json = serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json = serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json = serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
         (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json)
     };
 
@@ -1052,7 +1052,7 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         ("output/config.json".to_string(), output_config_json),
     ].into_iter().collect();
 
-    let local_manifest_json = serde_json::to_string(&local_manifest).map_err(|e| e.to_string())?;
+    let local_manifest_json = serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
 
     for path in &changed_paths {
         // Skip cloud-only files (no local content to push)
@@ -1180,11 +1180,11 @@ pub async fn check_sync_conflict(
     // Build local manifest
     let (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        let subscriptions_json = serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
-        let rules_remote_json = serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
-        let rules_individual_json = serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
-        let nodes_json = serde_json::to_string(&data.extra_nodes).map_err(|e| e.to_string())?;
-        let output_config_json = serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
+        let subscriptions_json = serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json = serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json = serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json = serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json = serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
         (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json)
     };
 
@@ -1207,7 +1207,7 @@ pub async fn check_sync_conflict(
         Err(_) => return Ok(None),
     };
 
-    let local_manifest_json = serde_json::to_string(&local_manifest).map_err(|e| e.to_string())?;
+    let local_manifest_json = serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
 
     // Compute manifest SHA using CloudSyncManifest::compute_sha
     let local_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&local_manifest_json);
