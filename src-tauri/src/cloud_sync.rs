@@ -23,6 +23,7 @@ struct GithubContentResponse {
 struct GithubCreateFile {
     message: String,
     content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     sha: Option<String>,
 }
 
