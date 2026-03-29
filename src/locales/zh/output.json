@@ -38,5 +38,8 @@
     "backupSize": "大小",
     "rollbackConfirmTitle": "确认回退",
     "cancel": "取消"
+  },
+  "cloudSync": {
+    "syncNow": "同步"
   }
 }

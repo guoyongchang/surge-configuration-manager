@@ -28,5 +28,23 @@
     "label": "[URL Rewrite] 区块内容",
     "hint": "HTTP URL 重写规则，格式：正则表达式 替换内容 类型（302 / 307 / reject / header）。"
   },
+  "cloudSync": {
+    "sectionTitle": "云同步",
+    "enableLabel": "启用云同步",
+    "enableHint": "将配置同步到 GitHub 私有仓库",
+    "patLabel": "GitHub 个人访问令牌",
+    "patHint": "需要 'repo' 权限。在 GitHub → Settings → Developer settings → Personal access tokens 创建",
+    "repoUrlLabel": "仓库地址",
+    "repoUrlHint": "格式：owner/repo-name（仓库必须已存在）",
+    "autoSyncLabel": "生成后自动同步",
+    "autoSyncHint": "生成配置后自动推送到云端",
+    "lastSynced": "上次同步",
+    "saveBtn": "保存设置",
+    "syncNow": "立即同步",
+    "conflictTitle": "检测到同步冲突",
+    "conflictHint": "本地和云端都有变更。请选择保留哪个版本：",
+    "keepLocal": "保留本地",
+    "keepCloud": "保留云端"
+  },
   "saveSectionsBtn": "保存 MITM / Host / URL Rewrite"
 }

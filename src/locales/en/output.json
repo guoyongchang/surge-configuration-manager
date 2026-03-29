@@ -38,5 +38,8 @@
     "backupSize": "Size",
     "rollbackConfirmTitle": "Confirm Rollback",
     "cancel": "Cancel"
+  },
+  "cloudSync": {
+    "syncNow": "Sync"
   }
 }
