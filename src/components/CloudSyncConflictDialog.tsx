@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,6 @@ interface Props {
   cloudContent: string;
   onKeepLocal: () => Promise<void>;
   onKeepCloud: () => Promise<void>;
-  t: (key: string) => string;
 }
 
 export function CloudSyncConflictDialog({
@@ -26,8 +26,8 @@ export function CloudSyncConflictDialog({
   cloudContent,
   onKeepLocal,
   onKeepCloud,
-  t,
 }: Props) {
+  const { t } = useTranslation();
   const [resolving, setResolving] = useState(false);
 
   const handle = async (fn: () => Promise<void>) => {
@@ -46,8 +46,8 @@ export function CloudSyncConflictDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ maxWidth: "90vw" }} className="!w-[90vw] max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle>{t("cloudSync.conflictTitle")}</DialogTitle>
-          <p className="text-xs text-muted-foreground">{t("cloudSync.conflictHint")}</p>
+          <DialogTitle>{t("settings_cloudSync.conflictTitle")}</DialogTitle>
+          <p className="text-xs text-muted-foreground">{t("settings_cloudSync.conflictHint")}</p>
         </DialogHeader>
 
         <div style={{ height: "55vh" }} className="border border-border rounded-lg overflow-hidden">
@@ -78,7 +78,7 @@ export function CloudSyncConflictDialog({
               onClick={() => handle(onKeepCloud)}
             >
               {resolving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {t("cloudSync.keepCloud")}
+              {t("settings_cloudSync.keepCloud")}
             </Button>
             <Button
               variant="outline"
@@ -86,7 +86,7 @@ export function CloudSyncConflictDialog({
               onClick={() => handle(onKeepLocal)}
             >
               {resolving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {t("cloudSync.keepLocal")}
+              {t("settings_cloudSync.keepLocal")}
             </Button>
           </div>
           <Button
@@ -94,7 +94,7 @@ export function CloudSyncConflictDialog({
             onClick={() => onOpenChange(false)}
             disabled={resolving}
           >
-            {t("common.cancel")}
+            {t("settings_actions_cancel")}
           </Button>
         </div>
       </DialogContent>

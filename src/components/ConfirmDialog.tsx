@@ -27,7 +27,7 @@ export function ConfirmDialog({
   onConfirm,
   confirmLabel,
 }: ConfirmDialogProps) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -38,12 +38,12 @@ export function ConfirmDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+          <AlertDialogCancel>{t("actions_cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-white hover:bg-destructive/90"
             onClick={onConfirm}
           >
-            {confirmLabel ?? t("actions.delete")}
+            {confirmLabel ?? t("actions_delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

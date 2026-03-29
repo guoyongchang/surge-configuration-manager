@@ -31,8 +31,8 @@ function parseBatchHosts(text: string): { domain: string; ip: string }[] {
 // ── Add Host Dialog ───────────────────────────────────────────────────────────
 
 function AddHostDialog({ onAdded }: { onAdded: () => void }) {
-  const { t } = useTranslation("hosts");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
+  const { t: tc } = useTranslation();
   const [open, setOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"single" | "batch">("single");
 
@@ -95,10 +95,10 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogTrigger asChild>
-        <Button><Plus size={16} />{t("dialog.trigger")}</Button>
+        <Button><Plus size={16} />{t("hosts_dialog.trigger")}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{t("dialog.title")}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("hosts_dialog.title")}</DialogTitle></DialogHeader>
 
         {/* Main tab switcher */}
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -111,7 +111,7 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("single"); setError(""); }}
           >
-            {t("tabs.single")}
+            {t("hosts_tabs.single")}
           </button>
           <button
             type="button"
@@ -122,14 +122,14 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("batch"); setError(""); }}
           >
-            {t("tabs.batch")}
+            {t("hosts_tabs.batch")}
           </button>
         </div>
 
         {mainTab === "single" ? (
           <div className="space-y-3 py-1">
             <div>
-              <Label>{t("single.domain")}</Label>
+              <Label>{t("hosts_single.domain")}</Label>
               <Input
                 placeholder="example.com"
                 value={domain}
@@ -137,7 +137,7 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
               />
             </div>
             <div>
-              <Label>{t("single.ip")}</Label>
+              <Label>{t("hosts_single.ip")}</Label>
               <Input
                 placeholder="1.2.3.4"
                 value={ip}
@@ -146,7 +146,7 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
             </div>
             {error && <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>}
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>{tc("actions.cancel")}</Button>
+              <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
               <Button onClick={handleSubmitSingle} disabled={loading || !canSubmitSingle}>
                 {loading && <Loader2 size={14} className="animate-spin" />}{t("dialog.add")}
               </Button>
@@ -155,8 +155,8 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
         ) : (
           <div className="space-y-3 py-1">
             <div>
-              <Label>{t("batch.title")}</Label>
-              <p className="text-xs text-muted-foreground mb-1.5">{t("batch.hint")}</p>
+              <Label>{t("hosts_batch.title")}</Label>
+              <p className="text-xs text-muted-foreground mb-1.5">{t("hosts_batch.hint")}</p>
               <textarea
                 className="w-full h-36 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                 placeholder={"example.com = 1.2.3.4\napi.example.com = 5.6.7.8"}
@@ -168,7 +168,7 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
               <div className="flex items-center gap-3 text-xs">
                 {batchParsed.length > 0 && (
                   <span className="flex items-center gap-1 text-success">
-                    {batchParsed.length} {t("batch.willAdd")}
+                    {batchParsed.length} {t("hosts_batch.willAdd")}
                   </span>
                 )}
               </div>
@@ -177,7 +177,7 @@ function AddHostDialog({ onAdded }: { onAdded: () => void }) {
               <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>{tc("actions.cancel")}</Button>
+              <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
               <Button
                 onClick={handleSubmitBatch}
                 disabled={loading || batchParsed.length === 0}
@@ -202,8 +202,8 @@ function EditHostDialog({
   host: HostEntry;
   onUpdated: () => void;
 }) {
-  const { t } = useTranslation("hosts");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
+  const { t: tc } = useTranslation();
   const [open, setOpen] = useState(false);
   const [domain, setDomain] = useState(host.domain);
   const [ip, setIp] = useState(host.ip);
@@ -239,10 +239,10 @@ function EditHostDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{t("edit.title")}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("hosts_edit.title")}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-1">
           <div>
-            <Label>{t("single.domain")}</Label>
+            <Label>{t("hosts_single.domain")}</Label>
             <Input
               placeholder="example.com"
               value={domain}
@@ -250,7 +250,7 @@ function EditHostDialog({
             />
           </div>
           <div>
-            <Label>{t("single.ip")}</Label>
+            <Label>{t("hosts_single.ip")}</Label>
             <Input
               placeholder="1.2.3.4"
               value={ip}
@@ -258,15 +258,15 @@ function EditHostDialog({
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label>{t("edit.enabled")}</Label>
+            <Label>{t("hosts_edit.enabled")}</Label>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
           {error && <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>{tc("actions.cancel")}</Button>
+          <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading || !canSubmit}>
-            {loading && <Loader2 size={14} className="animate-spin" />}{t("edit.save")}
+            {loading && <Loader2 size={14} className="animate-spin" />}{t("hosts_edit.save")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -277,8 +277,8 @@ function EditHostDialog({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function HostPage() {
-  const { t } = useTranslation("hosts");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
+  const { t: tc } = useTranslation();
   const [hosts, setHosts] = useState<HostEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -355,15 +355,15 @@ export default function HostPage() {
     <div className="p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-xs text-muted-foreground mb-1">{t("page.breadcrumb")}</div>
-          <h1 className="text-xl font-bold">{t("page.title")}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{t("page.subtitle")}</p>
+          <div className="text-xs text-muted-foreground mb-1">{t("hosts_page.breadcrumb")}</div>
+          <h1 className="text-xl font-bold">{t("hosts_page.title")}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t("hosts_page.subtitle")}</p>
         </div>
         <div className="flex items-center gap-1.5">
           {selected.size > 0 && (
             <>
               <span className="text-xs text-muted-foreground mr-1">
-                {t("page.selectedCount", { count: selected.size })}
+                {t("hosts_page.selectedCount", { count: selected.size })}
               </span>
               <Button
                 variant="destructive"
@@ -371,7 +371,7 @@ export default function HostPage() {
                 title={`Delete ${selected.size} selected hosts`}
                 onClick={() =>
                   setConfirm({
-                    title: t("page.deleteTitle", { count: selected.size }),
+                    title: t("hosts_page.deleteTitle", { count: selected.size }),
                     description: tc("confirm.cannotUndo"),
                     onConfirm: () => {
                       setConfirm(null);
@@ -401,7 +401,7 @@ export default function HostPage() {
             ) : (
               <Square size={14} />
             )}
-            {selected.size === hosts.length ? t("page.deselectAll") : t("page.selectAll")}
+            {selected.size === hosts.length ? t("hosts_page.deselectAll") : t("hosts_page.selectAll")}
           </button>
         </div>
       )}
@@ -409,13 +409,13 @@ export default function HostPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <Loader2 size={20} className="animate-spin mr-2" />
-          {tc("status.loading")}
+          {tc("status_loading")}
         </div>
       ) : hosts.length === 0 ? (
         <div className="w-full py-10 border border-dashed border-border rounded-lg flex flex-col items-center gap-2 text-muted-foreground">
           <Globe size={24} />
-          <div className="text-sm font-medium">{t("page.empty")}</div>
-          <div className="text-xs">{t("page.emptyHint")}</div>
+          <div className="text-sm font-medium">{t("hosts_page.empty")}</div>
+          <div className="text-xs">{t("hosts_page.emptyHint")}</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -457,7 +457,7 @@ export default function HostPage() {
                         variant={host.enabled ? "default" : "outline"}
                         className={`text-xs ${!host.enabled ? "opacity-60" : ""}`}
                       >
-                        {host.enabled ? t("status.enabled") : t("status.disabled")}
+                        {host.enabled ? t("hosts_status.enabled") : t("hosts_status.disabled")}
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -470,7 +470,7 @@ export default function HostPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      title={host.enabled ? t("actions.disable") : t("actions.enable")}
+                      title={host.enabled ? t("hosts_actions.disable") : t("hosts_actions.enable")}
                       disabled={isToggling}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -493,7 +493,7 @@ export default function HostPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      title={t("actions.edit")}
+                      title={t("hosts_actions.edit")}
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingHost(host);
@@ -506,13 +506,13 @@ export default function HostPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      title={t("actions.delete")}
+                      title={t("hosts_actions.delete")}
                       className="text-muted-foreground hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirm({
-                          title: t("page.removeTitle"),
-                          description: t("page.removeDesc", { domain: host.domain }),
+                          title: t("hosts_page.removeTitle"),
+                          description: t("hosts_page.removeDesc", { domain: host.domain }),
                           onConfirm: () => {
                             setConfirm(null);
                             handleRemove(host.id);

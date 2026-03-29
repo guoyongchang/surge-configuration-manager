@@ -38,8 +38,8 @@ function SectionTextarea({
 }
 
 export default function GeneralSettingsPage() {
-  const { t } = useTranslation("settings");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
+  const { t: tc } = useTranslation();
   const [settings, setSettings] = useState<GeneralSettings>({
     http_listen: null,
     socks5_listen: null,
@@ -81,7 +81,7 @@ export default function GeneralSettingsPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status.loading")}
+        {tc("status_loading")}
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function GeneralSettingsPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Settings2 size={18} className="text-muted-foreground" />
-          <h1 className="text-xl font-bold">{t("general.sectionTitle")}</h1>
+          <h1 className="text-xl font-bold">{t("settings_general.sectionTitle")}</h1>
         </div>
       </div>
 
@@ -99,9 +99,9 @@ export default function GeneralSettingsPage() {
         <CardContent className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>{t("general.httpListenLabel")}</Label>
+              <Label>{t("settings_general.httpListenLabel")}</Label>
               <p className="text-xs text-muted-foreground mb-1.5">
-                {t("general.httpListenHint")}
+                {t("settings_general.httpListenHint")}
               </p>
               <Input
                 placeholder="0.0.0.0:7890"
@@ -115,9 +115,9 @@ export default function GeneralSettingsPage() {
               />
             </div>
             <div>
-              <Label>{t("general.socks5ListenLabel")}</Label>
+              <Label>{t("settings_general.socks5ListenLabel")}</Label>
               <p className="text-xs text-muted-foreground mb-1.5">
-                {t("general.socks5ListenHint")}
+                {t("settings_general.socks5ListenHint")}
               </p>
               <Input
                 placeholder="0.0.0.0:7891"
@@ -132,8 +132,8 @@ export default function GeneralSettingsPage() {
             </div>
           </div>
           <SectionTextarea
-            label={t("general.extraLinesLabel")}
-            description={t("general.extraLinesHint")}
+            label={t("settings_general.extraLinesLabel")}
+            description={t("settings_general.extraLinesHint")}
             value={extraLinesText}
             onChange={setExtraLinesText}
             placeholder={"internet-test-url = http://google.com/\nproxy-test-url = http://google.com/\nloglevel = notify"}
@@ -147,7 +147,7 @@ export default function GeneralSettingsPage() {
               ) : (
                 <Save size={14} />
               )}
-              {saved ? tc("status.saved") : t("general.saveBtn")}
+              {saved ? tc("status_saved") : t("settings_general.saveBtn")}
             </Button>
           </div>
         </CardContent>

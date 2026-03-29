@@ -10,8 +10,8 @@ import type { CloudSyncSettings } from "@/types";
 import * as api from "@/lib/api";
 
 export default function CloudSyncPage() {
-  const { t } = useTranslation("settings");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
+  const { t: tc } = useTranslation();
   const [cloudSync, setCloudSync] = useState<CloudSyncSettings>({
     enabled: false,
     github_pat: null,
@@ -63,7 +63,7 @@ export default function CloudSyncPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status.loading")}
+        {tc("status_loading")}
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function CloudSyncPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Cloud size={18} className="text-muted-foreground" />
-          <h1 className="text-xl font-bold">{t("cloudSync.sectionTitle")}</h1>
+          <h1 className="text-xl font-bold">{t("settings_cloudSync.sectionTitle")}</h1>
         </div>
       </div>
 
@@ -81,9 +81,9 @@ export default function CloudSyncPage() {
         <CardContent className="p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm">{t("cloudSync.enableLabel")}</div>
+              <div className="text-sm">{t("settings_cloudSync.enableLabel")}</div>
               <div className="text-xs text-muted-foreground">
-                {t("cloudSync.enableHint")}
+                {t("settings_cloudSync.enableHint")}
               </div>
             </div>
             <Switch
@@ -93,9 +93,9 @@ export default function CloudSyncPage() {
           </div>
 
           <div>
-            <Label>{t("cloudSync.patLabel")}</Label>
+            <Label>{t("settings_cloudSync.patLabel")}</Label>
             <p className="text-xs text-muted-foreground mb-1.5">
-              {t("cloudSync.patHint")}
+              {t("settings_cloudSync.patHint")}
             </p>
             <Input
               type="password"
@@ -109,9 +109,9 @@ export default function CloudSyncPage() {
           </div>
 
           <div>
-            <Label>{t("cloudSync.repoUrlLabel")}</Label>
+            <Label>{t("settings_cloudSync.repoUrlLabel")}</Label>
             <p className="text-xs text-muted-foreground mb-1.5">
-              {t("cloudSync.repoUrlHint")}
+              {t("settings_cloudSync.repoUrlHint")}
             </p>
             <Input
               placeholder="username/repo-name"
@@ -125,9 +125,9 @@ export default function CloudSyncPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm">{t("cloudSync.autoSyncLabel")}</div>
+              <div className="text-sm">{t("settings_cloudSync.autoSyncLabel")}</div>
               <div className="text-xs text-muted-foreground">
-                {t("cloudSync.autoSyncHint")}
+                {t("settings_cloudSync.autoSyncHint")}
               </div>
             </div>
             <Switch
@@ -138,7 +138,7 @@ export default function CloudSyncPage() {
 
           {cloudSync.last_synced_at && (
             <div className="text-xs text-muted-foreground">
-              {t("cloudSync.lastSynced")}: {new Date(cloudSync.last_synced_at).toLocaleString()}
+              {t("settings_cloudSync.lastSynced")}: {new Date(cloudSync.last_synced_at).toLocaleString()}
             </div>
           )}
 
@@ -160,7 +160,7 @@ export default function CloudSyncPage() {
             {cloudSync.enabled && (
               <Button onClick={handleSyncNow} size="sm" disabled={syncing}>
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                {t("cloudSync.syncNow")}
+                {t("settings_cloudSync.syncNow")}
               </Button>
             )}
           </div>

@@ -9,7 +9,6 @@ import {
   Eye,
   Archive,
   History,
-  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,8 +43,8 @@ function timeDisplay(iso: string, t: (key: string) => string): string {
 }
 
 export default function OutputPage() {
-  const { t } = useTranslation("output");
-  const { t: tc } = useTranslation("common");
+  const { t } = useTranslation();
+  const { t: tc } = useTranslation();
   const [config, setConfig] = useState<OutputConfig | null>(null);
   const [builds, setBuilds] = useState<BuildRecord[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -159,7 +158,7 @@ export default function OutputPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status.loading")}
+        {tc("status_loading")}
       </div>
     );
   }
@@ -167,9 +166,9 @@ export default function OutputPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold">{t("page.title")}</h1>
+        <h1 className="text-xl font-bold">{t("output_page.title")}</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          {t("page.subtitle")}
+          {t("output_page.subtitle")}
         </p>
       </div>
 
@@ -179,7 +178,7 @@ export default function OutputPage() {
           {/* Output Path + Filename */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              {t("page.outputPathLabel")}
+              {t("output_page.outputPathLabel")}
             </Label>
             <div className="flex gap-2">
               <div className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm font-mono truncate">
@@ -193,7 +192,7 @@ export default function OutputPage() {
 
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              {t("page.outputFilenameLabel")}
+              {t("output_page.outputFilenameLabel")}
             </Label>
             <Input
               className="font-mono text-sm"
@@ -206,7 +205,7 @@ export default function OutputPage() {
               }}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {t("page.outputFilenameHint")}
+              {t("output_page.outputFilenameHint")}
             </p>
           </div>
 
@@ -214,9 +213,9 @@ export default function OutputPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">{t("page.regenerateLabel")}</div>
+                <div className="text-sm">{t("output_page.regenerateLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t("page.regenerateHint")}
+                  {t("output_page.regenerateHint")}
                 </div>
               </div>
               <Switch
@@ -226,9 +225,9 @@ export default function OutputPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">{t("page.minifyLabel")}</div>
+                <div className="text-sm">{t("output_page.minifyLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t("page.minifyHint")}
+                  {t("output_page.minifyHint")}
                 </div>
               </div>
               <Switch
@@ -236,24 +235,12 @@ export default function OutputPage() {
                 onCheckedChange={(v) => updateConfig({ minify: v })}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm">{t("page.autoUploadLabel")}</div>
-                <div className="text-xs text-muted-foreground">
-                  {t("page.autoUploadHint")}
-                </div>
-              </div>
-              <Switch
-                checked={config.auto_upload}
-                onCheckedChange={(v) => updateConfig({ auto_upload: v })}
-              />
-            </div>
           </div>
 
           {/* Preview button */}
           <Button variant="outline" onClick={handlePreview} className="w-full">
             <Eye size={16} />
-            {t("page.previewBtn")}
+            {t("output_page.previewBtn")}
           </Button>
         </div>
 
@@ -271,45 +258,18 @@ export default function OutputPage() {
             ) : (
               <Zap size={28} />
             )}
-            {generating ? t("page.generatingBtn") : t("page.generateBtn")}
+            {generating ? t("output_page.generatingBtn") : t("output_page.generateBtn")}
           </Button>
-
-          {/* Manual sync button */}
-          {cloudSync?.enabled && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={async () => {
-                try {
-                  const conflict = await api.checkSyncConflict();
-                  if (conflict) {
-                    setConflictInfo(conflict);
-                    setSyncConflictOpen(true);
-                  } else {
-                    await api.syncToCloud();
-                    const cs = await api.getCloudSyncSettings();
-                    setCloudSync(cs);
-                  }
-                } catch (e) {
-                  console.error("Sync failed:", e);
-                }
-              }}
-              title={t("cloudSync.syncNow")}
-              className="shrink-0"
-            >
-              <RefreshCw size={16} />
-            </Button>
-          )}
 
           {/* Status */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">{t("page.statusLabel")}</span>
-              <span className="text-success font-medium">{t("page.statusReady")}</span>
+              <span className="text-muted-foreground">{t("output_page.statusLabel")}</span>
+              <span className="text-success font-medium">{t("output_page.statusReady")}</span>
             </div>
             {lastBuildTime && (
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">{t("page.lastBuildLabel")}</span>
+                <span className="text-muted-foreground">{t("output_page.lastBuildLabel")}</span>
                 <span>{timeDisplay(lastBuildTime, t)}</span>
               </div>
             )}
@@ -318,7 +278,7 @@ export default function OutputPage() {
           {/* Build History */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">{t("page.buildHistoryTitle")}</h3>
+              <h3 className="text-sm font-semibold">{t("output_page.buildHistoryTitle")}</h3>
               {builds.length > 0 && (
                 <Button
                   variant="ghost"
@@ -326,13 +286,13 @@ export default function OutputPage() {
                   className="text-primary"
                   onClick={handleClearHistory}
                 >
-                  {t("page.clearAllBtn")}
+                  {t("output_page.clearAllBtn")}
                 </Button>
               )}
             </div>
             {builds.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-6">
-                {t("page.noBuilds")}
+                {t("output_page.noBuilds")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -347,7 +307,7 @@ export default function OutputPage() {
                             <span className="font-mono truncate">{build.filename}</span>
                           </div>
                         ) : (
-                          <div className="text-xs text-muted-foreground">{t("page.noChange")}</div>
+                          <div className="text-xs text-muted-foreground">{t("output_page.noChange")}</div>
                         )}
                         <div className="text-xs text-muted-foreground truncate">
                           {build.description}
@@ -377,7 +337,7 @@ export default function OutputPage() {
             className="w-full"
           >
             <History size={16} />
-            {t("page.historyVersionsBtn")}
+            {t("output_page.historyVersionsBtn")}
           </Button>
         </div>
       </div>
@@ -386,7 +346,7 @@ export default function OutputPage() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>{t("page.previewTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page.previewTitle")}</DialogTitle>
           </DialogHeader>
           <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
             {previewContent || t("page.noPreviewData")}
@@ -398,11 +358,11 @@ export default function OutputPage() {
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>{t("page.historyVersionsTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page.historyVersionsTitle")}</DialogTitle>
           </DialogHeader>
           {backups.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-8">
-              {t("page.noBackups")}
+              {t("output_page.noBackups")}
             </div>
           ) : (
             <div className="space-y-2 max-h-[60vh] overflow-auto">
@@ -416,10 +376,10 @@ export default function OutputPage() {
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-xs text-muted-foreground">
-                          {t("page.backupCreated")}: {new Date(backup.created).toLocaleString()}
+                          {t("output_page.backupCreated")}: {new Date(backup.created).toLocaleString()}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {t("page.backupSize")}:{" "}
+                          {t("output_page.backupSize")}:{" "}
                           {backup.size_bytes < 1024
                             ? `${backup.size_bytes} B`
                             : backup.size_bytes < 1024 * 1024
@@ -446,7 +406,7 @@ export default function OutputPage() {
                       }}
                     >
                       <Eye size={12} />
-                      {t("page.backupPreview")}
+                      {t("output_page.backupPreview")}
                     </Button>
                     <Button
                       size="xs"
@@ -456,7 +416,7 @@ export default function OutputPage() {
                         setRollbackConfirmOpen(true);
                       }}
                     >
-                      {t("page.rollback")}
+                      {t("output_page.rollback")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -473,8 +433,8 @@ export default function OutputPage() {
           className="!w-[90vw] max-h-[85vh]"
         >
           <DialogHeader className="mb-2">
-            <DialogTitle>{t("page.backupPreview")}</DialogTitle>
-            <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
+            <DialogTitle>{t("output_page.backupPreview")}</DialogTitle>
+            <p className="text-xs text-muted-foreground">{t("output_page.diffHint")}</p>
           </DialogHeader>
           <div style={{ height: "65vh" }} className="border border-border rounded-lg overflow-hidden">
             <DiffEditor
@@ -502,12 +462,12 @@ export default function OutputPage() {
       <Dialog open={rollbackConfirmOpen} onOpenChange={setRollbackConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("page.rollbackConfirmTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page.rollbackConfirmTitle")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">{t("page.rollbackConfirm")}</p>
+          <p className="text-sm text-muted-foreground">{t("output_page.rollbackConfirm")}</p>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setRollbackConfirmOpen(false)}>
-              {tc("page.cancel")}
+              {tc("output_page.cancel")}
             </Button>
             <Button
               onClick={async () => {
@@ -521,7 +481,7 @@ export default function OutputPage() {
                 }
               }}
             >
-              {t("page.rollback")}
+              {t("output_page.rollback")}
             </Button>
           </div>
         </DialogContent>
@@ -536,7 +496,6 @@ export default function OutputPage() {
           cloudContent={conflictInfo?.cloud_content ?? ""}
           onKeepLocal={handleKeepLocal}
           onKeepCloud={handleKeepCloud}
-          t={t}
         />
       )}
     </div>
