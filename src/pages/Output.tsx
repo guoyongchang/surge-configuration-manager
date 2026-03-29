@@ -416,23 +416,25 @@ export default function OutputPage() {
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
             <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
           </DialogHeader>
-          <DiffEditor
-            original={backupOriginal}
-            modified={backupModified}
-            language="plaintext"
-            theme="vs-dark"
-            options={{
-              readOnly: true,
-              renderSideBySide: true,
-              scrollBeyondLastLine: false,
-              minimap: { enabled: false },
-              lineNumbers: "on",
-              folding: true,
-              wordWrap: "off",
-              automaticLayout: true,
-            }}
-            className="border border-border rounded-lg overflow-hidden"
-          />
+          <div style={{ height: "65vh" }} className="border border-border rounded-lg overflow-hidden">
+            <DiffEditor
+              original={backupOriginal}
+              modified={backupModified}
+              language="plaintext"
+              theme="vs-dark"
+              options={{
+                readOnly: true,
+                renderSideBySide: true,
+                scrollBeyondLastLine: false,
+                minimap: { enabled: false },
+                lineNumbers: "on",
+                folding: true,
+                wordWrap: "off",
+                automaticLayout: true,
+                fixedOverflowWidgets: true,
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
