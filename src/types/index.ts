@@ -137,3 +137,12 @@ export interface SyncConflictInfo {
   local_content: string;
   cloud_content: string;
 }
+
+export interface CloudSyncManifestFileEntry {
+  sha: string;
+}
+
+export interface CloudSyncManifest {
+  version: number;
+  files: Record<string, CloudSyncManifestFileEntry>;
+}
