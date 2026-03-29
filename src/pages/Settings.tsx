@@ -65,6 +65,8 @@ export default function SettingsPage() {
   });
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [savingCloudSync, setSavingCloudSync] = useState(false);
+  const [savedCloudSync, setSavedCloudSync] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -115,10 +117,15 @@ export default function SettingsPage() {
     }));
 
   const handleSaveCloudSync = async () => {
+    setSavingCloudSync(true);
     try {
       await api.updateCloudSyncSettings(cloudSync);
+      setSavedCloudSync(true);
+      setTimeout(() => setSavedCloudSync(false), 2000);
     } catch (e) {
       setSyncError(String(e));
+    } finally {
+      setSavingCloudSync(false);
     }
   };
 
@@ -374,9 +381,15 @@ export default function SettingsPage() {
             )}
 
             <div className="flex gap-2">
-              <Button onClick={handleSaveCloudSync} size="sm">
-                <Save size={14} />
-                {t("cloudSync.saveBtn")}
+              <Button onClick={handleSaveCloudSync} disabled={savingCloudSync} size="sm">
+                {savingCloudSync ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : savedCloudSync ? (
+                  <RefreshCw size={14} />
+                ) : (
+                  <Save size={14} />
+                )}
+                {savedCloudSync ? tc("status.saved") : t("cloudSync.saveBtn")}
               </Button>
               {cloudSync.enabled && (
                 <Button onClick={handleSyncNow} size="sm" disabled={syncing}>
