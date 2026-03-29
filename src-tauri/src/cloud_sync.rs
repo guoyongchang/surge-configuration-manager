@@ -132,6 +132,7 @@ impl CloudSyncClient {
             .map_err(|e| e.to_string())?;
 
         if resp.status() == 404 {
+            eprintln!("[cloud_sync] GET {} - 404 not found", path);
             return Ok(None);
         }
         if !resp.status().is_success() {
@@ -167,6 +168,8 @@ impl CloudSyncClient {
             content: base64_encode(content),
             sha,
         };
+        let body_json = serde_json::to_string_pretty(&body).unwrap_or_default();
+        eprintln!("[cloud_sync] PUT {} body: {}", path, body_json);
         let resp = self
             .client
             .put(&url)
