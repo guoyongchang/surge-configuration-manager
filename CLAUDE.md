@@ -97,6 +97,7 @@ Subscriptions support two source types (`SubSource::Url` | `SubSource::File`). O
 - Tauri capabilities are in `src-tauri/capabilities/default.json` — includes `fs:default` and `dialog:default`
 - Compact Card usage: always add `className="py-0 gap-0"` to shadcn `<Card>` in list items (default padding is too large)
 - Frontend icons: `lucide-react` exclusively
+- Page inspection: use Playwright (installed at `/tmp/node_modules/puppeteer` or via `npx playwright`) to read page content and debug UI issues
 
 ## Architecture Layer Rules (ENFORCED BY CI — requires test harness setup)
 
