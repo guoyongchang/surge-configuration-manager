@@ -1176,45 +1176,53 @@ pub async fn check_sync_conflict(
     }
 
     let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
-    let existing = client
-        .get_file_info("scm_data.json")
-        .await
-        .map_err(|e| e.to_string())?;
 
-    let Some((cloud_sha, _)) = existing else {
-        return Ok(None);
-    };
-
-    let local_content = {
+    // Build local manifest
+    let (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        serde_json::to_string(&*data).map_err(|e| e.to_string())?
+        let subscriptions_json = serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json = serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json = serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json = serde_json::to_string(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json = serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
+        (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json)
     };
 
-    // Compute local SHA (simple hash-based approximation)
-    let local_sha = Some(sha256_string(&local_content));
+    let local_manifest = client.build_local_manifest(
+        &subscriptions_json,
+        &rules_remote_json,
+        &rules_individual_json,
+        &nodes_json,
+        &output_config_json,
+    );
 
-    if local_sha.as_ref() != Some(&cloud_sha) {
-        let cloud_content = client
-            .get_file_content("scm_data.json")
-            .await
-            .map_err(|e| e.to_string())?;
+    // Get cloud manifest
+    let cloud_manifest_json = match client.get_file_content("manifest.json").await {
+        Ok(content) => content,
+        Err(_) => return Ok(None), // No cloud data = no conflict
+    };
+
+    let cloud_manifest: crate::cloud_sync::CloudSyncManifest = match serde_json::from_str(&cloud_manifest_json) {
+        Ok(m) => m,
+        Err(_) => return Ok(None),
+    };
+
+    let local_manifest_json = serde_json::to_string(&local_manifest).map_err(|e| e.to_string())?;
+
+    // Compute manifest SHA using CloudSyncManifest::compute_sha
+    let local_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&local_manifest_json);
+    let cloud_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&cloud_manifest_json);
+
+    if local_sha != cloud_sha {
         Ok(Some(SyncConflictInfo {
-            local_sha,
+            local_sha: Some(local_sha),
             cloud_sha,
-            local_content,
-            cloud_content,
+            local_content: local_manifest_json,
+            cloud_content: cloud_manifest_json,
         }))
     } else {
         Ok(None)
     }
-}
-
-fn sha256_string(input: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut hasher = DefaultHasher::new();
-    input.hash(&mut hasher);
-    format!("{:016x}", hasher.finish())
 }
 
 fn shellexpand_tilde(path: &str) -> String {
