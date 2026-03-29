@@ -14,9 +14,11 @@
     "saveBtn": "保存通用设置"
   },
   "httpListen": {
-    "title": "HTTP 监听"
+    "breadcrumb": "首页 / 通用",
+    "title": "通用"
   },
   "mitm": {
+    "breadcrumb": "首页 / MITM",
     "sectionTitle": "MITM",
     "title": "MITM",
     "label": "[MITM] 区块内容",

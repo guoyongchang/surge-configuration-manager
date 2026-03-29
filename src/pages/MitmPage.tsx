@@ -83,7 +83,7 @@ export default function MitmPage() {
   return (
     <div className="p-6 w-full max-w-2xl">
       <div className="mb-6">
-        <div className="text-xs text-muted-foreground mb-1">{t("page.breadcrumb")}</div>
+        <div className="text-xs text-muted-foreground mb-1">{t("mitm.breadcrumb")}</div>
         <h1 className="text-xl font-bold">{t("mitm.title")}</h1>
       </div>
 

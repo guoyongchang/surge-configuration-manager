@@ -14,9 +14,11 @@
     "saveBtn": "Save General"
   },
   "httpListen": {
-    "title": "HTTP Listen"
+    "breadcrumb": "Dashboard / General",
+    "title": "General"
   },
   "mitm": {
+    "breadcrumb": "Dashboard / MITM",
     "sectionTitle": "MITM",
     "title": "MITM",
     "label": "[MITM] Section Content",
