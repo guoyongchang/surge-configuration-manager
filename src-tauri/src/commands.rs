@@ -1055,6 +1055,10 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
     let local_manifest_json = serde_json::to_string(&local_manifest).map_err(|e| e.to_string())?;
 
     for path in &changed_paths {
+        // Skip cloud-only files (no local content to push)
+        if !local_manifest.files.contains_key(path) {
+            continue;
+        }
         let content = file_contents.get(path).map(|s| s.as_str()).unwrap_or("");
         let sha = cloud_manifest
             .as_ref()
