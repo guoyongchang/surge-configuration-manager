@@ -54,8 +54,8 @@ describe("RulesPage", () => {
       mockInitialLoad([], []);
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("page.emptyRuleSets")).toBeInTheDocument();
-        expect(screen.getByText("page.emptyIndividual")).toBeInTheDocument();
+        expect(screen.getByText("rules_page_emptyRuleSets")).toBeInTheDocument();
+        expect(screen.getByText("rules_page_emptyIndividual")).toBeInTheDocument();
       });
     });
   });
@@ -75,16 +75,16 @@ describe("RulesPage", () => {
 
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("addRuleSet.trigger")).toBeInTheDocument();
+        expect(screen.getByText("rules_addRuleSet_trigger")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByText("addRuleSet.trigger"));
+      await user.click(screen.getByText("rules_addRuleSet_trigger"));
       await waitFor(() => {
-        expect(screen.getByText("addRuleSet.title")).toBeInTheDocument();
+        expect(screen.getByText("rules_addRuleSet_title")).toBeInTheDocument();
       });
 
-      await user.type(screen.getByPlaceholderText("addRuleSet.namePlaceholder"), "China Direct");
-      await user.type(screen.getByPlaceholderText("addRuleSet.urlPlaceholder"), "https://cdn.example.com/china.list");
+      await user.type(screen.getByPlaceholderText("rules_addRuleSet_namePlaceholder"), "China Direct");
+      await user.type(screen.getByPlaceholderText("rules_addRuleSet_urlPlaceholder"), "https://cdn.example.com/china.list");
       await user.click(screen.getByRole("button", { name: "actions.add" }));
 
       await waitFor(() => {
@@ -112,12 +112,12 @@ describe("RulesPage", () => {
 
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("addRule.trigger")).toBeInTheDocument();
+        expect(screen.getByText("rules_addRule_trigger")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByText("addRule.trigger"));
+      await user.click(screen.getByText("rules_addRule_trigger"));
       await waitFor(() => {
-        expect(screen.getByText("addRule.title")).toBeInTheDocument();
+        expect(screen.getByText("rules_addRule_title")).toBeInTheDocument();
       });
 
       // Default rule type is DOMAIN, placeholder is "example.com"
@@ -151,7 +151,7 @@ describe("RulesPage", () => {
       }
 
       await waitFor(() => {
-        expect(screen.getByText("page.removeRuleSetTitle")).toBeInTheDocument();
+        expect(screen.getByText("rules_page_removeRuleSetTitle")).toBeInTheDocument();
       });
     });
   });

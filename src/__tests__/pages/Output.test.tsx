@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import OutputPage from "@/pages/Output";
@@ -36,6 +36,10 @@ describe("OutputPage", () => {
     vi.resetAllMocks();
   });
 
+  afterEach(() => {
+    mockInvoke.mockReset();
+  });
+
   describe("Initial Load", () => {
     it("loads and renders output config", async () => {
       mockInvoke
@@ -55,7 +59,7 @@ describe("OutputPage", () => {
 
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("page.noBuilds")).toBeInTheDocument();
+        expect(screen.getByText("output_page_noBuilds")).toBeInTheDocument();
       });
     });
   });
@@ -66,12 +70,13 @@ describe("OutputPage", () => {
       mockInvoke
         .mockResolvedValueOnce(mockOutputConfig)
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce({ enabled: false, github_pat: null, repo_url: null, auto_sync: false, last_synced_at: null })
         .mockResolvedValueOnce(mockBuildRecord); // generateConfig result
 
       renderPage();
       await waitFor(() => screen.getByDisplayValue("managed.conf"));
 
-      await user.click(screen.getByText("page.generateBtn"));
+      await user.click(screen.getByText("output_page_generateBtn"));
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith("generate_config");
@@ -83,15 +88,16 @@ describe("OutputPage", () => {
       mockInvoke
         .mockResolvedValueOnce(mockOutputConfig)
         .mockResolvedValueOnce([])
+        .mockResolvedValueOnce({ enabled: false, github_pat: null, repo_url: null, auto_sync: false, last_synced_at: null })
         .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(mockBuildRecord), 100)));
 
       renderPage();
       await waitFor(() => screen.getByDisplayValue("managed.conf"));
 
-      await user.click(screen.getByText("page.generateBtn"));
+      await user.click(screen.getByText("output_page_generateBtn"));
 
       await waitFor(() => {
-        expect(screen.getByText("page.generatingBtn")).toBeInTheDocument();
+        expect(screen.getByText("output_page_generatingBtn")).toBeInTheDocument();
       });
     });
   });
@@ -107,7 +113,7 @@ describe("OutputPage", () => {
       renderPage();
       await waitFor(() => screen.getByDisplayValue("managed.conf"));
 
-      await user.click(screen.getByText("page.previewBtn"));
+      await user.click(screen.getByText("output_page_previewBtn"));
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith("preview_config");
@@ -171,7 +177,7 @@ describe("OutputPage", () => {
       renderPage();
       await waitFor(() => screen.getByText("managed.conf"));
 
-      await user.click(screen.getByText("page.clearAllBtn"));
+      await user.click(screen.getByText("output_page_clearAllBtn"));
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith("clear_build_history");

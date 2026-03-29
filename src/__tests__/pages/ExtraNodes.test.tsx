@@ -34,7 +34,7 @@ describe("ExtraNodesPage", () => {
       mockInvoke.mockResolvedValueOnce([]);
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("page.empty")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_page_empty")).toBeInTheDocument();
       });
     });
   });
@@ -49,15 +49,15 @@ describe("ExtraNodesPage", () => {
 
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("dialog.trigger")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_dialog_trigger")).toBeInTheDocument();
       });
 
       // Open the add dialog
-      await user.click(screen.getByText("dialog.trigger"));
+      await user.click(screen.getByText("extraNodes_dialog_trigger"));
 
       // Wait for dialog to open and fill in the form
       await waitFor(() => {
-        expect(screen.getByText("dialog.title")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_dialog_title")).toBeInTheDocument();
       });
 
       // Fill name
@@ -73,7 +73,7 @@ describe("ExtraNodesPage", () => {
       // Port uses type="number" with default value, no placeholder needed
 
       // Submit the form
-      await user.click(screen.getByText("batch.addBtn"));
+      await user.click(screen.getByText("extraNodes_batch_addBtn"));
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith(
@@ -94,20 +94,20 @@ describe("ExtraNodesPage", () => {
 
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("dialog.trigger")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_dialog_trigger")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByText("dialog.trigger"));
+      await user.click(screen.getByText("extraNodes_dialog_trigger"));
 
       await waitFor(() => {
-        expect(screen.getByText("dialog.title")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_dialog_title")).toBeInTheDocument();
       });
 
       // Switch to batch tab
-      await user.click(screen.getByText("tabs.batch"));
+      await user.click(screen.getByText("extraNodes_tabs_batch"));
 
       await waitFor(() => {
-        expect(screen.getByText("batch.socks5Tab")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_batch_socks5Tab")).toBeInTheDocument();
       });
     });
   });
@@ -133,7 +133,7 @@ describe("ExtraNodesPage", () => {
 
       // Confirm dialog should appear
       await waitFor(() => {
-        expect(screen.getByText("page.removeTitle")).toBeInTheDocument();
+        expect(screen.getByText("extraNodes_page_removeTitle")).toBeInTheDocument();
       });
 
       // Click confirm button (destructive)

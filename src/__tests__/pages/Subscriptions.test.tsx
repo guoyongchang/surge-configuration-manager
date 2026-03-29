@@ -41,7 +41,7 @@ describe("SubscriptionsPage", () => {
       mockInvoke.mockResolvedValueOnce([]);
       renderPage();
       await waitFor(() => {
-        expect(screen.getByText("page.emptyTitle")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_page_emptyTitle")).toBeInTheDocument();
       });
     });
 
@@ -66,19 +66,19 @@ describe("SubscriptionsPage", () => {
 
       // Wait for dialog trigger button to appear
       await waitFor(() => {
-        expect(screen.getByText("dialog.triggerLabel")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_dialog_triggerLabel")).toBeInTheDocument();
       });
 
       // Open the add dialog
-      await user.click(screen.getByText("dialog.triggerLabel"));
+      await user.click(screen.getByText("subscriptions_dialog_triggerLabel"));
 
       // Fill in the form
       await user.type(
-        screen.getByPlaceholderText("dialog.namePlaceholder"),
+        screen.getByPlaceholderText("subscriptions_dialog_namePlaceholder"),
         "My Sub"
       );
       await user.type(
-        screen.getByPlaceholderText("dialog.urlPlaceholder"),
+        screen.getByPlaceholderText("subscriptions_dialog_urlPlaceholder"),
         "https://example.com/sub.conf"
       );
 
@@ -104,13 +104,13 @@ describe("SubscriptionsPage", () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByText("dialog.triggerLabel")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_dialog_triggerLabel")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByText("dialog.triggerLabel"));
+      await user.click(screen.getByText("subscriptions_dialog_triggerLabel"));
 
       // Switch to file source
-      await user.click(screen.getByText("dialog.fromFile"));
+      await user.click(screen.getByText("subscriptions_dialog_fromFile"));
 
       // Click the folder picker button (icon button next to file input)
       const folderButton = screen.getByRole("button", { name: "" });
@@ -144,9 +144,9 @@ describe("SubscriptionsPage", () => {
 
       // Wait for dropdown to appear and click remove
       await waitFor(() => {
-        expect(screen.getByText("card.remove")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_card_remove")).toBeInTheDocument();
       });
-      await user.click(screen.getByText("card.remove"));
+      await user.click(screen.getByText("subscriptions_card_remove"));
 
       // Confirm dialog should appear — click the destructive confirm button
       await waitFor(() => {
@@ -192,9 +192,9 @@ describe("SubscriptionsPage", () => {
 
       // Wait for dropdown and click refresh
       await waitFor(() => {
-        expect(screen.getByText("card.refreshNow")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_card_refreshNow")).toBeInTheDocument();
       });
-      await user.click(screen.getByText("card.refreshNow"));
+      await user.click(screen.getByText("subscriptions_card_refreshNow"));
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith("refresh_subscription", {
@@ -226,9 +226,9 @@ describe("SubscriptionsPage", () => {
 
       // Wait for dropdown and click "Set as Primary"
       await waitFor(() => {
-        expect(screen.getByText("card.setPrimary")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_card_setPrimary")).toBeInTheDocument();
       });
-      await user.click(screen.getByText("card.setPrimary"));
+      await user.click(screen.getByText("subscriptions_card_setPrimary"));
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith("set_primary_subscription", {
@@ -244,12 +244,12 @@ describe("SubscriptionsPage", () => {
       mockInvoke.mockResolvedValueOnce([]);
 
       renderPage();
-      await waitFor(() => screen.getByText("page.emptyTitle"));
+      await waitFor(() => screen.getByText("subscriptions_page_emptyTitle"));
 
-      await user.click(screen.getByText("page.emptyTitle"));
+      await user.click(screen.getByText("subscriptions_page_emptyTitle"));
 
       await waitFor(() => {
-        expect(screen.getByText("dialog.addTitle")).toBeInTheDocument();
+        expect(screen.getByText("subscriptions_dialog_addTitle")).toBeInTheDocument();
       });
     });
   });
