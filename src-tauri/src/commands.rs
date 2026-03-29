@@ -982,9 +982,7 @@ pub struct CloudSyncState {
 }
 
 #[tauri::command]
-pub fn get_cloud_sync_settings(
-    store: State<'_, Store>,
-) -> Result<CloudSyncSettings, String> {
+pub fn get_cloud_sync_settings(store: State<'_, Store>) -> Result<CloudSyncSettings, String> {
     let data = store.data.lock().map_err(|e| e.to_string())?;
     Ok(data.cloud_sync_settings.clone())
 }
@@ -1002,9 +1000,7 @@ pub fn update_cloud_sync_settings(
 }
 
 #[tauri::command]
-pub async fn sync_to_cloud(
-    store: State<'_, Store>,
-) -> Result<CloudSyncState, String> {
+pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, String> {
     let settings = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         data.cloud_sync_settings.clone()
@@ -1014,8 +1010,7 @@ pub async fn sync_to_cloud(
         return Err("Cloud sync not configured".to_string());
     }
 
-    let client = crate::cloud_sync::CloudSyncClient::new(&settings)
-        .map_err(|e| e.to_string())?;
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
 
     // Serialize all app data as JSON
     let app_data_json = {
@@ -1024,12 +1019,16 @@ pub async fn sync_to_cloud(
     };
 
     // Check if file exists and get SHA
-    let existing = client.get_file_info("scm_data.json").await
+    let existing = client
+        .get_file_info("scm_data.json")
+        .await
         .map_err(|e| e.to_string())?;
     let sha = existing.map(|(s, _)| s);
 
     // Push to GitHub
-    client.put_file("scm_data.json", &app_data_json, sha).await
+    client
+        .put_file("scm_data.json", &app_data_json, sha)
+        .await
         .map_err(|e| e.to_string())?;
 
     // Update last_synced_at
@@ -1048,9 +1047,7 @@ pub async fn sync_to_cloud(
 }
 
 #[tauri::command]
-pub async fn sync_from_cloud(
-    store: State<'_, Store>,
-) -> Result<(), String> {
+pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let settings = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         data.cloud_sync_settings.clone()
@@ -1060,12 +1057,13 @@ pub async fn sync_from_cloud(
         return Err("Cloud sync not configured".to_string());
     }
 
-    let client = crate::cloud_sync::CloudSyncClient::new(&settings)
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+    let content = client
+        .get_file_content("scm_data.json")
+        .await
         .map_err(|e| e.to_string())?;
-    let content = client.get_file_content("scm_data.json").await
-        .map_err(|e| e.to_string())?;
-    let cloud_data: AppData = serde_json::from_str(&content)
-        .map_err(|e| format!("Invalid cloud data format: {}", e))?;
+    let cloud_data: AppData =
+        serde_json::from_str(&content).map_err(|e| format!("Invalid cloud data format: {}", e))?;
 
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
@@ -1097,9 +1095,10 @@ pub async fn check_sync_conflict(
         return Ok(None);
     }
 
-    let client = crate::cloud_sync::CloudSyncClient::new(&settings)
-        .map_err(|e| e.to_string())?;
-    let existing = client.get_file_info("scm_data.json").await
+    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+    let existing = client
+        .get_file_info("scm_data.json")
+        .await
         .map_err(|e| e.to_string())?;
 
     let Some((cloud_sha, _)) = existing else {
@@ -1115,7 +1114,9 @@ pub async fn check_sync_conflict(
     let local_sha = Some(sha256_string(&local_content));
 
     if local_sha.as_ref() != Some(&cloud_sha) {
-        let cloud_content = client.get_file_content("scm_data.json").await
+        let cloud_content = client
+            .get_file_content("scm_data.json")
+            .await
             .map_err(|e| e.to_string())?;
         Ok(Some(SyncConflictInfo {
             local_sha,
