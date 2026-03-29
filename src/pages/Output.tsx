@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { diffLines } from "diff";
 import type { OutputConfig, BuildRecord, BackupInfo } from "@/types";
 import * as api from "@/lib/api";
 
@@ -52,7 +53,7 @@ export default function OutputPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [backupPreviewOpen, setBackupPreviewOpen] = useState(false);
-  const [backupPreviewContent, setBackupPreviewContent] = useState("");
+  const [backupDiff, setBackupDiff] = useState<ReturnType<typeof diffLines>>([]);
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
 
@@ -371,8 +372,12 @@ export default function OutputPage() {
                       variant="outline"
                       onClick={async () => {
                         try {
-                          const content = await api.getBackupContent(backup.filename);
-                          setBackupPreviewContent(content);
+                          const [backupContent, currentContent] = await Promise.all([
+                            api.getBackupContent(backup.filename),
+                            api.previewConfig(),
+                          ]);
+                          const changes = diffLines(backupContent, currentContent);
+                          setBackupDiff(changes);
                           setBackupPreviewOpen(true);
                         } catch (e) {
                           console.error("Preview failed:", e);
@@ -405,10 +410,34 @@ export default function OutputPage() {
         <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
+            <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
           </DialogHeader>
-          <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
-            {backupPreviewContent}
-          </pre>
+          <div className="bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh]">
+            {backupDiff.map((part, idx) => {
+              if (part.added) {
+                return (
+                  <div key={idx} className="bg-green-950/30 text-green-400 font-mono text-xs leading-5 pl-2">
+                    <span className="text-green-500 select-none mr-2">+</span>
+                    {part.value}
+                  </div>
+                );
+              }
+              if (part.removed) {
+                return (
+                  <div key={idx} className="bg-red-950/30 text-red-400 font-mono text-xs leading-5 pl-2">
+                    <span className="text-red-500 select-none mr-2">-</span>
+                    {part.value}
+                  </div>
+                );
+              }
+              return (
+                <div key={idx} className="text-muted-foreground font-mono text-xs leading-5 pl-2">
+                  <span className="select-none mr-2 text-border"> </span>
+                  {part.value}
+                </div>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
 
