@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FolderOpen,
@@ -21,70 +21,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { diffLines } from "diff";
+import { DiffEditor } from "@monaco-editor/react";
 import type { OutputConfig, BuildRecord, BackupInfo } from "@/types";
 import * as api from "@/lib/api";
-
-interface DiffRow {
-  left: { text: string; color: "neutral" | "removed" | "empty" };
-  right: { text: string; color: "neutral" | "added" | "empty" };
-}
-
-function buildSideBySideRows(diff: ReturnType<typeof diffLines>): DiffRow[] {
-  const rows: DiffRow[] = [];
-  let i = 0;
-  while (i < diff.length) {
-    const part = diff[i];
-    if (part.added) {
-      // Check if previous part was removed — pair them
-      if (i > 0 && diff[i - 1].removed) {
-        const prevLines = diff[i - 1].value.split("\n");
-        const currLines = part.value.split("\n");
-        const maxLen = Math.max(prevLines.length, currLines.length);
-        for (let j = 0; j < maxLen; j++) {
-          rows.push({
-            left: {
-              text: prevLines[j] ?? "",
-              color: prevLines[j] !== undefined ? "removed" : "empty",
-            },
-            right: {
-              text: currLines[j] ?? "",
-              color: currLines[j] !== undefined ? "added" : "empty",
-            },
-          });
-        }
-      } else {
-        // Just added lines
-        for (const line of part.value.split("\n")) {
-          if (line === "" && part.value.endsWith("\n")) continue;
-          rows.push({ left: { text: "", color: "empty" }, right: { text: line, color: "added" } });
-        }
-      }
-    } else if (part.removed) {
-      // Removed lines not followed by added — show alone
-      let j = i + 1;
-      let paired = false;
-      if (j < diff.length && diff[j].added) {
-        // Will be paired in next iteration via the "added" branch above
-        paired = true;
-      }
-      if (!paired) {
-        for (const line of part.value.split("\n")) {
-          if (line === "" && part.value.endsWith("\n")) continue;
-          rows.push({ left: { text: line, color: "removed" }, right: { text: "", color: "empty" } });
-        }
-      }
-    } else {
-      // Unchanged
-      for (const line of part.value.split("\n")) {
-        if (line === "" && part.value.endsWith("\n")) continue;
-        rows.push({ left: { text: line, color: "neutral" }, right: { text: line, color: "neutral" } });
-      }
-    }
-    i++;
-  }
-  return rows;
-}
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   if (status === "success")
@@ -114,25 +53,10 @@ export default function OutputPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [backupPreviewOpen, setBackupPreviewOpen] = useState(false);
-  const [backupDiff, setBackupDiff] = useState<ReturnType<typeof diffLines>>([]);
+  const [backupOriginal, setBackupOriginal] = useState("");
+  const [backupModified, setBackupModified] = useState("");
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
-
-  const leftScrollRef = useRef<HTMLDivElement>(null);
-  const rightScrollRef = useRef<HTMLDivElement>(null);
-  const syncingRef = useRef(false);
-
-  const handleDiffScroll = useCallback((source: "left" | "right") => {
-    const sourceEl = source === "left" ? leftScrollRef.current : rightScrollRef.current;
-    const targetEl = source === "left" ? rightScrollRef.current : leftScrollRef.current;
-    if (!sourceEl || !targetEl || syncingRef.current) return;
-    syncingRef.current = true;
-    targetEl.scrollTop = sourceEl.scrollTop;
-    targetEl.scrollLeft = sourceEl.scrollLeft;
-    requestAnimationFrame(() => {
-      syncingRef.current = false;
-    });
-  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -449,12 +373,12 @@ export default function OutputPage() {
                       variant="outline"
                       onClick={async () => {
                         try {
-                          const [backupContent, currentContent] = await Promise.all([
+                          const [original, modified] = await Promise.all([
                             api.getBackupContent(backup.filename),
                             api.previewConfig(),
                           ]);
-                          const changes = diffLines(backupContent, currentContent);
-                          setBackupDiff(changes);
+                          setBackupOriginal(original);
+                          setBackupModified(modified);
                           setBackupPreviewOpen(true);
                         } catch (e) {
                           console.error("Preview failed:", e);
@@ -482,76 +406,33 @@ export default function OutputPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Backup Preview Dialog — side-by-side diff */}
+      {/* Backup Preview Dialog — Monaco DiffEditor */}
       <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
         <DialogContent
-          style={{ maxWidth: "80vw" }}
-          className="!w-[80vw] max-h-[80vh]"
+          style={{ maxWidth: "90vw" }}
+          className="!w-[90vw] max-h-[85vh]"
         >
           <DialogHeader className="mb-2">
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
             <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
           </DialogHeader>
-          <div className="flex text-xs font-mono leading-5 border border-border rounded-lg overflow-hidden">
-            {/* Left: backup */}
-            <div
-              ref={leftScrollRef}
-              onScroll={() => handleDiffScroll("left")}
-              className="w-1/2 overflow-auto max-h-[65vh] bg-card"
-            >
-              <div className="sticky top-0 left-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
-                Backup
-              </div>
-              <div className="min-w-0">
-                {buildSideBySideRows(backupDiff).map((row, idx) => {
-                  const leftColor =
-                    row.left.color === "removed"
-                      ? "bg-red-950/30 text-red-400"
-                      : row.left.color === "empty"
-                        ? "bg-muted/20"
-                        : "text-muted-foreground";
-                  return (
-                    <div
-                      key={idx}
-                      className={`px-3 py-0.5 whitespace-nowrap ${leftColor}`}
-                    >
-                      {row.left.text || "\u00A0"}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {/* Divider */}
-            <div className="w-px bg-border shrink-0" />
-            {/* Right: current */}
-            <div
-              ref={rightScrollRef}
-              onScroll={() => handleDiffScroll("right")}
-              className="w-1/2 overflow-auto max-h-[65vh] bg-card"
-            >
-              <div className="sticky top-0 left-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
-                Current
-              </div>
-              <div className="min-w-0">
-                {buildSideBySideRows(backupDiff).map((row, idx) => {
-                  const rightColor =
-                    row.right.color === "added"
-                      ? "bg-green-950/30 text-green-400"
-                      : row.right.color === "empty"
-                        ? "bg-muted/20"
-                        : "text-muted-foreground";
-                  return (
-                    <div
-                      key={idx}
-                      className={`px-3 py-0.5 whitespace-nowrap ${rightColor}`}
-                    >
-                      {row.right.text || "\u00A0"}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <DiffEditor
+            original={backupOriginal}
+            modified={backupModified}
+            language="plaintext"
+            theme="vs-dark"
+            options={{
+              readOnly: true,
+              renderSideBySide: true,
+              scrollBeyondLastLine: false,
+              minimap: { enabled: false },
+              lineNumbers: "on",
+              folding: true,
+              wordWrap: "off",
+              automaticLayout: true,
+            }}
+            className="border border-border rounded-lg overflow-hidden"
+          />
         </DialogContent>
       </Dialog>
 
