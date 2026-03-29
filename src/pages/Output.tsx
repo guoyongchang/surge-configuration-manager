@@ -128,6 +128,7 @@ export default function OutputPage() {
     if (!sourceEl || !targetEl || syncingRef.current) return;
     syncingRef.current = true;
     targetEl.scrollTop = sourceEl.scrollTop;
+    targetEl.scrollLeft = sourceEl.scrollLeft;
     requestAnimationFrame(() => {
       syncingRef.current = false;
     });
@@ -498,10 +499,10 @@ export default function OutputPage() {
               onScroll={() => handleDiffScroll("left")}
               className="w-1/2 overflow-auto max-h-[65vh] bg-card"
             >
-              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
+              <div className="sticky top-0 left-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
                 Backup
               </div>
-              <div>
+              <div className="min-w-0">
                 {buildSideBySideRows(backupDiff).map((row, idx) => {
                   const leftColor =
                     row.left.color === "removed"
@@ -512,7 +513,7 @@ export default function OutputPage() {
                   return (
                     <div
                       key={idx}
-                      className={`px-3 py-0.5 ${leftColor}`}
+                      className={`px-3 py-0.5 whitespace-nowrap ${leftColor}`}
                     >
                       {row.left.text || "\u00A0"}
                     </div>
@@ -528,10 +529,10 @@ export default function OutputPage() {
               onScroll={() => handleDiffScroll("right")}
               className="w-1/2 overflow-auto max-h-[65vh] bg-card"
             >
-              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
+              <div className="sticky top-0 left-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
                 Current
               </div>
-              <div>
+              <div className="min-w-0">
                 {buildSideBySideRows(backupDiff).map((row, idx) => {
                   const rightColor =
                     row.right.color === "added"
@@ -542,7 +543,7 @@ export default function OutputPage() {
                   return (
                     <div
                       key={idx}
-                      className={`px-3 py-0.5 ${rightColor}`}
+                      className={`px-3 py-0.5 whitespace-nowrap ${rightColor}`}
                     >
                       {row.right.text || "\u00A0"}
                     </div>
