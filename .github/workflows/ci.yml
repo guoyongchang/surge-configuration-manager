@@ -41,6 +41,12 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
+      - name: ESLint (architecture boundaries)
+        run: pnpm lint
+
+      - name: Frontend unit tests
+        run: pnpm test
+
       - name: Rust format check
         working-directory: src-tauri
         run: cargo fmt -- --check
