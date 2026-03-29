@@ -17,6 +17,8 @@ import type {
   CloudSyncSettings,
   CloudSyncState,
   SyncConflictInfo,
+  HostEntry,
+  UrlRewriteEntry,
 } from "@/types";
 
 export type {
@@ -36,6 +38,8 @@ export type {
   CloudSyncSettings,
   CloudSyncState,
   SyncConflictInfo,
+  HostEntry,
+  UrlRewriteEntry,
 } from "@/types";
 
 // ── File / Folder Dialog ──
@@ -261,3 +265,59 @@ export const syncFromCloud = () =>
 
 export const checkSyncConflict = () =>
   invoke<SyncConflictInfo | null>("check_sync_conflict");
+
+// ── Host Entries ──
+
+export const getHosts = () => invoke<HostEntry[]>("get_hosts");
+
+export const addHost = (domain: string, ip: string) =>
+  invoke<HostEntry>("add_host", { domain, ip });
+
+export const updateHost = (id: string, domain: string, ip: string, enabled: boolean) =>
+  invoke<HostEntry>("update_host", { id, domain, ip, enabled });
+
+export const removeHost = (id: string) =>
+  invoke<void>("remove_host", { id });
+
+export const toggleHost = (id: string) =>
+  invoke<void>("toggle_host", { id });
+
+export const batchAddHosts = (entries: [string, string][]) =>
+  invoke<HostEntry[]>("batch_add_hosts", { entries });
+
+export const batchRemoveHosts = (ids: string[]) =>
+  invoke<void>("batch_remove_hosts", { ids });
+
+// ── URL Rewrite Entries ──
+
+export const getUrlRewrites = () => invoke<UrlRewriteEntry[]>("get_url_rewrites");
+
+export const addUrlRewrite = (pattern: string, replacement: string, redirectType: string) =>
+  invoke<UrlRewriteEntry>("add_url_rewrite", { pattern, replacement, redirect_type: redirectType });
+
+export const updateUrlRewrite = (
+  id: string,
+  pattern: string,
+  replacement: string,
+  redirectType: string,
+  enabled: boolean
+) =>
+  invoke<UrlRewriteEntry>("update_url_rewrite", {
+    id,
+    pattern,
+    replacement,
+    redirect_type: redirectType,
+    enabled,
+  });
+
+export const removeUrlRewrite = (id: string) =>
+  invoke<void>("remove_url_rewrite", { id });
+
+export const toggleUrlRewrite = (id: string) =>
+  invoke<void>("toggle_url_rewrite", { id });
+
+export const batchAddUrlRewrites = (entries: [string, string, string][]) =>
+  invoke<UrlRewriteEntry[]>("batch_add_url_rewrites", { entries });
+
+export const batchRemoveUrlRewrites = (ids: string[]) =>
+  invoke<void>("batch_remove_url_rewrites", { ids });
