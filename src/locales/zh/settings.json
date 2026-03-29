@@ -13,8 +13,12 @@
     "extraLinesHint": "[General] 区块的额外 key=value 配置，每行一条。",
     "saveBtn": "保存通用设置"
   },
+  "httpListen": {
+    "title": "HTTP 监听"
+  },
   "mitm": {
     "sectionTitle": "MITM",
+    "title": "MITM",
     "label": "[MITM] 区块内容",
     "hint": "[MITM] 区块的原始内容，通常包含 hostname = *.example.com 等 MITM 设置。"
   },

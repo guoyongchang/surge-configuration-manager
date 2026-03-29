@@ -13,8 +13,12 @@
     "extraLinesHint": "Additional key=value entries for the [General] section, one per line.",
     "saveBtn": "Save General"
   },
+  "httpListen": {
+    "title": "HTTP Listen"
+  },
   "mitm": {
     "sectionTitle": "MITM",
+    "title": "MITM",
     "label": "[MITM] Section Content",
     "hint": "Raw content of the [MITM] section. Typically contains hostname = *.example.com and other MITM settings."
   },
