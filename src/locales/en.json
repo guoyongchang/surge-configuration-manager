@@ -292,5 +292,21 @@
   "hosts_actions_enable": "Enable",
   "hosts_actions_disable": "Disable",
   "hosts_actions_edit": "Edit",
-  "hosts_actions_delete": "Delete"
+  "hosts_actions_delete": "Delete",
+  "extraNodes_page_breadcrumb": "Dashboard / Extra Nodes",
+  "hosts_page_breadcrumb": "Dashboard / Hosts",
+  "settings_page_breadcrumb": "Dashboard / Settings",
+  "subscriptions_page_breadcrumb": "Dashboard / Subscriptions",
+  "dialog_add": "Add",
+  "batch_addCount": "Add {{count}}",
+  "batch_add": "Add",
+  "settings_status_enabled": "Enabled",
+  "settings_status_disabled": "Disabled",
+  "settings_actions_enable": "Enable",
+  "settings_actions_disable": "Disable",
+  "settings_actions_edit": "Edit",
+  "settings_actions_delete": "Delete",
+  "rules_page_confirmDelete": "Delete this?",
+  "rules_page_confirmDeleteRules": "Delete {{count}} rules?",
+  "rules_page_confirmDeleteRuleSets": "Delete {{count}} rule sets?"
 }

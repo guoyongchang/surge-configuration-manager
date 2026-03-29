@@ -36,7 +36,6 @@ function parseBatchRewrites(text: string): { pattern: string; replacement: strin
 
 function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
   const [open, setOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"single" | "batch">("single");
 
@@ -106,10 +105,10 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogTrigger asChild>
-        <Button><Plus size={16} />{t("settings_dialog.trigger", { name: t("settings_urlRewrite.name") })}</Button>
+        <Button><Plus size={16} />{t("settings_dialog_trigger", { name: t("settings_urlRewrite_name") })}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{t("settings_dialog.addTitle", { name: t("settings_urlRewrite.name") })}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("settings_dialog_addTitle", { name: t("settings_urlRewrite_name") })}</DialogTitle></DialogHeader>
 
         {/* Main tab switcher */}
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -122,7 +121,7 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("single"); setError(""); }}
           >
-            {t("settings_tabs.single")}
+            {t("settings_tabs_single")}
           </button>
           <button
             type="button"
@@ -133,14 +132,14 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("batch"); setError(""); }}
           >
-            {t("settings_tabs.batch")}
+            {t("settings_tabs_batch")}
           </button>
         </div>
 
         {mainTab === "single" ? (
           <div className="space-y-3 py-1">
             <div>
-              <Label>{t("settings_urlRewrite.pattern")}</Label>
+              <Label>{t("settings_urlRewrite_pattern")}</Label>
               <Input
                 placeholder="^http://example.com"
                 value={pattern}
@@ -148,7 +147,7 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
               />
             </div>
             <div>
-              <Label>{t("settings_urlRewrite.replacement")}</Label>
+              <Label>{t("settings_urlRewrite_replacement")}</Label>
               <Input
                 placeholder="https://example.com"
                 value={replacement}
@@ -156,7 +155,7 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
               />
             </div>
             <div>
-              <Label>{t("settings_urlRewrite.redirectType")}</Label>
+              <Label>{t("settings_urlRewrite_redirectType")}</Label>
               <Input
                 placeholder="302"
                 value={redirectType}
@@ -165,17 +164,17 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
             </div>
             {error && <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>}
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
+              <Button variant="outline" onClick={handleClose}>{t("actions.cancel")}</Button>
               <Button onClick={handleSubmitSingle} disabled={loading || !canSubmitSingle}>
-                {loading && <Loader2 size={14} className="animate-spin" />}{t("settings_dialog.add")}
+                {loading && <Loader2 size={14} className="animate-spin" />}{t("settings_dialog_add")}
               </Button>
             </DialogFooter>
           </div>
         ) : (
           <div className="space-y-3 py-1">
             <div>
-              <Label>{t("settings_batch.title")}</Label>
-              <p className="text-xs text-muted-foreground mb-1.5">{t("settings_batch.hintUrlRewrite")}</p>
+              <Label>{t("settings_batch_title")}</Label>
+              <p className="text-xs text-muted-foreground mb-1.5">{t("settings_batch_hintUrlRewrite")}</p>
               <textarea
                 className="w-full h-36 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                 placeholder={"^http://example.com https://example.com 302\n^http://foo.com https://foo.com 301"}
@@ -187,7 +186,7 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
               <div className="flex items-center gap-3 text-xs">
                 {batchParsed.length > 0 && (
                   <span className="flex items-center gap-1 text-success">
-                    {batchParsed.length} {t("settings_batch.willAdd")}
+                    {batchParsed.length} {t("settings_batch_willAdd")}
                   </span>
                 )}
               </div>
@@ -196,13 +195,13 @@ function AddUrlRewriteDialog({ onAdded }: { onAdded: () => void }) {
               <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
+              <Button variant="outline" onClick={handleClose}>{t("actions.cancel")}</Button>
               <Button
                 onClick={handleSubmitBatch}
                 disabled={loading || batchParsed.length === 0}
               >
                 {loading && <Loader2 size={14} className="animate-spin" />}
-                {batchParsed.length > 0 ? t("batch.addCount", { count: batchParsed.length }) : t("batch.add")}
+                {batchParsed.length > 0 ? t("batch_addCount", { count: batchParsed.length }) : t("batch_add")}
               </Button>
             </DialogFooter>
           </div>
@@ -222,7 +221,6 @@ function EditUrlRewriteDialog({
   onUpdated: () => void;
 }) {
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
   const [open, setOpen] = useState(false);
   const [pattern, setPattern] = useState(rewrite.pattern);
   const [replacement, setReplacement] = useState(rewrite.replacement);
@@ -260,10 +258,10 @@ function EditUrlRewriteDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{t("settings_edit.title")}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("settings_edit_title")}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-1">
           <div>
-            <Label>{t("settings_urlRewrite.pattern")}</Label>
+            <Label>{t("settings_urlRewrite_pattern")}</Label>
             <Input
               placeholder="^http://example.com"
               value={pattern}
@@ -271,7 +269,7 @@ function EditUrlRewriteDialog({
             />
           </div>
           <div>
-            <Label>{t("settings_urlRewrite.replacement")}</Label>
+            <Label>{t("settings_urlRewrite_replacement")}</Label>
             <Input
               placeholder="https://example.com"
               value={replacement}
@@ -279,7 +277,7 @@ function EditUrlRewriteDialog({
             />
           </div>
           <div>
-            <Label>{t("settings_urlRewrite.redirectType")}</Label>
+            <Label>{t("settings_urlRewrite_redirectType")}</Label>
             <Input
               placeholder="302"
               value={redirectType}
@@ -287,15 +285,15 @@ function EditUrlRewriteDialog({
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label>{t("settings_edit.enabled")}</Label>
+            <Label>{t("settings_edit_enabled")}</Label>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
           {error && <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
+          <Button variant="outline" onClick={handleClose}>{t("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading || !canSubmit}>
-            {loading && <Loader2 size={14} className="animate-spin" />}{t("settings_edit.save")}
+            {loading && <Loader2 size={14} className="animate-spin" />}{t("settings_edit_save")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -307,7 +305,6 @@ function EditUrlRewriteDialog({
 
 export default function UrlRewritePage() {
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
   const [rewrites, setRewrites] = useState<UrlRewriteEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -384,15 +381,15 @@ export default function UrlRewritePage() {
     <div className="p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-xs text-muted-foreground mb-1">{t("settings_page.breadcrumb")}</div>
-          <h1 className="text-xl font-bold">{t("settings_urlRewrite.name")}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{t("settings_urlRewrite.subtitle")}</p>
+          <div className="text-xs text-muted-foreground mb-1">{t("settings_page_breadcrumb")}</div>
+          <h1 className="text-xl font-bold">{t("settings_urlRewrite_name")}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t("settings_urlRewrite_subtitle")}</p>
         </div>
         <div className="flex items-center gap-1.5">
           {selected.size > 0 && (
             <>
               <span className="text-xs text-muted-foreground mr-1">
-                {t("settings_page.selectedCount", { count: selected.size })}
+                {t("settings_page_selectedCount", { count: selected.size })}
               </span>
               <Button
                 variant="destructive"
@@ -400,8 +397,8 @@ export default function UrlRewritePage() {
                 title={`Delete ${selected.size} selected rewrites`}
                 onClick={() =>
                   setConfirm({
-                    title: t("settings_page.deleteTitle", { count: selected.size }),
-                    description: tc("confirm.cannotUndo"),
+                    title: t("settings_page_deleteTitle", { count: selected.size }),
+                    description: t("confirm.cannotUndo"),
                     onConfirm: () => {
                       setConfirm(null);
                       handleBatchDelete();
@@ -430,7 +427,7 @@ export default function UrlRewritePage() {
             ) : (
               <Square size={14} />
             )}
-            {selected.size === rewrites.length ? t("settings_page.deselectAll") : t("settings_page.selectAll")}
+            {selected.size === rewrites.length ? t("settings_page_deselectAll") : t("settings_page_selectAll")}
           </button>
         </div>
       )}
@@ -438,13 +435,13 @@ export default function UrlRewritePage() {
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <Loader2 size={20} className="animate-spin mr-2" />
-          {tc("status_loading")}
+          {t("status.loading")}
         </div>
       ) : rewrites.length === 0 ? (
         <div className="w-full py-10 border border-dashed border-border rounded-lg flex flex-col items-center gap-2 text-muted-foreground">
           <BookMarked size={24} />
-          <div className="text-sm font-medium">{t("settings_page.empty")}</div>
-          <div className="text-xs">{t("settings_page.emptyHint")}</div>
+          <div className="text-sm font-medium">{t("settings_page_empty")}</div>
+          <div className="text-xs">{t("settings_page_emptyHint")}</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -486,7 +483,7 @@ export default function UrlRewritePage() {
                         variant={rewrite.enabled ? "default" : "outline"}
                         className={`text-xs ${!rewrite.enabled ? "opacity-60" : ""}`}
                       >
-                        {rewrite.enabled ? t("settings_status.enabled") : t("settings_status.disabled")}
+                        {rewrite.enabled ? t("settings_status_enabled") : t("settings_status_disabled")}
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -500,7 +497,7 @@ export default function UrlRewritePage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      title={rewrite.enabled ? t("settings_actions.disable") : t("settings_actions.enable")}
+                      title={rewrite.enabled ? t("settings_actions_disable") : t("settings_actions_enable")}
                       disabled={isToggling}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -523,7 +520,7 @@ export default function UrlRewritePage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      title={t("settings_actions.edit")}
+                      title={t("settings_actions_edit")}
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingRewrite(rewrite);
@@ -536,13 +533,13 @@ export default function UrlRewritePage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      title={t("settings_actions.delete")}
+                      title={t("settings_actions_delete")}
                       className="text-muted-foreground hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirm({
-                          title: t("settings_page.removeTitle"),
-                          description: t("settings_page.removeDesc", { name: rewrite.pattern }),
+                          title: t("settings_page_removeTitle"),
+                          description: t("settings_page_removeDesc", { name: rewrite.pattern }),
                           onConfirm: () => {
                             setConfirm(null);
                             handleRemove(rewrite.id);

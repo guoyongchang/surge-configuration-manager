@@ -289,5 +289,21 @@
   "hosts_actions_enable": "启用",
   "hosts_actions_disable": "禁用",
   "hosts_actions_edit": "编辑",
-  "hosts_actions_delete": "删除"
+  "hosts_actions_delete": "删除",
+  "extraNodes_page_breadcrumb": "控制台 / 额外节点",
+  "hosts_page_breadcrumb": "控制台 / 主机",
+  "settings_page_breadcrumb": "控制台 / 设置",
+  "subscriptions_page_breadcrumb": "控制台 / 订阅",
+  "dialog_add": "添加",
+  "batch_addCount": "添加 {{count}} 个",
+  "batch_add": "添加",
+  "settings_status_enabled": "已启用",
+  "settings_status_disabled": "已禁用",
+  "settings_actions_enable": "启用",
+  "settings_actions_disable": "禁用",
+  "settings_actions_edit": "编辑",
+  "settings_actions_delete": "删除",
+  "rules_page_confirmDelete": "删除此项？",
+  "rules_page_confirmDeleteRules": "删除 {{count}} 条规则？",
+  "rules_page_confirmDeleteRuleSets": "删除 {{count}} 条规则集？"
 }

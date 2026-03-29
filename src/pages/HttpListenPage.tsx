@@ -81,7 +81,7 @@ export default function GeneralSettingsPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status_loading")}
+        {t("status.loading")}
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function GeneralSettingsPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Settings2 size={18} className="text-muted-foreground" />
-          <h1 className="text-xl font-bold">{t("settings_general.sectionTitle")}</h1>
+          <h1 className="text-xl font-bold">{t("settings_general_sectionTitle")}</h1>
         </div>
       </div>
 
@@ -99,9 +99,9 @@ export default function GeneralSettingsPage() {
         <CardContent className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>{t("settings_general.httpListenLabel")}</Label>
+              <Label>{t("settings_general_httpListenLabel")}</Label>
               <p className="text-xs text-muted-foreground mb-1.5">
-                {t("settings_general.httpListenHint")}
+                {t("settings_general_httpListenHint")}
               </p>
               <Input
                 placeholder="0.0.0.0:7890"
@@ -115,9 +115,9 @@ export default function GeneralSettingsPage() {
               />
             </div>
             <div>
-              <Label>{t("settings_general.socks5ListenLabel")}</Label>
+              <Label>{t("settings_general_socks5ListenLabel")}</Label>
               <p className="text-xs text-muted-foreground mb-1.5">
-                {t("settings_general.socks5ListenHint")}
+                {t("settings_general_socks5ListenHint")}
               </p>
               <Input
                 placeholder="0.0.0.0:7891"
@@ -132,8 +132,8 @@ export default function GeneralSettingsPage() {
             </div>
           </div>
           <SectionTextarea
-            label={t("settings_general.extraLinesLabel")}
-            description={t("settings_general.extraLinesHint")}
+            label={t("settings_general_extraLinesLabel")}
+            description={t("settings_general_extraLinesHint")}
             value={extraLinesText}
             onChange={setExtraLinesText}
             placeholder={"internet-test-url = http://google.com/\nproxy-test-url = http://google.com/\nloglevel = notify"}
@@ -147,7 +147,7 @@ export default function GeneralSettingsPage() {
               ) : (
                 <Save size={14} />
               )}
-              {saved ? tc("status_saved") : t("settings_general.saveBtn")}
+              {saved ? tc("status.saved") : t("settings_general_saveBtn")}
             </Button>
           </div>
         </CardContent>

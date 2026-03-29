@@ -39,12 +39,11 @@ function timeDisplay(iso: string, t: (key: string) => string): string {
   if (diffMs < 86400000) {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  return t("page.yesterday");
+  return t("output_page_yesterday");
 }
 
 export default function OutputPage() {
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
   const [config, setConfig] = useState<OutputConfig | null>(null);
   const [builds, setBuilds] = useState<BuildRecord[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -119,7 +118,7 @@ export default function OutputPage() {
 
   const handlePickFolder = async () => {
     const selected = await api.pickFolder({
-      title: t("page.selectOutputDir"),
+      title: t("output_page_selectOutputDir"),
     });
     if (selected) {
       updateConfig({ output_path: selected as string });
@@ -158,7 +157,7 @@ export default function OutputPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status_loading")}
+        {t("status.loading")}
       </div>
     );
   }
@@ -166,9 +165,9 @@ export default function OutputPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold">{t("output_page.title")}</h1>
+        <h1 className="text-xl font-bold">{t("output_page_title")}</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          {t("output_page.subtitle")}
+          {t("output_page_subtitle")}
         </p>
       </div>
 
@@ -178,7 +177,7 @@ export default function OutputPage() {
           {/* Output Path + Filename */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              {t("output_page.outputPathLabel")}
+              {t("output_page_outputPathLabel")}
             </Label>
             <div className="flex gap-2">
               <div className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm font-mono truncate">
@@ -192,7 +191,7 @@ export default function OutputPage() {
 
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">
-              {t("output_page.outputFilenameLabel")}
+              {t("output_page_outputFilenameLabel")}
             </Label>
             <Input
               className="font-mono text-sm"
@@ -205,7 +204,7 @@ export default function OutputPage() {
               }}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {t("output_page.outputFilenameHint")}
+              {t("output_page_outputFilenameHint")}
             </p>
           </div>
 
@@ -213,9 +212,9 @@ export default function OutputPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">{t("output_page.regenerateLabel")}</div>
+                <div className="text-sm">{t("output_page_regenerateLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t("output_page.regenerateHint")}
+                  {t("output_page_regenerateHint")}
                 </div>
               </div>
               <Switch
@@ -225,9 +224,9 @@ export default function OutputPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm">{t("output_page.minifyLabel")}</div>
+                <div className="text-sm">{t("output_page_minifyLabel")}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t("output_page.minifyHint")}
+                  {t("output_page_minifyHint")}
                 </div>
               </div>
               <Switch
@@ -240,7 +239,7 @@ export default function OutputPage() {
           {/* Preview button */}
           <Button variant="outline" onClick={handlePreview} className="w-full">
             <Eye size={16} />
-            {t("output_page.previewBtn")}
+            {t("output_page_previewBtn")}
           </Button>
         </div>
 
@@ -258,18 +257,18 @@ export default function OutputPage() {
             ) : (
               <Zap size={28} />
             )}
-            {generating ? t("output_page.generatingBtn") : t("output_page.generateBtn")}
+            {generating ? t("output_page_generatingBtn") : t("output_page_generateBtn")}
           </Button>
 
           {/* Status */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">{t("output_page.statusLabel")}</span>
-              <span className="text-success font-medium">{t("output_page.statusReady")}</span>
+              <span className="text-muted-foreground">{t("output_page_statusLabel")}</span>
+              <span className="text-success font-medium">{t("output_page_statusReady")}</span>
             </div>
             {lastBuildTime && (
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">{t("output_page.lastBuildLabel")}</span>
+                <span className="text-muted-foreground">{t("output_page_lastBuildLabel")}</span>
                 <span>{timeDisplay(lastBuildTime, t)}</span>
               </div>
             )}
@@ -278,7 +277,7 @@ export default function OutputPage() {
           {/* Build History */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">{t("output_page.buildHistoryTitle")}</h3>
+              <h3 className="text-sm font-semibold">{t("output_page_buildHistoryTitle")}</h3>
               {builds.length > 0 && (
                 <Button
                   variant="ghost"
@@ -286,13 +285,13 @@ export default function OutputPage() {
                   className="text-primary"
                   onClick={handleClearHistory}
                 >
-                  {t("output_page.clearAllBtn")}
+                  {t("output_page_clearAllBtn")}
                 </Button>
               )}
             </div>
             {builds.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-6">
-                {t("output_page.noBuilds")}
+                {t("output_page_noBuilds")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -307,7 +306,7 @@ export default function OutputPage() {
                             <span className="font-mono truncate">{build.filename}</span>
                           </div>
                         ) : (
-                          <div className="text-xs text-muted-foreground">{t("output_page.noChange")}</div>
+                          <div className="text-xs text-muted-foreground">{t("output_page_noChange")}</div>
                         )}
                         <div className="text-xs text-muted-foreground truncate">
                           {build.description}
@@ -337,7 +336,7 @@ export default function OutputPage() {
             className="w-full"
           >
             <History size={16} />
-            {t("output_page.historyVersionsBtn")}
+            {t("output_page_historyVersionsBtn")}
           </Button>
         </div>
       </div>
@@ -346,10 +345,10 @@ export default function OutputPage() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>{t("output_page.previewTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page_previewTitle")}</DialogTitle>
           </DialogHeader>
           <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
-            {previewContent || t("page.noPreviewData")}
+            {previewContent || t("output_page_noPreviewData")}
           </pre>
         </DialogContent>
       </Dialog>
@@ -358,11 +357,11 @@ export default function OutputPage() {
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>{t("output_page.historyVersionsTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page_historyVersionsTitle")}</DialogTitle>
           </DialogHeader>
           {backups.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-8">
-              {t("output_page.noBackups")}
+              {t("output_page_noBackups")}
             </div>
           ) : (
             <div className="space-y-2 max-h-[60vh] overflow-auto">
@@ -376,10 +375,10 @@ export default function OutputPage() {
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-xs text-muted-foreground">
-                          {t("output_page.backupCreated")}: {new Date(backup.created).toLocaleString()}
+                          {t("output_page_backupCreated")}: {new Date(backup.created).toLocaleString()}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {t("output_page.backupSize")}:{" "}
+                          {t("output_page_backupSize")}:{" "}
                           {backup.size_bytes < 1024
                             ? `${backup.size_bytes} B`
                             : backup.size_bytes < 1024 * 1024
@@ -406,7 +405,7 @@ export default function OutputPage() {
                       }}
                     >
                       <Eye size={12} />
-                      {t("output_page.backupPreview")}
+                      {t("output_page_backupPreview")}
                     </Button>
                     <Button
                       size="xs"
@@ -416,7 +415,7 @@ export default function OutputPage() {
                         setRollbackConfirmOpen(true);
                       }}
                     >
-                      {t("output_page.rollback")}
+                      {t("output_page_rollback")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -433,8 +432,8 @@ export default function OutputPage() {
           className="!w-[90vw] max-h-[85vh]"
         >
           <DialogHeader className="mb-2">
-            <DialogTitle>{t("output_page.backupPreview")}</DialogTitle>
-            <p className="text-xs text-muted-foreground">{t("output_page.diffHint")}</p>
+            <DialogTitle>{t("output_page_backupPreview")}</DialogTitle>
+            <p className="text-xs text-muted-foreground">{t("output_page_diffHint")}</p>
           </DialogHeader>
           <div style={{ height: "65vh" }} className="border border-border rounded-lg overflow-hidden">
             <DiffEditor
@@ -462,12 +461,12 @@ export default function OutputPage() {
       <Dialog open={rollbackConfirmOpen} onOpenChange={setRollbackConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("output_page.rollbackConfirmTitle")}</DialogTitle>
+            <DialogTitle>{t("output_page_rollbackConfirmTitle")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">{t("output_page.rollbackConfirm")}</p>
+          <p className="text-sm text-muted-foreground">{t("output_page_rollbackConfirm")}</p>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setRollbackConfirmOpen(false)}>
-              {tc("output_page.cancel")}
+              {t("output_page_cancel")}
             </Button>
             <Button
               onClick={async () => {
@@ -481,7 +480,7 @@ export default function OutputPage() {
                 }
               }}
             >
-              {t("output_page.rollback")}
+              {t("output_page_rollback")}
             </Button>
           </div>
         </DialogContent>

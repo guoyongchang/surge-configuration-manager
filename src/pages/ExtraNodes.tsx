@@ -131,7 +131,6 @@ function buildRawLine(proto: ProtoId, name: string, server: string, port: string
 
 function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
   const [open, setOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"single" | "batch">("single");
 
@@ -225,10 +224,10 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogTrigger asChild>
-        <Button><Plus size={16} />{t("extraNodes_dialog.trigger")}</Button>
+        <Button><Plus size={16} />{t("extraNodes_dialog_trigger")}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{t("extraNodes_dialog.title")}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("extraNodes_dialog_title")}</DialogTitle></DialogHeader>
 
         {/* Main tab switcher */}
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -239,7 +238,7 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("single"); setError(""); }}
           >
-            {t("extraNodes_tabs.single")}
+            {t("extraNodes_tabs_single")}
           </button>
           <button
             type="button"
@@ -248,14 +247,14 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             }`}
             onClick={() => { setMainTab("batch"); setError(""); }}
           >
-            {t("extraNodes_tabs.batch")}
+            {t("extraNodes_tabs_batch")}
           </button>
         </div>
 
         {mainTab === "single" ? (
           <div className="space-y-3 py-1">
             <div>
-              <Label>{t("extraNodes_single.protocol")}</Label>
+              <Label>{t("extraNodes_single_protocol")}</Label>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {(Object.keys(PROTO_LABELS) as ProtoId[]).map((p) => (
                   <button key={p} type="button"
@@ -271,27 +270,27 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
               </div>
             </div>
             <div>
-              <Label>{t("extraNodes_single.name")}</Label>
+              <Label>{t("extraNodes_single_name")}</Label>
               <Input placeholder="e.g. HK-01" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2">
-                <Label>{t("extraNodes_single.server")}</Label>
+                <Label>{t("extraNodes_single_server")}</Label>
                 <Input placeholder="1.2.3.4" value={server} onChange={(e) => setServer(e.target.value)} />
               </div>
               <div>
-                <Label>{t("extraNodes_single.port")}</Label>
+                <Label>{t("extraNodes_single_port")}</Label>
                 <Input type="number" value={port} onChange={(e) => setPort(e.target.value)} />
               </div>
             </div>
             {(proto === "socks5" || proto === "socks5-tls" || proto === "http" || proto === "https") && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label>{t("extraNodes_single.username")} <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single.optional")})</span></Label>
+                  <Label>{t("extraNodes_single_username")} <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single_optional")})</span></Label>
                   <Input value={fields.username ?? ""} onChange={(e) => setField("username", e.target.value)} />
                 </div>
                 <div>
-                  <Label>{t("extraNodes_single.password")} <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single.optional")})</span></Label>
+                  <Label>{t("extraNodes_single_password")} <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single_optional")})</span></Label>
                   <Input value={fields.password ?? ""} onChange={(e) => setField("password", e.target.value)} />
                 </div>
               </div>
@@ -299,14 +298,14 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             {proto === "ss" && (
               <>
                 <div>
-                  <Label>{t("extraNodes_single.encryptMethod")}</Label>
+                  <Label>{t("extraNodes_single_encryptMethod")}</Label>
                   <select className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={fields.method ?? "aes-128-gcm"} onChange={(e) => setField("method", e.target.value)}>
                     {SS_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <Label>{t("extraNodes_single.password")}</Label>
+                  <Label>{t("extraNodes_single_password")}</Label>
                   <Input value={fields.password ?? ""} onChange={(e) => setField("password", e.target.value)} />
                 </div>
               </>
@@ -319,14 +318,14 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>WS Path <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single.optional")})</span></Label>
+                    <Label>WS Path <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single_optional")})</span></Label>
                     <Input placeholder="/path" value={fields.ws_path ?? ""} onChange={(e) => setField("ws_path", e.target.value)} />
                   </div>
                   <div>
-                    <Label>TLS <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single.optional")})</span></Label>
+                    <Label>TLS <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single_optional")})</span></Label>
                     <select className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={fields.tls ?? ""} onChange={(e) => setField("tls", e.target.value)}>
-                      <option value="">{t("extraNodes_single.disabled")}</option>
+                      <option value="">{t("extraNodes_single_disabled")}</option>
                       <option value="true">true</option>
                     </select>
                   </div>
@@ -336,15 +335,15 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             {(proto === "trojan" || proto === "hysteria2") && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label>{t("extraNodes_single.password")}</Label>
+                  <Label>{t("extraNodes_single_password")}</Label>
                   <Input value={fields.password ?? ""} onChange={(e) => setField("password", e.target.value)} />
                 </div>
                 <div>
-                  <Label>{t("extraNodes_single.skipVerify")}</Label>
+                  <Label>{t("extraNodes_single_skipVerify")}</Label>
                   <select className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={fields.skip_verify ?? ""} onChange={(e) => setField("skip_verify", e.target.value)}>
-                    <option value="">{t("extraNodes_single.no")}</option>
-                    <option value="true">{t("extraNodes_single.yes")}</option>
+                    <option value="">{t("extraNodes_single_no")}</option>
+                    <option value="true">{t("extraNodes_single_yes")}</option>
                   </select>
                 </div>
               </div>
@@ -362,7 +361,7 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
               </div>
             )}
             <div>
-              <Label>{t("extraNodes_single.refreshUrl")} <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single.optional")})</span></Label>
+              <Label>{t("extraNodes_single_refreshUrl")} <span className="text-muted-foreground font-normal text-xs">({t("extraNodes_single_optional")})</span></Label>
               <Input placeholder="https://example.com/refresh" value={refreshUrl} onChange={(e) => setRefreshUrl(e.target.value)} />
             </div>
             {rawLine && (
@@ -370,9 +369,9 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             )}
             {error && <div className="text-xs text-destructive bg-destructive/10 rounded p-2">{error}</div>}
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
+              <Button variant="outline" onClick={handleClose}>{t("actions.cancel")}</Button>
               <Button onClick={handleSubmitSingle} disabled={loading || !rawLine}>
-                {loading && <Loader2 size={14} className="animate-spin" />}{t("extraNodes_batch.addBtn")}
+                {loading && <Loader2 size={14} className="animate-spin" />}{t("extraNodes_batch_addBtn")}
               </Button>
             </DialogFooter>
           </div>
@@ -387,7 +386,7 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 }`}
                 onClick={() => { setBatchTab("socks5"); setError(""); }}
               >
-                {t("extraNodes_batch.socks5Tab")}
+                {t("extraNodes_batch_socks5Tab")}
               </button>
               <button
                 type="button"
@@ -396,15 +395,15 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 }`}
                 onClick={() => { setBatchTab("raw"); setError(""); }}
               >
-                {t("extraNodes_batch.rawTab")}
+                {t("extraNodes_batch_rawTab")}
               </button>
             </div>
 
             {batchTab === "socks5" ? (
               <>
                 <div>
-                  <Label>{t("extraNodes_batch.nodeList")}</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">{t("extraNodes_batch.nodeListHint")}</p>
+                  <Label>{t("extraNodes_batch_nodeList")}</Label>
+                  <p className="text-xs text-muted-foreground mb-1.5">{t("extraNodes_batch_nodeListHint")}</p>
                   <textarea
                     className="w-full h-36 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                     placeholder={"big2024_75019-sesstime-10:N1iiJh@proxy-as.socks5.io:3000\nbig2024_75020-sesstime-10:N1iiJh@proxy-as.socks5.io:3000"}
@@ -413,8 +412,8 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                   />
                 </div>
                 <div>
-                  <Label>{t("extraNodes_batch.refreshTemplate")} <span className="text-muted-foreground font-normal">({t("extraNodes_single.optional")})</span></Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">{t("extraNodes_batch.refreshTemplateHint", { placeholder: "{user}" })}</p>
+                  <Label>{t("extraNodes_batch_refreshTemplate")} <span className="text-muted-foreground font-normal">({t("extraNodes_single_optional")})</span></Label>
+                  <p className="text-xs text-muted-foreground mb-1.5">{t("extraNodes_batch_refreshTemplateHint", { placeholder: "{user}" })}</p>
                   <Input
                     placeholder="https://example.com/refresh?user={user}"
                     value={refreshTemplate}
@@ -426,12 +425,12 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                   <div className="flex items-center gap-3 text-xs">
                     {socks5Valid.length > 0 && (
                       <span className="flex items-center gap-1 text-success">
-                        <CheckCircle2 size={12} /> {t("extraNodes_batch.valid", { count: socks5Valid.length })}
+                        <CheckCircle2 size={12} /> {t("extraNodes_batch_valid", { count: socks5Valid.length })}
                       </span>
                     )}
                     {socks5Errors.length > 0 && (
                       <span className="flex items-center gap-1 text-destructive">
-                        <XCircle size={12} /> {t("extraNodes_batch.invalid", { count: socks5Errors.length })}
+                        <XCircle size={12} /> {t("extraNodes_batch_invalid", { count: socks5Errors.length })}
                       </span>
                     )}
                   </div>
@@ -448,8 +447,8 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
               </>
             ) : (
               <div>
-                <Label>{t("extraNodes_batch.surgeLines")}</Label>
-                <p className="text-xs text-muted-foreground mb-1.5">{t("extraNodes_batch.surgeLinesHint")}</p>
+                <Label>{t("extraNodes_batch_surgeLines")}</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">{t("extraNodes_batch_surgeLinesHint")}</p>
                 <div className="text-xs text-muted-foreground font-mono bg-muted rounded px-3 py-2 mb-2 space-y-0.5">
                   <div>HK-SS = ss, 1.2.3.4, 8388, encrypt-method=aes-128-gcm, password=xxx</div>
                   <div>JP-VMess = vmess, 5.6.7.8, 443, username=UUID, tls=true</div>
@@ -458,13 +457,13 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
                 </div>
                 <textarea
                   className="w-full h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-                  placeholder={t("extraNodes_batch.surgeLinesPlaceholder")}
+                  placeholder={t("extraNodes_batch_surgeLinesPlaceholder")}
                   value={rawLines}
                   onChange={(e) => setRawLines(e.target.value)}
                 />
                 {rawParsed.length > 0 && (
                   <p className="text-xs text-success mt-1 flex items-center gap-1">
-                    <CheckCircle2 size={12} /> {t("extraNodes_batch.willAdd", { count: rawParsed.length })}
+                    <CheckCircle2 size={12} /> {t("extraNodes_batch_willAdd", { count: rawParsed.length })}
                   </p>
                 )}
               </div>
@@ -475,12 +474,12 @@ function AddNodeDialog({ onAdded }: { onAdded: () => void }) {
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>{tc("actions_cancel")}</Button>
+              <Button variant="outline" onClick={handleClose}>{t("actions.cancel")}</Button>
               <Button onClick={handleSubmitBatch} disabled={loading || !batchCanSubmit}>
                 {loading && <Loader2 size={14} className="animate-spin" />}
                 {batchTab === "socks5"
-                  ? (socks5Valid.length > 0 ? t("extraNodes_batch.importCount", { count: socks5Valid.length }) : t("extraNodes_batch.importBtn"))
-                  : (rawParsed.length > 0 ? t("extraNodes_batch.addCount", { count: rawParsed.length }) : t("extraNodes_batch.addBtn"))}
+                  ? (socks5Valid.length > 0 ? t("extraNodes_batch_importCount", { count: socks5Valid.length }) : t("extraNodes_batch_importBtn"))
+                  : (rawParsed.length > 0 ? t("extraNodes_batch_addCount", { count: rawParsed.length }) : t("extraNodes_batch_addBtn"))}
               </Button>
             </DialogFooter>
           </div>
@@ -500,14 +499,14 @@ function TestBadge({ status }: { status: TestStatus }) {
   if (status === "testing") {
     return (
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Loader2 size={12} className="animate-spin" />{t("extraNodes_test.testing")}
+        <Loader2 size={12} className="animate-spin" />{t("extraNodes_test_testing")}
       </div>
     );
   }
   if (status.error) {
     return (
       <div className="flex items-center gap-1 text-xs text-destructive" title={status.error}>
-        <XCircle size={12} />{status.error.length > 20 ? t("extraNodes_test.failed") : status.error}
+        <XCircle size={12} />{status.error.length > 20 ? t("extraNodes_test_failed") : status.error}
       </div>
     );
   }
@@ -520,12 +519,12 @@ function TestBadge({ status }: { status: TestStatus }) {
         <span title={status.country ?? ""} className="text-base leading-none">{flag}</span>
         {pure ? (
           <span title="Clean IP" className="flex items-center gap-0.5 text-success">
-            <CheckCircle2 size={11} />{t("extraNodes_test.clean")}
+            <CheckCircle2 size={11} />{t("extraNodes_test_clean")}
           </span>
         ) : (
           <span title="Proxy/hosting IP detected" className="flex items-center gap-0.5 text-warning">
             <AlertCircle size={11} />
-            {status.is_hosting ? t("extraNodes_test.hosting") : t("extraNodes_test.proxy")}
+            {status.is_hosting ? t("extraNodes_test_hosting") : t("extraNodes_test_proxy")}
           </span>
         )}
       </div>
@@ -558,7 +557,6 @@ function saveHistory(results: Record<string, TestStatus>) {
 
 export default function ExtraNodesPage() {
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
   const [nodes, setNodes] = useState<ExtraNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [testResults, setTestResults] = useState<Record<string, TestStatus>>(() => loadHistory());
@@ -665,25 +663,25 @@ export default function ExtraNodesPage() {
     <div className="p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-xs text-muted-foreground mb-1">{t("extraNodes_page.breadcrumb")}</div>
-          <h1 className="text-xl font-bold">{t("extraNodes_page.title")}</h1>
+          <div className="text-xs text-muted-foreground mb-1">{t("extraNodes_page_breadcrumb")}</div>
+          <h1 className="text-xl font-bold">{t("extraNodes_page_title")}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            {t("extraNodes_page.subtitle")}
+            {t("extraNodes_page_subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
           {selected.size > 0 && (
             <>
               <span className="text-xs text-muted-foreground mr-1">
-                {t("extraNodes_page.selectedCount", { count: selected.size })}
+                {t("extraNodes_page_selectedCount", { count: selected.size })}
               </span>
               <Button
                 variant="destructive"
                 size="icon"
                 title={`Delete ${selected.size} selected nodes`}
                 onClick={() => setConfirm({
-                  title: t("extraNodes_page.deleteTitle", { count: selected.size }),
-                  description: tc("confirm.cannotUndo"),
+                  title: t("extraNodes_page_deleteTitle", { count: selected.size }),
+                  description: t("confirm.cannotUndo"),
                   onConfirm: () => { setConfirm(null); handleBatchDelete(); },
                 })}
                 disabled={deleting}
@@ -708,20 +706,20 @@ export default function ExtraNodesPage() {
             {selected.size === nodes.length
               ? <CheckSquare size={14} className="text-primary" />
               : <Square size={14} />}
-            {selected.size === nodes.length ? t("extraNodes_page.deselectAll") : t("extraNodes_page.selectAll")}
+            {selected.size === nodes.length ? t("extraNodes_page_deselectAll") : t("extraNodes_page_selectAll")}
           </button>
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <Loader2 size={20} className="animate-spin mr-2" />{tc("status_loading")}
+          <Loader2 size={20} className="animate-spin mr-2" />{t("status.loading")}
         </div>
       ) : nodes.length === 0 ? (
         <div className="w-full py-10 border border-dashed border-border rounded-lg flex flex-col items-center gap-2 text-muted-foreground">
           <Server size={24} />
-          <div className="text-sm font-medium">{t("extraNodes_page.empty")}</div>
-          <div className="text-xs">{t("extraNodes_page.emptyHint")}</div>
+          <div className="text-sm font-medium">{t("extraNodes_page_empty")}</div>
+          <div className="text-xs">{t("extraNodes_page_emptyHint")}</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -799,8 +797,8 @@ export default function ExtraNodesPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setConfirm({
-                            title: t("extraNodes_page.removeTitle"),
-                            description: t("extraNodes_page.removeDesc", { name: node.name }),
+                            title: t("extraNodes_page_removeTitle"),
+                            description: t("extraNodes_page_removeDesc", { name: node.name }),
                             onConfirm: () => { setConfirm(null); handleRemove(node.id); },
                           });
                         }}

@@ -51,7 +51,7 @@ export default function SettingsPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status_loading")}
+        {t("status.loading")}
       </div>
     );
   }
@@ -59,8 +59,8 @@ export default function SettingsPage() {
   return (
     <div className="p-6 w-full max-w-2xl">
       <div className="mb-6">
-        <div className="text-xs text-muted-foreground mb-1">{t("settings_page.breadcrumb")}</div>
-        <h1 className="text-xl font-bold">{t("settings_page.title")}</h1>
+        <div className="text-xs text-muted-foreground mb-1">{t("settings_page_breadcrumb")}</div>
+        <h1 className="text-xl font-bold">{t("settings_page_title")}</h1>
       </div>
 
       {/* General Settings */}
@@ -68,16 +68,16 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2 mb-3">
           <Settings2 size={15} className="text-muted-foreground" />
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {t("settings_general.sectionTitle")}
+            {t("settings_general_sectionTitle")}
           </h2>
         </div>
         <Card className="py-0 gap-0">
           <CardContent className="p-5 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("settings_general.httpListenLabel")}</Label>
+                <Label>{t("settings_general_httpListenLabel")}</Label>
                 <p className="text-xs text-muted-foreground mb-1.5">
-                  {t("settings_general.httpListenHint")}
+                  {t("settings_general_httpListenHint")}
                 </p>
                 <Input
                   placeholder="0.0.0.0:7890"
@@ -91,9 +91,9 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <Label>{t("settings_general.socks5ListenLabel")}</Label>
+                <Label>{t("settings_general_socks5ListenLabel")}</Label>
                 <p className="text-xs text-muted-foreground mb-1.5">
-                  {t("settings_general.socks5ListenHint")}
+                  {t("settings_general_socks5ListenHint")}
                 </p>
                 <Input
                   placeholder="0.0.0.0:7891"
@@ -108,9 +108,9 @@ export default function SettingsPage() {
               </div>
             </div>
             <div>
-              <Label>{t("settings_general.extraLinesLabel")}</Label>
+              <Label>{t("settings_general_extraLinesLabel")}</Label>
               <p className="text-xs text-muted-foreground mb-1.5">
-                {t("settings_general.extraLinesHint")}
+                {t("settings_general_extraLinesHint")}
               </p>
               <textarea
                 className="w-full h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
@@ -128,7 +128,7 @@ export default function SettingsPage() {
                 ) : (
                   <Save size={14} />
                 )}
-                {savedGeneral ? tc("status.saved") : t("general.saveBtn")}
+                {savedGeneral ? tc("status.saved") : t("settings_general_saveBtn")}
               </Button>
             </div>
           </CardContent>

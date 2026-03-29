@@ -75,7 +75,7 @@ export default function MitmPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status_loading")}
+        {t("status.loading")}
       </div>
     );
   }
@@ -83,15 +83,15 @@ export default function MitmPage() {
   return (
     <div className="p-6 w-full max-w-2xl">
       <div className="mb-6">
-        <div className="text-xs text-muted-foreground mb-1">{t("settings_mitm.breadcrumb")}</div>
-        <h1 className="text-xl font-bold">{t("settings_mitm.title")}</h1>
+        <div className="text-xs text-muted-foreground mb-1">{t("settings_mitm_breadcrumb")}</div>
+        <h1 className="text-xl font-bold">{t("settings_mitm_title")}</h1>
       </div>
 
       <Card className="py-0 gap-0">
         <CardContent className="p-5 space-y-4">
           <SectionTextarea
-            label={t("settings_mitm.label")}
-            description={t("settings_mitm.hint")}
+            label={t("settings_mitm_label")}
+            description={t("settings_mitm_hint")}
             value={mitmSection}
             onChange={setMitmSection}
             placeholder={"hostname = *.google.com, *.apple.com\nskip-server-cert-verify = true"}
@@ -105,7 +105,7 @@ export default function MitmPage() {
               ) : (
                 <Save size={14} />
               )}
-              {saved ? tc("status_saved") : t("settings_general.saveBtn")}
+              {saved ? tc("status.saved") : t("settings_general_saveBtn")}
             </Button>
           </div>
         </CardContent>

@@ -207,7 +207,6 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
   const [nodeNames, setNodeNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
 
   useEffect(() => {
     if (open) api.getAllNodeNames().then(setNodeNames).catch(() => {});
@@ -303,7 +302,7 @@ function BatchAddRulesDialog({ onAdded }: { onAdded: () => void }) {
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>{tc("actions_cancel")}</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading || valid.length === 0}>
             {loading && <Loader2 size={14} className="animate-spin" />}
             {valid.length > 0 ? t("rules_batchImport_importRules", { count: valid.length }) : t("rules_batchImport_importBtn")}
@@ -322,7 +321,6 @@ function AddRuleSetDialog({ onAdded }: { onAdded: () => void }) {
   const [nodeNames, setNodeNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
 
   useEffect(() => {
     if (open) api.getAllNodeNames().then(setNodeNames).catch(() => {});
@@ -376,10 +374,10 @@ function AddRuleSetDialog({ onAdded }: { onAdded: () => void }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>{tc("actions_cancel")}</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            {tc("actions_add")}
+            {t("actions.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -396,7 +394,6 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
   const [nodeNames, setNodeNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
 
   useEffect(() => {
     if (open) api.getAllNodeNames().then(setNodeNames).catch(() => {});
@@ -474,10 +471,10 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>{tc("actions_cancel")}</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t("actions.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            {tc("actions_add")}
+            {t("actions.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -600,7 +597,6 @@ export default function RulesPage() {
   const [deletingRuleSets, setDeletingRuleSets] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description?: string; onConfirm: () => void } | null>(null);
   const { t } = useTranslation();
-  const { t: tc } = useTranslation();
 
   const load = useCallback(async () => {
     try {
@@ -682,16 +678,16 @@ export default function RulesPage() {
 
   const confirmRemoveRuleSet = (rs: RemoteRuleSet) => {
     setConfirm({
-      title: t("rules_page.removeRuleSetTitle"),
-      description: t("rules_page.removeRuleSetDesc", { name: rs.name }),
+      title: t("rules_page_removeRuleSetTitle"),
+      description: t("rules_page_removeRuleSetDesc", { name: rs.name }),
       onConfirm: () => { setConfirm(null); handleRemoveRuleSet(rs.id); },
     });
   };
 
   const confirmRemoveRule = (rule: IndividualRule) => {
     setConfirm({
-      title: t("rules_page.removeRuleTitle"),
-      description: t("rules_page.removeRuleDesc", { type: rule.rule_type, value: rule.value }),
+      title: t("rules_page_removeRuleTitle"),
+      description: t("rules_page_removeRuleDesc", { type: rule.rule_type, value: rule.value }),
       onConfirm: () => { setConfirm(null); handleRemoveRule(rule.id); },
     });
   };
@@ -738,16 +734,16 @@ export default function RulesPage() {
 
   const confirmBatchDeleteRules = () => {
     setConfirm({
-      title: t("rules_page.batchDeleteRulesTitle", { count: selectedRules.size }),
-      description: tc("confirm_cannotUndo"),
+      title: t("rules_page_batchDeleteRulesTitle", { count: selectedRules.size }),
+      description: t("confirm.cannotUndo"),
       onConfirm: () => { setConfirm(null); handleBatchDeleteRules(); },
     });
   };
 
   const confirmBatchDeleteRuleSets = () => {
     setConfirm({
-      title: t("rules_page.batchDeleteRuleSetsTitle", { count: selectedRuleSets.size }),
-      description: tc("confirm_cannotUndo"),
+      title: t("rules_page_batchDeleteRuleSetsTitle", { count: selectedRuleSets.size }),
+      description: t("confirm.cannotUndo"),
       onConfirm: () => { setConfirm(null); handleBatchDeleteRuleSets(); },
     });
   };
@@ -772,7 +768,7 @@ export default function RulesPage() {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={20} className="animate-spin mr-2" />
-        {tc("status_loading")}
+        {t("status.loading")}
       </div>
     );
   }
@@ -780,7 +776,7 @@ export default function RulesPage() {
   return (
     <div className="p-6 w-full">
       <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-xl font-bold">{t("rules_page.title")}</h1>
+        <h1 className="text-xl font-bold">{t("rules_page_title")}</h1>
         <Badge variant="secondary">{totalCount}</Badge>
       </div>
 
@@ -789,7 +785,7 @@ export default function RulesPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("rules_page.ruleSetsTitle")}
+              {t("rules_page_ruleSetsTitle")}
             </h2>
             {selectedRuleSets.size > 0 && (
               <Button variant="destructive" size="icon-xs" title={`Delete ${selectedRuleSets.size} selected`} onClick={confirmBatchDeleteRuleSets} disabled={deletingRuleSets}>
@@ -816,7 +812,7 @@ export default function RulesPage() {
           </DndContext>
           {ruleSets.length === 0 && subRuleSets.length === 0 && (
             <div className="text-xs text-muted-foreground py-4 text-center">
-              {t("rules_page.emptyRuleSets")}
+              {t("rules_page_emptyRuleSets")}
             </div>
           )}
           {subRuleSets.length > 0 && (
@@ -824,7 +820,7 @@ export default function RulesPage() {
               {ruleSets.length > 0 && (
                 <div className="flex items-center gap-2 my-3">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">{t("rules_page.fromSubscriptions")}</span>
+                  <span className="text-xs text-muted-foreground">{t("rules_page_fromSubscriptions")}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
               )}
@@ -866,7 +862,7 @@ export default function RulesPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("rules_page.individualTitle")}
+              {t("rules_page_individualTitle")}
             </h2>
             {selectedRules.size > 0 && (
               <Button variant="destructive" size="icon-xs" title={`Delete ${selectedRules.size} selected`} onClick={confirmBatchDeleteRules} disabled={deletingRules}>
@@ -896,7 +892,7 @@ export default function RulesPage() {
           </DndContext>
           {rules.length === 0 && subIndividualRules.length === 0 && (
             <div className="text-xs text-muted-foreground py-4 text-center">
-              {t("rules_page.emptyIndividual")}
+              {t("rules_page_emptyIndividual")}
             </div>
           )}
           {subIndividualRules.length > 0 && (
@@ -904,7 +900,7 @@ export default function RulesPage() {
               {rules.length > 0 && (
                 <div className="flex items-center gap-2 my-2">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">{t("rules_page.fromSubscriptions")}</span>
+                  <span className="text-xs text-muted-foreground">{t("rules_page_fromSubscriptions")}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
               )}
