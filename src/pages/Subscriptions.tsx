@@ -280,7 +280,7 @@ function AddSubscriptionDialog({ onAdded }: { onAdded: () => void }) {
           {t("dialog.triggerLabel")}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent style={{ maxWidth: "80vw" }}>
         <DialogHeader>
           <DialogTitle>{t("dialog.addTitle")}</DialogTitle>
         </DialogHeader>

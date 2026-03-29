@@ -349,7 +349,7 @@ function AddRuleSetDialog({ onAdded }: { onAdded: () => void }) {
           <Plus size={14} /> {t("addRuleSet.trigger")}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent style={{ maxWidth: "80vw" }}>
         <DialogHeader>
           <DialogTitle>{t("addRuleSet.title")}</DialogTitle>
         </DialogHeader>
@@ -428,7 +428,7 @@ function AddRuleDialog({ onAdded }: { onAdded: () => void }) {
           <Plus size={14} /> {t("addRule.trigger")}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent style={{ maxWidth: "80vw" }}>
         <DialogHeader>
           <DialogTitle>{t("addRule.title")}</DialogTitle>
         </DialogHeader>

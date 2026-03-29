@@ -384,7 +384,7 @@ export default function OutputPage() {
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh]">
+        <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>{t("page.previewTitle")}</DialogTitle>
           </DialogHeader>
@@ -396,7 +396,7 @@ export default function OutputPage() {
 
       {/* History Versions Dialog */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogContent style={{ maxWidth: "80vw" }} className="max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>{t("page.historyVersionsTitle")}</DialogTitle>
           </DialogHeader>
