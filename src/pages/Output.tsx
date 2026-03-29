@@ -9,6 +9,7 @@ import {
   Eye,
   Archive,
   History,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,8 +23,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DiffEditor } from "@monaco-editor/react";
-import type { OutputConfig, BuildRecord, BackupInfo } from "@/types";
+import type { OutputConfig, BuildRecord, BackupInfo, CloudSyncSettings, SyncConflictInfo } from "@/types";
 import * as api from "@/lib/api";
+import { CloudSyncConflictDialog } from "@/components/CloudSyncConflictDialog";
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   if (status === "success")
@@ -57,15 +59,20 @@ export default function OutputPage() {
   const [backupModified, setBackupModified] = useState("");
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
+  const [syncConflictOpen, setSyncConflictOpen] = useState(false);
+  const [conflictInfo, setConflictInfo] = useState<SyncConflictInfo | null>(null);
+  const [cloudSync, setCloudSync] = useState<CloudSyncSettings | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [cfg, history] = await Promise.all([
+      const [cfg, history, cs] = await Promise.all([
         api.getOutputConfig(),
         api.getBuildHistory(),
+        api.getCloudSyncSettings(),
       ]);
       setConfig(cfg);
       setBuilds(history);
+      setCloudSync(cs);
       if (history.length > 0) {
         setLastBuildTime(history[0].time);
       }
@@ -91,6 +98,19 @@ export default function OutputPage() {
       const record = await api.generateConfig();
       setBuilds((prev) => [record, ...prev].slice(0, 20));
       setLastBuildTime(record.time);
+
+      // Auto-sync if enabled
+      if (cloudSync?.enabled && cloudSync?.auto_sync) {
+        const conflict = await api.checkSyncConflict();
+        if (conflict) {
+          setConflictInfo(conflict);
+          setSyncConflictOpen(true);
+        } else {
+          await api.syncToCloud();
+          const cs = await api.getCloudSyncSettings();
+          setCloudSync(cs);
+        }
+      }
     } catch (e) {
       console.error("Generate failed:", e);
     } finally {
@@ -120,6 +140,19 @@ export default function OutputPage() {
   const handleClearHistory = async () => {
     await api.clearBuildHistory();
     setBuilds([]);
+  };
+
+  const handleKeepLocal = async () => {
+    if (!conflictInfo) return;
+    await api.syncToCloud();
+    const cs = await api.getCloudSyncSettings();
+    setCloudSync(cs);
+  };
+
+  const handleKeepCloud = async () => {
+    await api.syncFromCloud();
+    const cs = await api.getCloudSyncSettings();
+    setCloudSync(cs);
   };
 
   if (!config) {
@@ -240,6 +273,33 @@ export default function OutputPage() {
             )}
             {generating ? t("page.generatingBtn") : t("page.generateBtn")}
           </Button>
+
+          {/* Manual sync button */}
+          {cloudSync?.enabled && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={async () => {
+                try {
+                  const conflict = await api.checkSyncConflict();
+                  if (conflict) {
+                    setConflictInfo(conflict);
+                    setSyncConflictOpen(true);
+                  } else {
+                    await api.syncToCloud();
+                    const cs = await api.getCloudSyncSettings();
+                    setCloudSync(cs);
+                  }
+                } catch (e) {
+                  console.error("Sync failed:", e);
+                }
+              }}
+              title={t("cloudSync.syncNow")}
+              className="shrink-0"
+            >
+              <RefreshCw size={16} />
+            </Button>
+          )}
 
           {/* Status */}
           <div className="flex items-center justify-between text-xs">
@@ -466,6 +526,19 @@ export default function OutputPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Cloud Sync Conflict Dialog */}
+      {cloudSync?.enabled && (
+        <CloudSyncConflictDialog
+          open={syncConflictOpen}
+          onOpenChange={setSyncConflictOpen}
+          localContent={conflictInfo?.local_content ?? ""}
+          cloudContent={conflictInfo?.cloud_content ?? ""}
+          onKeepLocal={handleKeepLocal}
+          onKeepCloud={handleKeepCloud}
+          t={t}
+        />
+      )}
     </div>
   );
 }
