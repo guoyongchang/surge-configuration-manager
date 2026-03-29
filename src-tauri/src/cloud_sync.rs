@@ -233,6 +233,78 @@ impl CloudSyncClient {
         }
         Ok(diffs)
     }
+
+    /// Build local manifest from current AppData sections
+    pub fn build_local_manifest(
+        &self,
+        subscriptions_json: &str,
+        rules_remote_json: &str,
+        rules_individual_json: &str,
+        nodes_json: &str,
+        output_config_json: &str,
+    ) -> CloudSyncManifest {
+        let mut manifest = CloudSyncManifest::new();
+        manifest.files.insert(
+            "subscriptions/data.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(subscriptions_json),
+            },
+        );
+        manifest.files.insert(
+            "rules/remote.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(rules_remote_json),
+            },
+        );
+        manifest.files.insert(
+            "rules/individual.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(rules_individual_json),
+            },
+        );
+        manifest.files.insert(
+            "nodes/data.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(nodes_json),
+            },
+        );
+        manifest.files.insert(
+            "output/config.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(output_config_json),
+            },
+        );
+        manifest
+    }
+
+    /// Find which files differ between local and cloud manifests
+    pub fn diff_manifests(
+        &self,
+        local: &CloudSyncManifest,
+        cloud: Option<&CloudSyncManifest>,
+    ) -> Vec<String> {
+        let mut changed = Vec::new();
+        let cloud_ref = cloud.unwrap_or(local);
+
+        for (path, local_entry) in &local.files {
+            if let Some(cloud_entry) = cloud_ref.files.get(path) {
+                if local_entry.sha != cloud_entry.sha {
+                    changed.push(path.clone());
+                }
+            } else {
+                changed.push(path.clone());
+            }
+        }
+
+        // Also check for files in cloud but not in local
+        for path in cloud_ref.files.keys() {
+            if !local.files.contains_key(path) {
+                changed.push(path.clone());
+            }
+        }
+
+        changed
+    }
 }
 
 fn base64_encode(input: &str) -> String {

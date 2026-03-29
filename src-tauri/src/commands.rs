@@ -1001,6 +1001,8 @@ pub fn update_cloud_sync_settings(
 
 #[tauri::command]
 pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, String> {
+    use std::collections::HashMap;
+
     let settings = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         data.cloud_sync_settings.clone()
@@ -1012,24 +1014,58 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
 
     let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
 
-    // Serialize all app data as JSON
-    let app_data_json = {
+    // Serialize each section
+    let (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        serde_json::to_string(&*data).map_err(|e| e.to_string())?
+        let subscriptions_json = serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json = serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json = serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json = serde_json::to_string(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json = serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
+        (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json)
     };
 
-    // Check if file exists and get SHA
-    let existing = client
-        .get_file_info("scm_data.json")
-        .await
-        .map_err(|e| e.to_string())?;
-    let sha = existing.map(|(s, _)| s);
+    // Build local manifest
+    let local_manifest = client.build_local_manifest(
+        &subscriptions_json,
+        &rules_remote_json,
+        &rules_individual_json,
+        &nodes_json,
+        &output_config_json,
+    );
 
-    // Push to GitHub
-    client
-        .put_file("scm_data.json", &app_data_json, sha)
-        .await
-        .map_err(|e| e.to_string())?;
+    // Get cloud manifest (if exists)
+    let cloud_manifest: Option<crate::cloud_sync::CloudSyncManifest> = match client.get_file_content("manifest.json").await {
+        Ok(content) => serde_json::from_str(&content).ok(),
+        Err(_) => None,
+    };
+
+    // Find changed files
+    let changed_paths = client.diff_manifests(&local_manifest, cloud_manifest.as_ref());
+
+    // Push each changed file
+    let file_contents: HashMap<String, String> = [
+        ("subscriptions/data.json".to_string(), subscriptions_json),
+        ("rules/remote.json".to_string(), rules_remote_json),
+        ("rules/individual.json".to_string(), rules_individual_json),
+        ("nodes/data.json".to_string(), nodes_json),
+        ("output/config.json".to_string(), output_config_json),
+    ].into_iter().collect();
+
+    let local_manifest_json = serde_json::to_string(&local_manifest).map_err(|e| e.to_string())?;
+
+    for path in &changed_paths {
+        let content = file_contents.get(path).map(|s| s.as_str()).unwrap_or("");
+        let sha = cloud_manifest
+            .as_ref()
+            .and_then(|m| m.files.get(path))
+            .map(|e| e.sha.clone());
+        client.put_file(path, content, sha).await?;
+    }
+
+    // Push manifest
+    let manifest_sha = cloud_manifest.as_ref().and_then(|m| m.files.get("manifest.json")).map(|e| e.sha.clone());
+    client.put_file("manifest.json", &local_manifest_json, manifest_sha).await?;
 
     // Update last_synced_at
     let now = chrono::Utc::now();
