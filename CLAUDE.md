@@ -98,7 +98,7 @@ Subscriptions support two source types (`SubSource::Url` | `SubSource::File`). O
 - Compact Card usage: always add `className="py-0 gap-0"` to shadcn `<Card>` in list items (default padding is too large)
 - Frontend icons: `lucide-react` exclusively
 
-## Architecture Layer Rules (ENFORCED BY CI)
+## Architecture Layer Rules (ENFORCED BY CI — requires test harness setup)
 
 The frontend uses strict layer separation enforced by `eslint-plugin-boundaries`. Violations cause CI failure.
 
@@ -135,6 +135,8 @@ For every feature implementation:
 5. Final gate: `pnpm test` fully green before any commit
 
 ## Test Commands
+
+> Requires test harness setup (Vitest + ESLint configured per `docs/superpowers/plans/2026-03-29-test-harness.md`).
 
 ```bash
 # Run all frontend tests
