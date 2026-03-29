@@ -796,6 +796,225 @@ pub fn update_advanced_sections(
     store.save()
 }
 
+// ── Hosts ──
+
+#[tauri::command]
+pub fn get_hosts(store: State<'_, Store>) -> Result<Vec<HostEntry>, String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    Ok(data.hosts.clone())
+}
+
+#[tauri::command]
+pub fn add_host(domain: String, ip: String, store: State<'_, Store>) -> Result<HostEntry, String> {
+    let host = HostEntry {
+        id: Uuid::new_v4(),
+        domain,
+        ip,
+        enabled: true,
+    };
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.hosts.push(host.clone());
+    }
+    store.save()?;
+    Ok(host)
+}
+
+#[tauri::command]
+pub fn update_host(
+    id: String,
+    domain: String,
+    ip: String,
+    enabled: bool,
+    store: State<'_, Store>,
+) -> Result<HostEntry, String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    let mut updated = None;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(host) = data.hosts.iter_mut().find(|h| h.id == uuid) {
+            host.domain = domain;
+            host.ip = ip;
+            host.enabled = enabled;
+            updated = Some(host.clone());
+        }
+    }
+    store.save()?;
+    updated.ok_or_else(|| "Host not found".to_string())
+}
+
+#[tauri::command]
+pub fn remove_host(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.hosts.retain(|h| h.id != uuid);
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn toggle_host(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(host) = data.hosts.iter_mut().find(|h| h.id == uuid) {
+            host.enabled = !host.enabled;
+        }
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn batch_add_hosts(
+    entries: Vec<(String, String)>,
+    store: State<'_, Store>,
+) -> Result<Vec<HostEntry>, String> {
+    let mut added = Vec::new();
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        for (domain, ip) in entries {
+            let host = HostEntry {
+                id: Uuid::new_v4(),
+                domain,
+                ip,
+                enabled: true,
+            };
+            added.push(host.clone());
+            data.hosts.push(host);
+        }
+    }
+    store.save()?;
+    Ok(added)
+}
+
+#[tauri::command]
+pub fn batch_remove_hosts(ids: Vec<String>, store: State<'_, Store>) -> Result<(), String> {
+    let uuids: Vec<Uuid> = ids
+        .iter()
+        .map(|id| Uuid::parse_str(id).map_err(|e| e.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.hosts.retain(|h| !uuids.contains(&h.id));
+    }
+    store.save()
+}
+
+// ── URL Rewrites ──
+
+#[tauri::command]
+pub fn get_url_rewrites(store: State<'_, Store>) -> Result<Vec<UrlRewriteEntry>, String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    Ok(data.url_rewrites.clone())
+}
+
+#[tauri::command]
+pub fn add_url_rewrite(
+    pattern: String,
+    replacement: String,
+    redirect_type: String,
+    store: State<'_, Store>,
+) -> Result<UrlRewriteEntry, String> {
+    let entry = UrlRewriteEntry {
+        id: Uuid::new_v4(),
+        pattern,
+        replacement,
+        redirect_type,
+        enabled: true,
+    };
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.url_rewrites.push(entry.clone());
+    }
+    store.save()?;
+    Ok(entry)
+}
+
+#[tauri::command]
+pub fn update_url_rewrite(
+    id: String,
+    pattern: String,
+    replacement: String,
+    redirect_type: String,
+    enabled: bool,
+    store: State<'_, Store>,
+) -> Result<UrlRewriteEntry, String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    let mut updated = None;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(entry) = data.url_rewrites.iter_mut().find(|r| r.id == uuid) {
+            entry.pattern = pattern;
+            entry.replacement = replacement;
+            entry.redirect_type = redirect_type;
+            entry.enabled = enabled;
+            updated = Some(entry.clone());
+        }
+    }
+    store.save()?;
+    updated.ok_or_else(|| "URL rewrite not found".to_string())
+}
+
+#[tauri::command]
+pub fn remove_url_rewrite(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.url_rewrites.retain(|r| r.id != uuid);
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn toggle_url_rewrite(id: String, store: State<'_, Store>) -> Result<(), String> {
+    let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        if let Some(entry) = data.url_rewrites.iter_mut().find(|r| r.id == uuid) {
+            entry.enabled = !entry.enabled;
+        }
+    }
+    store.save()
+}
+
+#[tauri::command]
+pub fn batch_add_url_rewrites(
+    entries: Vec<(String, String, String)>,
+    store: State<'_, Store>,
+) -> Result<Vec<UrlRewriteEntry>, String> {
+    let mut added = Vec::new();
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        for (pattern, replacement, redirect_type) in entries {
+            let entry = UrlRewriteEntry {
+                id: Uuid::new_v4(),
+                pattern,
+                replacement,
+                redirect_type,
+                enabled: true,
+            };
+            added.push(entry.clone());
+            data.url_rewrites.push(entry);
+        }
+    }
+    store.save()?;
+    Ok(added)
+}
+
+#[tauri::command]
+pub fn batch_remove_url_rewrites(ids: Vec<String>, store: State<'_, Store>) -> Result<(), String> {
+    let uuids: Vec<Uuid> = ids
+        .iter()
+        .map(|id| Uuid::parse_str(id).map_err(|e| e.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.url_rewrites.retain(|r| !uuids.contains(&r.id));
+    }
+    store.save()
+}
+
 // ── Output / Config Generation ──
 
 #[tauri::command]
