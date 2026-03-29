@@ -1098,16 +1098,56 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     }
 
     let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
-    let content = client
-        .get_file_content("scm_data.json")
-        .await
-        .map_err(|e| e.to_string())?;
-    let cloud_data: AppData =
-        serde_json::from_str(&content).map_err(|e| format!("Invalid cloud data format: {}", e))?;
 
+    // Get cloud manifest
+    let cloud_manifest_json = client.get_file_content("manifest.json").await?;
+    let cloud_manifest: crate::cloud_sync::CloudSyncManifest = serde_json::from_str(&cloud_manifest_json)
+        .map_err(|e| format!("Invalid cloud manifest: {}", e))?;
+
+    // Fetch and parse each file
+    let subscriptions: Vec<crate::models::Subscription> = if cloud_manifest.files.contains_key("subscriptions/data.json") {
+        let content = client.get_file_content("subscriptions/data.json").await?;
+        serde_json::from_str(&content).map_err(|e| format!("Invalid subscriptions: {}", e))?
+    } else {
+        Vec::new()
+    };
+
+    let remote_rule_sets: Vec<crate::models::RemoteRuleSet> = if cloud_manifest.files.contains_key("rules/remote.json") {
+        let content = client.get_file_content("rules/remote.json").await?;
+        serde_json::from_str(&content).map_err(|e| format!("Invalid remote rules: {}", e))?
+    } else {
+        Vec::new()
+    };
+
+    let individual_rules: Vec<crate::models::IndividualRule> = if cloud_manifest.files.contains_key("rules/individual.json") {
+        let content = client.get_file_content("rules/individual.json").await?;
+        serde_json::from_str(&content).map_err(|e| format!("Invalid individual rules: {}", e))?
+    } else {
+        Vec::new()
+    };
+
+    let extra_nodes: Vec<crate::models::ExtraNode> = if cloud_manifest.files.contains_key("nodes/data.json") {
+        let content = client.get_file_content("nodes/data.json").await?;
+        serde_json::from_str(&content).map_err(|e| format!("Invalid nodes: {}", e))?
+    } else {
+        Vec::new()
+    };
+
+    let output_config: crate::models::OutputConfig = if cloud_manifest.files.contains_key("output/config.json") {
+        let content = client.get_file_content("output/config.json").await?;
+        serde_json::from_str(&content).map_err(|e| format!("Invalid output config: {}", e))?
+    } else {
+        crate::models::OutputConfig::default()
+    };
+
+    // Update local store
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
-        *data = cloud_data;
+        data.subscriptions = subscriptions;
+        data.remote_rule_sets = remote_rule_sets;
+        data.individual_rules = individual_rules;
+        data.extra_nodes = extra_nodes;
+        data.output_config = output_config;
     }
     store.save()?;
 
