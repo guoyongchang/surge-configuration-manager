@@ -4,7 +4,12 @@
     "rules": "规则",
     "extraNodes": "额外节点",
     "output": "输出",
-    "settings": "设置"
+    "settings": "设置",
+    "httpListen": "HTTP 监听",
+    "mitm": "MITM",
+    "hosts": "HOST",
+    "urlRewrites": "URL 重写",
+    "cloudSync": "云同步"
   },
   "actions": {
     "add": "添加",

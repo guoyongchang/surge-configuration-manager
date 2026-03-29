@@ -4,7 +4,12 @@
     "rules": "Rules",
     "extraNodes": "Extra Nodes",
     "output": "Output",
-    "settings": "Settings"
+    "settings": "Settings",
+    "httpListen": "HTTP Listen",
+    "mitm": "MITM",
+    "hosts": "Hosts",
+    "urlRewrites": "URL Rewrite",
+    "cloudSync": "Cloud Sync"
   },
   "actions": {
     "add": "Add",
