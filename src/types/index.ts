@@ -146,3 +146,18 @@ export interface CloudSyncManifest {
   version: number;
   files: Record<string, CloudSyncManifestFileEntry>;
 }
+
+export interface HostEntry {
+  id: string;
+  domain: string;
+  ip: string;
+  enabled: boolean;
+}
+
+export interface UrlRewriteEntry {
+  id: string;
+  pattern: string;
+  replacement: string;
+  redirect_type: string;
+  enabled: boolean;
+}
