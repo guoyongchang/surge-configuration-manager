@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { GeneralSettings, AdvancedSections } from "@/types";
+import { Switch } from "@/components/ui/switch";
+import type { GeneralSettings, AdvancedSections, CloudSyncSettings } from "@/types";
 import * as api from "@/lib/api";
 
 function SectionTextarea({
@@ -55,15 +56,26 @@ export default function SettingsPage() {
   const [savingSections, setSavingSections] = useState(false);
   const [savedGeneral, setSavedGeneral] = useState(false);
   const [savedSections, setSavedSections] = useState(false);
+  const [cloudSync, setCloudSync] = useState<CloudSyncSettings>({
+    enabled: false,
+    github_pat: null,
+    repo_url: null,
+    auto_sync: false,
+    last_synced_at: null,
+  });
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [g, s] = await Promise.all([
+      const [g, s, cs] = await Promise.all([
         api.getGeneralSettings(),
         api.getAdvancedSections(),
+        api.getCloudSyncSettings(),
       ]);
       setGeneral(g);
       setSections(s);
+      setCloudSync(cs);
     } finally {
       setLoading(false);
     }
@@ -101,6 +113,28 @@ export default function SettingsPage() {
       ...prev,
       extra_lines: text ? text.split("\n") : [],
     }));
+
+  const handleSaveCloudSync = async () => {
+    try {
+      await api.updateCloudSyncSettings(cloudSync);
+    } catch (e) {
+      setSyncError(String(e));
+    }
+  };
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      await api.syncToCloud();
+      const cs = await api.getCloudSyncSettings();
+      setCloudSync(cs);
+    } catch (e) {
+      setSyncError(String(e));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -261,6 +295,99 @@ export default function SettingsPage() {
           {savedSections ? tc("status.saved") : t("saveSectionsBtn")}
         </Button>
       </div>
+
+      {/* Cloud Sync */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Globe size={15} className="text-muted-foreground" />
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t("cloudSync.sectionTitle")}
+          </h2>
+        </div>
+        <Card className="py-0 gap-0">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm">{t("cloudSync.enableLabel")}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t("cloudSync.enableHint")}
+                </div>
+              </div>
+              <Switch
+                checked={cloudSync.enabled}
+                onCheckedChange={(v) => setCloudSync((p) => ({ ...p, enabled: v }))}
+              />
+            </div>
+
+            <div>
+              <Label>{t("cloudSync.patLabel")}</Label>
+              <p className="text-xs text-muted-foreground mb-1.5">
+                {t("cloudSync.patHint")}
+              </p>
+              <Input
+                type="password"
+                placeholder="ghp_xxxxxxxxxxxx"
+                value={cloudSync.github_pat ?? ""}
+                onChange={(e) => setCloudSync((p) => ({
+                  ...p,
+                  github_pat: e.target.value || null,
+                }))}
+              />
+            </div>
+
+            <div>
+              <Label>{t("cloudSync.repoUrlLabel")}</Label>
+              <p className="text-xs text-muted-foreground mb-1.5">
+                {t("cloudSync.repoUrlHint")}
+              </p>
+              <Input
+                placeholder="username/repo-name"
+                value={cloudSync.repo_url ?? ""}
+                onChange={(e) => setCloudSync((p) => ({
+                  ...p,
+                  repo_url: e.target.value || null,
+                }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm">{t("cloudSync.autoSyncLabel")}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t("cloudSync.autoSyncHint")}
+                </div>
+              </div>
+              <Switch
+                checked={cloudSync.auto_sync}
+                onCheckedChange={(v) => setCloudSync((p) => ({ ...p, auto_sync: v }))}
+              />
+            </div>
+
+            {cloudSync.last_synced_at && (
+              <div className="text-xs text-muted-foreground">
+                {t("cloudSync.lastSynced")}: {new Date(cloudSync.last_synced_at).toLocaleString()}
+              </div>
+            )}
+
+            {syncError && (
+              <div className="text-xs text-danger">{syncError}</div>
+            )}
+
+            <div className="flex gap-2">
+              <Button onClick={handleSaveCloudSync} size="sm">
+                <Save size={14} />
+                {t("cloudSync.saveBtn")}
+              </Button>
+              {cloudSync.enabled && (
+                <Button onClick={handleSyncNow} size="sm" disabled={syncing}>
+                  {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  {t("cloudSync.syncNow")}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
