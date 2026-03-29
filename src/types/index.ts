@@ -110,3 +110,9 @@ export interface AdvancedSections {
   host: string;
   url_rewrite: string;
 }
+
+export interface BackupInfo {
+  filename: string;
+  size_bytes: number;
+  created: string;
+}

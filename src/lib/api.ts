@@ -13,6 +13,7 @@ import type {
   UpdateInfo,
   GeneralSettings,
   AdvancedSections,
+  BackupInfo,
 } from "@/types";
 
 export type {
@@ -28,6 +29,7 @@ export type {
   UpdateInfo,
   GeneralSettings,
   AdvancedSections,
+  BackupInfo,
 } from "@/types";
 
 // ── File / Folder Dialog ──
@@ -226,3 +228,13 @@ export const getAdvancedSections = () =>
 
 export const updateAdvancedSections = (sections: AdvancedSections) =>
   invoke<void>("update_advanced_sections", { sections });
+
+// ── Backup / Version Rollback ──
+
+export const getBackups = () => invoke<BackupInfo[]>("get_backups");
+
+export const getBackupContent = (filename: string) =>
+  invoke<string>("get_backup_content", { filename });
+
+export const rollbackToBackup = (filename: string) =>
+  invoke<void>("rollback_to_backup", { filename });

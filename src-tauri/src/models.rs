@@ -157,6 +157,14 @@ pub enum BuildStatus {
     Error,
 }
 
+/// Simple metadata for a backup file on disk
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackupInfo {
+    pub filename: String,
+    pub size_bytes: u64,
+    pub created: DateTime<Utc>,
+}
+
 /// The entire app state that gets persisted to disk
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppData {

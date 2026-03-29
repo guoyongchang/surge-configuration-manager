@@ -24,6 +24,18 @@
     "noChange": "无变化",
     "selectOutputDir": "选择输出目录",
     "previewTitle": "配置预览",
-    "noPreviewData": "暂无配置数据，请先添加订阅和规则。"
+    "noPreviewData": "暂无配置数据，请先添加订阅和规则。",
+    "historyVersionsBtn": "历史版本",
+    "historyVersionsTitle": "备份历史",
+    "noBackups": "暂无备份文件。",
+    "backupPreview": "预览",
+    "rollback": "回退",
+    "rollbackConfirm": "确定要恢复此版本到 Surge 配置目录吗？",
+    "rollbackSuccess": "回退成功",
+    "rollbackFailed": "回退失败",
+    "backupCreated": "创建时间",
+    "backupSize": "大小",
+    "rollbackConfirmTitle": "确认回退",
+    "cancel": "取消"
   }
 }

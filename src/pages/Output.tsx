@@ -8,6 +8,7 @@ import {
   Loader2,
   Eye,
   Archive,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { OutputConfig, BuildRecord } from "@/types";
+import type { OutputConfig, BuildRecord, BackupInfo } from "@/types";
 import * as api from "@/lib/api";
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
@@ -48,6 +49,12 @@ export default function OutputPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
   const [lastBuildTime, setLastBuildTime] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [backupPreviewOpen, setBackupPreviewOpen] = useState(false);
+  const [backupPreviewContent, setBackupPreviewContent] = useState("");
+  const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -293,6 +300,23 @@ export default function OutputPage() {
               </div>
             )}
           </div>
+          {/* History Versions button */}
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const list = await api.getBackups();
+                setBackups(list);
+                setHistoryOpen(true);
+              } catch (e) {
+                console.error("Failed to load backups:", e);
+              }
+            }}
+            className="w-full"
+          >
+            <History size={16} />
+            {t("page.historyVersionsBtn")}
+          </Button>
         </div>
       </div>
 
@@ -305,6 +329,115 @@ export default function OutputPage() {
           <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
             {previewContent || t("page.noPreviewData")}
           </pre>
+        </DialogContent>
+      </Dialog>
+
+      {/* History Versions Dialog */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{t("page.historyVersionsTitle")}</DialogTitle>
+          </DialogHeader>
+          {backups.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">
+              {t("page.noBackups")}
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-auto">
+              {backups.map((backup) => (
+                <Card key={backup.filename} className="py-0 gap-0">
+                  <CardContent className="flex items-center gap-3 px-3 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 text-xs font-medium">
+                        <Archive size={11} className="text-primary shrink-0" />
+                        <span className="font-mono truncate">{backup.filename}</span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-muted-foreground">
+                          {t("page.backupCreated")}: {new Date(backup.created).toLocaleString()}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {t("page.backupSize")}:{" "}
+                          {backup.size_bytes < 1024
+                            ? `${backup.size_bytes} B`
+                            : backup.size_bytes < 1024 * 1024
+                              ? `${(backup.size_bytes / 1024).toFixed(1)} KB`
+                              : `${(backup.size_bytes / (1024 * 1024)).toFixed(1)} MB`}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const content = await api.getBackupContent(backup.filename);
+                          setBackupPreviewContent(content);
+                          setBackupPreviewOpen(true);
+                        } catch (e) {
+                          console.error("Preview failed:", e);
+                        }
+                      }}
+                    >
+                      <Eye size={12} />
+                      {t("page.backupPreview")}
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedBackup(backup.filename);
+                        setRollbackConfirmOpen(true);
+                      }}
+                    >
+                      {t("page.rollback")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Backup Preview Dialog */}
+      <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{t("page.backupPreview")}</DialogTitle>
+          </DialogHeader>
+          <pre className="text-xs font-mono bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
+            {backupPreviewContent}
+          </pre>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rollback Confirm Dialog */}
+      <Dialog open={rollbackConfirmOpen} onOpenChange={setRollbackConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("page.rollbackConfirmTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("page.rollbackConfirm")}</p>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setRollbackConfirmOpen(false)}>
+              {tc("page.cancel")}
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedBackup) return;
+                try {
+                  await api.rollbackToBackup(selectedBackup);
+                  setRollbackConfirmOpen(false);
+                  setHistoryOpen(false);
+                } catch (e) {
+                  console.error("Rollback failed:", e);
+                }
+              }}
+            >
+              {t("page.rollback")}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -24,6 +24,18 @@
     "noChange": "No change",
     "selectOutputDir": "Select Output Directory",
     "previewTitle": "Config Preview",
-    "noPreviewData": "No config data. Add subscriptions and rules first."
+    "noPreviewData": "No config data. Add subscriptions and rules first.",
+    "historyVersionsBtn": "History Versions",
+    "historyVersionsTitle": "Backup History",
+    "noBackups": "No backup files found.",
+    "backupPreview": "Preview",
+    "rollback": "Rollback",
+    "rollbackConfirm": "Restore this version to the Surge profile directory?",
+    "rollbackSuccess": "Rollback successful",
+    "rollbackFailed": "Rollback failed",
+    "backupCreated": "Created",
+    "backupSize": "Size",
+    "rollbackConfirmTitle": "Confirm Rollback",
+    "cancel": "Cancel"
   }
 }

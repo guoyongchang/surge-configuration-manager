@@ -65,6 +65,9 @@ pub fn run() {
             commands::update_general_settings,
             commands::get_advanced_sections,
             commands::update_advanced_sections,
+            commands::get_backups,
+            commands::get_backup_content,
+            commands::rollback_to_backup,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

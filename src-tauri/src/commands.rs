@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use std::fs;
 use std::path::PathBuf;
 
@@ -912,6 +913,63 @@ pub fn clear_build_history(store: State<'_, Store>) -> Result<(), String> {
 pub fn preview_config(store: State<'_, Store>) -> Result<String, String> {
     let data = store.data.lock().map_err(|e| e.to_string())?;
     Ok(generator::generate_config(&data))
+}
+
+// ── Backup / Version Rollback ──
+
+#[tauri::command]
+pub fn get_backups(store: State<'_, Store>) -> Result<Vec<BackupInfo>, String> {
+    let backup_dir = store.app_data_dir().join("backups");
+    let entries =
+        fs::read_dir(&backup_dir).map_err(|e| format!("Cannot read backup dir: {}", e))?;
+
+    let mut backups: Vec<BackupInfo> = entries
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("conf"))
+        .filter_map(|entry| {
+            let path = entry.path();
+            let metadata = entry.metadata().ok()?;
+            let filename = path.file_name()?.to_str()?.to_string();
+            let created = metadata.created().ok()?;
+            let created: DateTime<Utc> = created.into();
+            Some(BackupInfo {
+                filename,
+                size_bytes: metadata.len(),
+                created,
+            })
+        })
+        .collect();
+
+    backups.sort_by_key(|b| std::cmp::Reverse(b.created));
+    Ok(backups)
+}
+
+#[tauri::command]
+pub fn get_backup_content(filename: String, store: State<'_, Store>) -> Result<String, String> {
+    let backup_path = store.app_data_dir().join("backups").join(&filename);
+    fs::read_to_string(&backup_path)
+        .map_err(|e| format!("Cannot read backup file '{}': {}", filename, e))
+}
+
+#[tauri::command]
+pub fn rollback_to_backup(filename: String, store: State<'_, Store>) -> Result<(), String> {
+    let data = store.data.lock().map_err(|e| e.to_string())?;
+    let backup_path = store.app_data_dir().join("backups").join(&filename);
+    let content = fs::read_to_string(&backup_path)
+        .map_err(|e| format!("Cannot read backup file '{}': {}", filename, e))?;
+
+    let output_dir = shellexpand_tilde(&data.output_config.output_path);
+    fs::create_dir_all(&output_dir).map_err(|e| format!("Cannot create output dir: {}", e))?;
+
+    let output_filename = if data.output_config.output_filename.is_empty() {
+        "surge.conf".to_string()
+    } else {
+        data.output_config.output_filename.clone()
+    };
+
+    let full_path = PathBuf::from(&output_dir).join(&output_filename);
+    fs::write(&full_path, &content).map_err(|e| format!("Failed to write config: {}", e))?;
+    Ok(())
 }
 
 fn shellexpand_tilde(path: &str) -> String {
