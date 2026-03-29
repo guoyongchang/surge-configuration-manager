@@ -166,6 +166,7 @@ pub struct BackupInfo {
 }
 
 /// Metadata for a backup file stored in cloud (GitHub)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudBackupFile {
     pub path: String, // e.g. "subscriptions/data.json"
@@ -175,7 +176,7 @@ pub struct CloudBackupFile {
 }
 
 /// Cloud sync settings for GitHub integration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CloudSyncSettings {
     pub enabled: bool,
     pub github_pat: Option<String>,
@@ -184,19 +185,8 @@ pub struct CloudSyncSettings {
     pub last_synced_at: Option<DateTime<Utc>>,
 }
 
-impl Default for CloudSyncSettings {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            github_pat: None,
-            repo_url: None,
-            auto_sync: false,
-            last_synced_at: None,
-        }
-    }
-}
-
 /// Sync status for cloud operations
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum SyncStatus {

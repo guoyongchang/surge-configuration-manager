@@ -1,18 +1,20 @@
-use chrono::{DateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
-use crate::models::{CloudBackupFile, CloudSyncSettings};
+use crate::models::CloudSyncSettings;
 
 const GITHUB_API: &str = "https://api.github.com";
 
 #[derive(Debug, Deserialize)]
 struct GithubContentResponse {
+    #[allow(dead_code)]
     name: String,
+    #[allow(dead_code)]
     sha: String,
     content: String,
+    #[allow(dead_code)]
     #[serde(rename = "last_modified")]
     last_modified: Option<String>,
 }
@@ -111,39 +113,6 @@ impl CloudSyncClient {
         headers
     }
 
-    /// Get file SHA and last_modified from GitHub (returns None if file doesn't exist)
-    pub async fn get_file_info(
-        &self,
-        path: &str,
-    ) -> Result<Option<(String, Option<String>)>, String> {
-        let url = format!(
-            "{}/repos/{}/{}/contents/{}",
-            GITHUB_API, self.repo_owner, self.repo_name, path
-        );
-        let resp = self
-            .client
-            .get(&url)
-            .headers(self.headers())
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
-
-        if resp.status() == 404 {
-            return Ok(None);
-        }
-        if !resp.status().is_success() {
-            let status = resp.status().as_u16();
-            let text = resp.text().await.unwrap_or_default();
-            return Err(format!("GitHub API error: {} {}", status, text));
-        }
-
-        let content: GithubContentResponse = resp
-            .json()
-            .await
-            .map_err(|e| format!("Parse error: {}", e))?;
-        Ok(Some((content.sha, content.last_modified)))
-    }
-
     /// Push a single file to GitHub using PUT (creates or updates)
     pub async fn put_file(
         &self,
@@ -209,29 +178,6 @@ impl CloudSyncClient {
             .await
             .map_err(|e| format!("Parse error: {}", e))?;
         base64_decode(&content.content)
-    }
-
-    /// Check which files differ between local and cloud
-    pub async fn diff(
-        &self,
-        local_files: &[(&str, Option<DateTime<Utc>>)],
-    ) -> Result<Vec<CloudBackupFile>, String> {
-        let mut diffs = Vec::new();
-        for (path, local_modified) in local_files {
-            if let Some((sha, cloud_modified_str)) = self.get_file_info(path).await? {
-                let cloud_modified = cloud_modified_str
-                    .and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
-                    .map(|dt| dt.with_timezone(&Utc));
-
-                diffs.push(CloudBackupFile {
-                    path: path.to_string(),
-                    sha,
-                    local_modified: *local_modified,
-                    cloud_modified,
-                });
-            }
-        }
-        Ok(diffs)
     }
 
     /// Build local manifest from current AppData sections

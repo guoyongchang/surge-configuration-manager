@@ -1202,7 +1202,7 @@ pub async fn check_sync_conflict(
         Err(_) => return Ok(None), // No cloud data = no conflict
     };
 
-    let cloud_manifest: crate::cloud_sync::CloudSyncManifest = match serde_json::from_str(&cloud_manifest_json) {
+    let _cloud_manifest: crate::cloud_sync::CloudSyncManifest = match serde_json::from_str(&cloud_manifest_json) {
         Ok(m) => m,
         Err(_) => return Ok(None),
     };
