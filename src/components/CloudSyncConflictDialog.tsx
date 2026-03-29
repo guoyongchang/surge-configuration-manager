@@ -46,8 +46,8 @@ export function CloudSyncConflictDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ maxWidth: "90vw" }} className="!w-[90vw] max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle>{t("settings_cloudSync.conflictTitle")}</DialogTitle>
-          <p className="text-xs text-muted-foreground">{t("settings_cloudSync.conflictHint")}</p>
+          <DialogTitle>{t("settings_cloudSync_conflictTitle")}</DialogTitle>
+          <p className="text-xs text-muted-foreground">{t("settings_cloudSync_conflictHint")}</p>
         </DialogHeader>
 
         <div style={{ height: "55vh" }} className="border border-border rounded-lg overflow-hidden">
@@ -78,7 +78,7 @@ export function CloudSyncConflictDialog({
               onClick={() => handle(onKeepCloud)}
             >
               {resolving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {t("settings_cloudSync.keepCloud")}
+              {t("settings_cloudSync_keepCloud")}
             </Button>
             <Button
               variant="outline"
@@ -86,7 +86,7 @@ export function CloudSyncConflictDialog({
               onClick={() => handle(onKeepLocal)}
             >
               {resolving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {t("settings_cloudSync.keepLocal")}
+              {t("settings_cloudSync_keepLocal")}
             </Button>
           </div>
           <Button

@@ -122,6 +122,8 @@ pub struct OutputConfig {
     pub output_filename: String,
     pub auto_regenerate: bool,
     pub minify: bool,
+    #[allow(dead_code)]
+    #[serde(skip)]
     pub auto_upload: bool,
 }
 

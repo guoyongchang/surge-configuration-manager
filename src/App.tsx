@@ -13,13 +13,13 @@ import UrlRewritePage from "./pages/UrlRewritePage";
 import CloudSyncPage from "./pages/CloudSyncPage";
 import { Button } from "@/components/ui/button";
 import { checkForUpdate, installUpdate, type UpdateInfo } from "@/lib/api";
-import { RefreshCw, X, Sun, Moon } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 
 export default function App() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [installing, setInstalling] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    return (localStorage.getItem("scm_theme") as "dark" | "light") ?? "light";
+    return (localStorage.getItem("scm_theme") as "dark" | "light") ?? "dark";
   });
 
   useEffect(() => {
@@ -49,25 +49,8 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background">
-      <Sidebar />
+      <Sidebar theme={theme} onThemeToggle={() => setTheme(theme === "dark" ? "light" : "dark")} />
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-border bg-background/80 backdrop-blur">
-          <div className="text-sm text-muted-foreground">
-            Surge Configuration Manager
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </Button>
-            <Button size="sm">Generate Config</Button>
-          </div>
-        </header>
-
         {update && (
           <div
             className="shrink-0 flex items-center justify-between gap-4 px-4 py-2 text-sm border-b"

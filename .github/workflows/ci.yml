@@ -44,6 +44,9 @@ jobs:
       - name: ESLint (architecture boundaries)
         run: pnpm lint
 
+      - name: i18n key check
+        run: pnpm check-i18n
+
       - name: Frontend unit tests
         run: pnpm test
 
