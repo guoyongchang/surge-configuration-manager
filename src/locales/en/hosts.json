@@ -1,0 +1,49 @@
+{
+  "page": {
+    "breadcrumb": "Dashboard / Hosts",
+    "title": "Hosts",
+    "subtitle": "Manage DNS mappings for Surge",
+    "selectedCount": "{{count}} selected",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "empty": "No hosts configured",
+    "emptyHint": "Add hosts to map domains to IP addresses",
+    "deleteTitle": "Delete {{count}} hosts",
+    "removeTitle": "Remove Host",
+    "removeDesc": "Remove {{domain}} from hosts?"
+  },
+  "dialog": {
+    "trigger": "Add Host",
+    "title": "Add Host"
+  },
+  "tabs": {
+    "single": "Single",
+    "batch": "Batch"
+  },
+  "single": {
+    "domain": "Domain",
+    "ip": "IP Address"
+  },
+  "batch": {
+    "title": "Batch Add Hosts",
+    "hint": "Enter one host per line in format: domain = ip",
+    "willAdd": "will be added",
+    "addCount": "Add {{count}}",
+    "add": "Add"
+  },
+  "edit": {
+    "title": "Edit Host",
+    "enabled": "Enabled",
+    "save": "Save"
+  },
+  "status": {
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "actions": {
+    "enable": "Enable",
+    "disable": "Disable",
+    "edit": "Edit",
+    "delete": "Delete"
+  }
+}

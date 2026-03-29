@@ -1254,8 +1254,7 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
             serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
         let output_config_json =
             serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
-        let hosts_json =
-            serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
+        let hosts_json = serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
         let url_rewrites_json =
             serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
         (
@@ -1473,8 +1472,7 @@ pub async fn check_sync_conflict(
             serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
         let output_config_json =
             serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
-        let hosts_json =
-            serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
+        let hosts_json = serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
         let url_rewrites_json =
             serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
         (

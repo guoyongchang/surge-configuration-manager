@@ -221,6 +221,7 @@ impl CloudSyncClient {
     }
 
     /// Build local manifest from current AppData sections
+    #[allow(clippy::too_many_arguments)]
     pub fn build_local_manifest(
         &self,
         subscriptions_json: &str,

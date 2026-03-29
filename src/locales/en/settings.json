@@ -29,8 +29,13 @@
   },
   "urlRewrite": {
     "sectionTitle": "URL Rewrite",
+    "name": "URL Rewrite",
+    "subtitle": "Manage HTTP URL rewrite rules",
     "label": "[URL Rewrite] Section Content",
-    "hint": "HTTP URL rewrite rules. Format: regex replacement type (302 / 307 / reject / header)."
+    "hint": "HTTP URL rewrite rules. Format: regex replacement type (302 / 307 / reject / header).",
+    "pattern": "Pattern (Regex)",
+    "replacement": "Replacement",
+    "redirectType": "Redirect Type"
   },
   "cloudSync": {
     "sectionTitle": "Cloud Sync",
@@ -49,6 +54,29 @@
     "conflictHint": "Both local and cloud have changes. Choose which version to keep:",
     "keepLocal": "Keep Local",
     "keepCloud": "Keep Cloud"
+  },
+  "dialog": {
+    "trigger": "Add",
+    "title": "Add",
+    "addTitle": "Add {{name}}",
+    "add": "Add"
+  },
+  "tabs": {
+    "single": "Single",
+    "batch": "Batch"
+  },
+  "batch": {
+    "title": "Batch Add",
+    "hint": "Enter one per line",
+    "hintUrlRewrite": "Enter one rewrite per line: pattern replacement type",
+    "willAdd": "will be added",
+    "addCount": "Add {{count}}",
+    "add": "Add"
+  },
+  "edit": {
+    "title": "Edit",
+    "enabled": "Enabled",
+    "save": "Save"
   },
   "saveSectionsBtn": "Save MITM / Host / URL Rewrite"
 }

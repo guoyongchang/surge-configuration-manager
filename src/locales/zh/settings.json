@@ -29,8 +29,13 @@
   },
   "urlRewrite": {
     "sectionTitle": "URL Rewrite",
+    "name": "URL 重写",
+    "subtitle": "管理 HTTP URL 重写规则",
     "label": "[URL Rewrite] 区块内容",
-    "hint": "HTTP URL 重写规则，格式：正则表达式 替换内容 类型（302 / 307 / reject / header）。"
+    "hint": "HTTP URL 重写规则，格式：正则表达式 替换内容 类型（302 / 307 / reject / header）。",
+    "pattern": "匹配模式（正则）",
+    "replacement": "替换内容",
+    "redirectType": "重定向类型"
   },
   "cloudSync": {
     "sectionTitle": "云同步",
@@ -49,6 +54,29 @@
     "conflictHint": "本地和云端都有变更。请选择保留哪个版本：",
     "keepLocal": "保留本地",
     "keepCloud": "保留云端"
+  },
+  "dialog": {
+    "trigger": "添加",
+    "title": "添加",
+    "addTitle": "添加{{name}}",
+    "add": "添加"
+  },
+  "tabs": {
+    "single": "单个",
+    "batch": "批量"
+  },
+  "batch": {
+    "title": "批量添加",
+    "hint": "每行一条",
+    "hintUrlRewrite": "每行一条，格式：匹配模式 替换内容 类型",
+    "willAdd": "将被添加",
+    "addCount": "添加 {{count}} 个",
+    "add": "添加"
+  },
+  "edit": {
+    "title": "编辑",
+    "enabled": "启用",
+    "save": "保存"
   },
   "saveSectionsBtn": "保存 MITM / Host / URL Rewrite"
 }

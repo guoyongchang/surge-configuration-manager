@@ -18,13 +18,18 @@
     "remove": "Remove",
     "delete": "Delete",
     "refresh": "Refresh",
-    "import": "Import"
+    "import": "Import",
+    "enable": "Enable",
+    "disable": "Disable",
+    "edit": "Edit"
   },
   "status": {
     "loading": "Loading...",
     "saved": "Saved!",
     "never": "Never",
-    "justNow": "Just now"
+    "justNow": "Just now",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   },
   "confirm": {
     "cannotUndo": "This action cannot be undone."

@@ -18,13 +18,18 @@
     "remove": "删除",
     "delete": "删除",
     "refresh": "刷新",
-    "import": "导入"
+    "import": "导入",
+    "enable": "启用",
+    "disable": "禁用",
+    "edit": "编辑"
   },
   "status": {
     "loading": "加载中…",
     "saved": "已保存！",
     "never": "从未",
-    "justNow": "刚刚"
+    "justNow": "刚刚",
+    "enabled": "已启用",
+    "disabled": "已禁用"
   },
   "confirm": {
     "cannotUndo": "此操作无法撤销。"
