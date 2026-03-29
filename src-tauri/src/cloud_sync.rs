@@ -114,6 +114,43 @@ impl CloudSyncClient {
         headers
     }
 
+    /// Get file SHA from GitHub (returns None if file doesn't exist)
+    pub async fn get_file_info(
+        &self,
+        path: &str,
+    ) -> Result<Option<String>, String> {
+        let url = format!(
+            "{}/repos/{}/{}/contents/{}",
+            GITHUB_API, self.repo_owner, self.repo_name, path
+        );
+        let resp = self
+            .client
+            .get(&url)
+            .headers(self.headers())
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if resp.status() == 404 {
+            return Ok(None);
+        }
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("GitHub API error: {} {}", status, text));
+        }
+
+        #[derive(Deserialize)]
+        struct GithubContentResponse {
+            sha: String,
+        }
+        let content: GithubContentResponse = resp
+            .json()
+            .await
+            .map_err(|e| format!("Parse error: {}", e))?;
+        Ok(Some(content.sha))
+    }
+
     /// Push a single file to GitHub using PUT (creates or updates)
     pub async fn put_file(
         &self,
