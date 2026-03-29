@@ -132,7 +132,6 @@ impl CloudSyncClient {
             .map_err(|e| e.to_string())?;
 
         if resp.status() == 404 {
-            eprintln!("[cloud_sync] GET {} - 404 not found", path);
             return Ok(None);
         }
         if !resp.status().is_success() {
@@ -152,24 +151,27 @@ impl CloudSyncClient {
         Ok(Some(content.sha))
     }
 
-    /// Push a single file to GitHub using PUT (creates or updates)
+    /// Push a single file to GitHub using PUT (creates or updates).
+    /// Queries SHA first to avoid sending null sha on updates.
     pub async fn put_file(
         &self,
         path: &str,
         content: &str,
-        sha: Option<String>,
+        _sha: Option<String>,
     ) -> Result<String, String> {
         let url = format!(
             "{}/repos/{}/{}/contents/{}",
             GITHUB_API, self.repo_owner, self.repo_name, path
         );
+
+        // Get current SHA if file exists in cloud (required for updates)
+        let existing_sha = self.get_file_info(path).await.ok().flatten();
+
         let body = GithubCreateFile {
             message: format!("SCM sync: {}", path),
             content: base64_encode(content),
-            sha,
+            sha: existing_sha,
         };
-        let body_json = serde_json::to_string_pretty(&body).unwrap_or_default();
-        eprintln!("[cloud_sync] PUT {} body: {}", path, body_json);
         let resp = self
             .client
             .put(&url)

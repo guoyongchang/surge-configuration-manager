@@ -1060,19 +1060,12 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
             continue;
         }
         let content = file_contents.get(path).map(|s| s.as_str()).unwrap_or("");
-
-        // Get SHA from cloud manifest
-        let sha = cloud_manifest
-            .as_ref()
-            .and_then(|m| m.files.get(path))
-            .map(|e| e.sha.clone());
-        // If sha is None, the file might still exist in cloud - GitHub will error if it does
-        client.put_file(path, content, sha).await?;
+        // put_file queries current SHA from GitHub internally
+        client.put_file(path, content, None).await?;
     }
 
-    // Push manifest - check if it already exists in cloud to get its SHA
-    let manifest_sha = client.get_file_info("manifest.json").await.ok().flatten();
-    client.put_file("manifest.json", &local_manifest_json, manifest_sha).await?;
+    // Push manifest - put_file handles SHA lookup internally
+    client.put_file("manifest.json", &local_manifest_json, None).await?;
 
     // Update last_synced_at
     let now = chrono::Utc::now();
