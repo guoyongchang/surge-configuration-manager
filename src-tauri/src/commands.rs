@@ -1240,6 +1240,8 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         rules_individual_json,
         nodes_json,
         output_config_json,
+        hosts_json,
+        url_rewrites_json,
     ) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         let subscriptions_json =
@@ -1252,12 +1254,18 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
             serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
         let output_config_json =
             serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
+        let hosts_json =
+            serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
+        let url_rewrites_json =
+            serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
         (
             subscriptions_json,
             rules_remote_json,
             rules_individual_json,
             nodes_json,
             output_config_json,
+            hosts_json,
+            url_rewrites_json,
         )
     };
 
@@ -1268,6 +1276,8 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         &rules_individual_json,
         &nodes_json,
         &output_config_json,
+        &hosts_json,
+        &url_rewrites_json,
     );
 
     // Get cloud manifest (if exists)
@@ -1287,6 +1297,8 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         ("rules/individual.json".to_string(), rules_individual_json),
         ("nodes/data.json".to_string(), nodes_json),
         ("output/config.json".to_string(), output_config_json),
+        ("hosts/data.json".to_string(), hosts_json),
+        ("url_rewrites/data.json".to_string(), url_rewrites_json),
     ]
     .into_iter()
     .collect();
@@ -1385,6 +1397,22 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
             crate::models::OutputConfig::default()
         };
 
+    let hosts: Vec<crate::models::HostEntry> =
+        if cloud_manifest.files.contains_key("hosts/data.json") {
+            let content = client.get_file_content("hosts/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid hosts: {}", e))?
+        } else {
+            Vec::new()
+        };
+
+    let url_rewrites: Vec<crate::models::UrlRewriteEntry> =
+        if cloud_manifest.files.contains_key("url_rewrites/data.json") {
+            let content = client.get_file_content("url_rewrites/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid url_rewrites: {}", e))?
+        } else {
+            Vec::new()
+        };
+
     // Update local store
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
@@ -1393,6 +1421,8 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
         data.individual_rules = individual_rules;
         data.extra_nodes = extra_nodes;
         data.output_config = output_config;
+        data.hosts = hosts;
+        data.url_rewrites = url_rewrites;
     }
     store.save()?;
 
@@ -1429,6 +1459,8 @@ pub async fn check_sync_conflict(
         rules_individual_json,
         nodes_json,
         output_config_json,
+        hosts_json,
+        url_rewrites_json,
     ) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         let subscriptions_json =
@@ -1441,12 +1473,18 @@ pub async fn check_sync_conflict(
             serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
         let output_config_json =
             serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
+        let hosts_json =
+            serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
+        let url_rewrites_json =
+            serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
         (
             subscriptions_json,
             rules_remote_json,
             rules_individual_json,
             nodes_json,
             output_config_json,
+            hosts_json,
+            url_rewrites_json,
         )
     };
 
@@ -1456,6 +1494,8 @@ pub async fn check_sync_conflict(
         &rules_individual_json,
         &nodes_json,
         &output_config_json,
+        &hosts_json,
+        &url_rewrites_json,
     );
 
     // Get cloud manifest

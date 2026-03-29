@@ -115,10 +115,7 @@ impl CloudSyncClient {
     }
 
     /// Get file SHA from GitHub (returns None if file doesn't exist)
-    pub async fn get_file_info(
-        &self,
-        path: &str,
-    ) -> Result<Option<String>, String> {
+    pub async fn get_file_info(&self, path: &str) -> Result<Option<String>, String> {
         let url = format!(
             "{}/repos/{}/{}/contents/{}",
             GITHUB_API, self.repo_owner, self.repo_name, path
@@ -231,6 +228,8 @@ impl CloudSyncClient {
         rules_individual_json: &str,
         nodes_json: &str,
         output_config_json: &str,
+        hosts_json: &str,
+        url_rewrites_json: &str,
     ) -> CloudSyncManifest {
         let mut manifest = CloudSyncManifest::new();
         manifest.files.insert(
@@ -261,6 +260,18 @@ impl CloudSyncClient {
             "output/config.json".to_string(),
             ManifestFileEntry {
                 sha: CloudSyncManifest::compute_sha(output_config_json),
+            },
+        );
+        manifest.files.insert(
+            "hosts/data.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(hosts_json),
+            },
+        );
+        manifest.files.insert(
+            "url_rewrites/data.json".to_string(),
+            ManifestFileEntry {
+                sha: CloudSyncManifest::compute_sha(url_rewrites_json),
             },
         );
         manifest
