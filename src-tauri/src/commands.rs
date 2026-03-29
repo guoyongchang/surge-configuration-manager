@@ -768,8 +768,8 @@ pub fn update_general_settings(
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct AdvancedSections {
     pub mitm: String,
-    pub host: String,
-    pub url_rewrite: String,
+    pub hosts: Vec<HostEntry>,
+    pub url_rewrites: Vec<UrlRewriteEntry>,
 }
 
 #[tauri::command]
@@ -777,8 +777,8 @@ pub fn get_advanced_sections(store: State<'_, Store>) -> Result<AdvancedSections
     let data = store.data.lock().map_err(|e| e.to_string())?;
     Ok(AdvancedSections {
         mitm: data.mitm_section.clone(),
-        host: data.host_section.clone(),
-        url_rewrite: data.url_rewrite_section.clone(),
+        hosts: data.hosts.clone(),
+        url_rewrites: data.url_rewrites.clone(),
     })
 }
 
@@ -790,8 +790,8 @@ pub fn update_advanced_sections(
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
         data.mitm_section = sections.mitm;
-        data.host_section = sections.host;
-        data.url_rewrite_section = sections.url_rewrite;
+        data.hosts = sections.hosts;
+        data.url_rewrites = sections.url_rewrites;
     }
     store.save()
 }
@@ -1015,14 +1015,31 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
     let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
 
     // Serialize each section
-    let (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json) = {
+    let (
+        subscriptions_json,
+        rules_remote_json,
+        rules_individual_json,
+        nodes_json,
+        output_config_json,
+    ) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        let subscriptions_json = serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
-        let rules_remote_json = serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
-        let rules_individual_json = serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
-        let nodes_json = serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
-        let output_config_json = serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
-        (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json)
+        let subscriptions_json =
+            serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json =
+            serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json =
+            serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json =
+            serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json =
+            serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
+        (
+            subscriptions_json,
+            rules_remote_json,
+            rules_individual_json,
+            nodes_json,
+            output_config_json,
+        )
     };
 
     // Build local manifest
@@ -1035,10 +1052,11 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
     );
 
     // Get cloud manifest (if exists)
-    let cloud_manifest: Option<crate::cloud_sync::CloudSyncManifest> = match client.get_file_content("manifest.json").await {
-        Ok(content) => serde_json::from_str(&content).ok(),
-        Err(_) => None,
-    };
+    let cloud_manifest: Option<crate::cloud_sync::CloudSyncManifest> =
+        match client.get_file_content("manifest.json").await {
+            Ok(content) => serde_json::from_str(&content).ok(),
+            Err(_) => None,
+        };
 
     // Find changed files
     let changed_paths = client.diff_manifests(&local_manifest, cloud_manifest.as_ref());
@@ -1050,9 +1068,12 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         ("rules/individual.json".to_string(), rules_individual_json),
         ("nodes/data.json".to_string(), nodes_json),
         ("output/config.json".to_string(), output_config_json),
-    ].into_iter().collect();
+    ]
+    .into_iter()
+    .collect();
 
-    let local_manifest_json = serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
+    let local_manifest_json =
+        serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
 
     for path in &changed_paths {
         // Skip cloud-only files (no local content to push)
@@ -1065,7 +1086,9 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
     }
 
     // Push manifest - put_file handles SHA lookup internally
-    client.put_file("manifest.json", &local_manifest_json, None).await?;
+    client
+        .put_file("manifest.json", &local_manifest_json, None)
+        .await?;
 
     // Update last_synced_at
     let now = chrono::Utc::now();
@@ -1097,44 +1120,51 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
 
     // Get cloud manifest
     let cloud_manifest_json = client.get_file_content("manifest.json").await?;
-    let cloud_manifest: crate::cloud_sync::CloudSyncManifest = serde_json::from_str(&cloud_manifest_json)
-        .map_err(|e| format!("Invalid cloud manifest: {}", e))?;
+    let cloud_manifest: crate::cloud_sync::CloudSyncManifest =
+        serde_json::from_str(&cloud_manifest_json)
+            .map_err(|e| format!("Invalid cloud manifest: {}", e))?;
 
     // Fetch and parse each file
-    let subscriptions: Vec<crate::models::Subscription> = if cloud_manifest.files.contains_key("subscriptions/data.json") {
-        let content = client.get_file_content("subscriptions/data.json").await?;
-        serde_json::from_str(&content).map_err(|e| format!("Invalid subscriptions: {}", e))?
-    } else {
-        Vec::new()
-    };
+    let subscriptions: Vec<crate::models::Subscription> =
+        if cloud_manifest.files.contains_key("subscriptions/data.json") {
+            let content = client.get_file_content("subscriptions/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid subscriptions: {}", e))?
+        } else {
+            Vec::new()
+        };
 
-    let remote_rule_sets: Vec<crate::models::RemoteRuleSet> = if cloud_manifest.files.contains_key("rules/remote.json") {
-        let content = client.get_file_content("rules/remote.json").await?;
-        serde_json::from_str(&content).map_err(|e| format!("Invalid remote rules: {}", e))?
-    } else {
-        Vec::new()
-    };
+    let remote_rule_sets: Vec<crate::models::RemoteRuleSet> =
+        if cloud_manifest.files.contains_key("rules/remote.json") {
+            let content = client.get_file_content("rules/remote.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid remote rules: {}", e))?
+        } else {
+            Vec::new()
+        };
 
-    let individual_rules: Vec<crate::models::IndividualRule> = if cloud_manifest.files.contains_key("rules/individual.json") {
-        let content = client.get_file_content("rules/individual.json").await?;
-        serde_json::from_str(&content).map_err(|e| format!("Invalid individual rules: {}", e))?
-    } else {
-        Vec::new()
-    };
+    let individual_rules: Vec<crate::models::IndividualRule> =
+        if cloud_manifest.files.contains_key("rules/individual.json") {
+            let content = client.get_file_content("rules/individual.json").await?;
+            serde_json::from_str(&content)
+                .map_err(|e| format!("Invalid individual rules: {}", e))?
+        } else {
+            Vec::new()
+        };
 
-    let extra_nodes: Vec<crate::models::ExtraNode> = if cloud_manifest.files.contains_key("nodes/data.json") {
-        let content = client.get_file_content("nodes/data.json").await?;
-        serde_json::from_str(&content).map_err(|e| format!("Invalid nodes: {}", e))?
-    } else {
-        Vec::new()
-    };
+    let extra_nodes: Vec<crate::models::ExtraNode> =
+        if cloud_manifest.files.contains_key("nodes/data.json") {
+            let content = client.get_file_content("nodes/data.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid nodes: {}", e))?
+        } else {
+            Vec::new()
+        };
 
-    let output_config: crate::models::OutputConfig = if cloud_manifest.files.contains_key("output/config.json") {
-        let content = client.get_file_content("output/config.json").await?;
-        serde_json::from_str(&content).map_err(|e| format!("Invalid output config: {}", e))?
-    } else {
-        crate::models::OutputConfig::default()
-    };
+    let output_config: crate::models::OutputConfig =
+        if cloud_manifest.files.contains_key("output/config.json") {
+            let content = client.get_file_content("output/config.json").await?;
+            serde_json::from_str(&content).map_err(|e| format!("Invalid output config: {}", e))?
+        } else {
+            crate::models::OutputConfig::default()
+        };
 
     // Update local store
     {
@@ -1174,14 +1204,31 @@ pub async fn check_sync_conflict(
     let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
 
     // Build local manifest
-    let (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json) = {
+    let (
+        subscriptions_json,
+        rules_remote_json,
+        rules_individual_json,
+        nodes_json,
+        output_config_json,
+    ) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        let subscriptions_json = serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
-        let rules_remote_json = serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
-        let rules_individual_json = serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
-        let nodes_json = serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
-        let output_config_json = serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
-        (subscriptions_json, rules_remote_json, rules_individual_json, nodes_json, output_config_json)
+        let subscriptions_json =
+            serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json =
+            serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json =
+            serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json =
+            serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json =
+            serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
+        (
+            subscriptions_json,
+            rules_remote_json,
+            rules_individual_json,
+            nodes_json,
+            output_config_json,
+        )
     };
 
     let local_manifest = client.build_local_manifest(
@@ -1198,12 +1245,14 @@ pub async fn check_sync_conflict(
         Err(_) => return Ok(None), // No cloud data = no conflict
     };
 
-    let _cloud_manifest: crate::cloud_sync::CloudSyncManifest = match serde_json::from_str(&cloud_manifest_json) {
-        Ok(m) => m,
-        Err(_) => return Ok(None),
-    };
+    let _cloud_manifest: crate::cloud_sync::CloudSyncManifest =
+        match serde_json::from_str(&cloud_manifest_json) {
+            Ok(m) => m,
+            Err(_) => return Ok(None),
+        };
 
-    let local_manifest_json = serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
+    let local_manifest_json =
+        serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
 
     // Compute manifest SHA using CloudSyncManifest::compute_sha
     let local_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&local_manifest_json);

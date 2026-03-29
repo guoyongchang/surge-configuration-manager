@@ -130,17 +130,28 @@ pub fn generate_config(data: &AppData) -> String {
     out.push('\n');
 
     // [Host]
-    if !data.host_section.is_empty() {
+    if !data.hosts.is_empty() {
         out.push_str("[Host]\n");
-        out.push_str(&data.host_section);
-        out.push_str("\n\n");
+        for host in &data.hosts {
+            if host.enabled {
+                out.push_str(&format!("{} = {}\n", host.domain, host.ip));
+            }
+        }
+        out.push('\n');
     }
 
     // [URL Rewrite]
-    if !data.url_rewrite_section.is_empty() {
+    if !data.url_rewrites.is_empty() {
         out.push_str("[URL Rewrite]\n");
-        out.push_str(&data.url_rewrite_section);
-        out.push_str("\n\n");
+        for rewrite in &data.url_rewrites {
+            if rewrite.enabled {
+                out.push_str(&format!(
+                    "{} {} {}\n",
+                    rewrite.pattern, rewrite.replacement, rewrite.redirect_type
+                ));
+            }
+        }
+        out.push('\n');
     }
 
     // [MITM]
@@ -375,19 +386,30 @@ HK-01 = ss, 1.2.3.4, 443
     #[test]
     fn test_host_section_included_when_set() {
         let mut data = AppData::default();
-        data.host_section = "example.com = 1.2.3.4".to_string();
+        data.hosts.push(HostEntry {
+            id: Uuid::new_v4(),
+            domain: "example.com".to_string(),
+            ip: "1.2.3.4".to_string(),
+            enabled: true,
+        });
         let conf = generate_config(&data);
         assert!(conf.contains("[Host]\n"));
-        assert!(conf.contains("example.com = 1.2.3.4"));
+        assert!(conf.contains("example.com = 1.2.3.4\n"));
     }
 
     #[test]
     fn test_url_rewrite_section_included_when_set() {
         let mut data = AppData::default();
-        data.url_rewrite_section = "^http://example.com https://example.com 302".to_string();
+        data.url_rewrites.push(UrlRewriteEntry {
+            id: Uuid::new_v4(),
+            pattern: "^http://example.com".to_string(),
+            replacement: "https://example.com".to_string(),
+            redirect_type: "302".to_string(),
+            enabled: true,
+        });
         let conf = generate_config(&data);
         assert!(conf.contains("[URL Rewrite]\n"));
-        assert!(conf.contains("^http://example.com https://example.com 302"));
+        assert!(conf.contains("^http://example.com https://example.com 302\n"));
     }
 
     #[test]

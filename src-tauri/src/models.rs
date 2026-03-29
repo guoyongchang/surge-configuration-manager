@@ -196,6 +196,27 @@ pub enum SyncStatus {
     Error(String),
 }
 
+/// A single host entry for the [Host] section
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HostEntry {
+    pub id: Uuid,
+    pub domain: String,
+    pub ip: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+/// A single URL rewrite entry for the [URL Rewrite] section
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UrlRewriteEntry {
+    pub id: Uuid,
+    pub pattern: String,
+    pub replacement: String,
+    pub redirect_type: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
 /// The entire app state that gets persisted to disk
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppData {
@@ -206,10 +227,14 @@ pub struct AppData {
     pub general_settings: GeneralSettings,
     pub output_config: OutputConfig,
     pub build_history: Vec<BuildRecord>,
-    /// Extra sections like [Host], [URL Rewrite], [MITM] stored as raw text
-    pub host_section: String,
-    pub url_rewrite_section: String,
+    /// Extra sections like [MITM] stored as raw text
     pub mitm_section: String,
+    /// Structured host entries for the [Host] section
+    #[serde(default)]
+    pub hosts: Vec<HostEntry>,
+    /// Structured URL rewrite entries for the [URL Rewrite] section
+    #[serde(default)]
+    pub url_rewrites: Vec<UrlRewriteEntry>,
     /// Keys of subscription-sourced rules that the user has disabled
     /// Format: "{subscription_id}:{rule_line}"
     #[serde(default)]
