@@ -483,8 +483,8 @@ export default function OutputPage() {
 
       {/* Backup Preview Dialog — side-by-side diff */}
       <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
-        <DialogContent className="max-w-[80vw] max-h-[80vh]">
-          <DialogHeader>
+        <DialogContent className="!w-[80vw] max-w-none max-h-[80vh]">
+          <DialogHeader className="mb-2">
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
             <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
           </DialogHeader>
@@ -493,27 +493,29 @@ export default function OutputPage() {
             <div
               ref={leftScrollRef}
               onScroll={() => handleDiffScroll("left")}
-              className="flex-1 overflow-auto max-h-[65vh] bg-card"
+              className="w-1/2 overflow-auto max-h-[65vh] bg-card"
             >
               <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
                 Backup
               </div>
-              {buildSideBySideRows(backupDiff).map((row, idx) => {
-                const leftColor =
-                  row.left.color === "removed"
-                    ? "bg-red-950/30 text-red-400"
-                    : row.left.color === "empty"
-                      ? "bg-muted/20"
-                      : "text-muted-foreground";
-                return (
-                  <div
-                    key={idx}
-                    className={`px-3 py-0.5 ${leftColor}`}
-                  >
-                    {row.left.text || "\u00A0"}
-                  </div>
-                );
-              })}
+              <div>
+                {buildSideBySideRows(backupDiff).map((row, idx) => {
+                  const leftColor =
+                    row.left.color === "removed"
+                      ? "bg-red-950/30 text-red-400"
+                      : row.left.color === "empty"
+                        ? "bg-muted/20"
+                        : "text-muted-foreground";
+                  return (
+                    <div
+                      key={idx}
+                      className={`px-3 py-0.5 ${leftColor}`}
+                    >
+                      {row.left.text || "\u00A0"}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             {/* Divider */}
             <div className="w-px bg-border shrink-0" />
@@ -521,27 +523,29 @@ export default function OutputPage() {
             <div
               ref={rightScrollRef}
               onScroll={() => handleDiffScroll("right")}
-              className="flex-1 overflow-auto max-h-[65vh] bg-card"
+              className="w-1/2 overflow-auto max-h-[65vh] bg-card"
             >
               <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground z-10">
                 Current
               </div>
-              {buildSideBySideRows(backupDiff).map((row, idx) => {
-                const rightColor =
-                  row.right.color === "added"
-                    ? "bg-green-950/30 text-green-400"
-                    : row.right.color === "empty"
-                      ? "bg-muted/20"
-                      : "text-muted-foreground";
-                return (
-                  <div
-                    key={idx}
-                    className={`px-3 py-0.5 ${rightColor}`}
-                  >
-                    {row.right.text || "\u00A0"}
-                  </div>
-                );
-              })}
+              <div>
+                {buildSideBySideRows(backupDiff).map((row, idx) => {
+                  const rightColor =
+                    row.right.color === "added"
+                      ? "bg-green-950/30 text-green-400"
+                      : row.right.color === "empty"
+                        ? "bg-muted/20"
+                        : "text-muted-foreground";
+                  return (
+                    <div
+                      key={idx}
+                      className={`px-3 py-0.5 ${rightColor}`}
+                    >
+                      {row.right.text || "\u00A0"}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </DialogContent>
