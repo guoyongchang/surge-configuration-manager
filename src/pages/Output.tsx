@@ -25,6 +25,67 @@ import { diffLines } from "diff";
 import type { OutputConfig, BuildRecord, BackupInfo } from "@/types";
 import * as api from "@/lib/api";
 
+interface DiffRow {
+  left: { text: string; color: "neutral" | "removed" | "empty" };
+  right: { text: string; color: "neutral" | "added" | "empty" };
+}
+
+function buildSideBySideRows(diff: ReturnType<typeof diffLines>): DiffRow[] {
+  const rows: DiffRow[] = [];
+  let i = 0;
+  while (i < diff.length) {
+    const part = diff[i];
+    if (part.added) {
+      // Check if previous part was removed — pair them
+      if (i > 0 && diff[i - 1].removed) {
+        const prevLines = diff[i - 1].value.split("\n");
+        const currLines = part.value.split("\n");
+        const maxLen = Math.max(prevLines.length, currLines.length);
+        for (let j = 0; j < maxLen; j++) {
+          rows.push({
+            left: {
+              text: prevLines[j] ?? "",
+              color: prevLines[j] !== undefined ? "removed" : "empty",
+            },
+            right: {
+              text: currLines[j] ?? "",
+              color: currLines[j] !== undefined ? "added" : "empty",
+            },
+          });
+        }
+      } else {
+        // Just added lines
+        for (const line of part.value.split("\n")) {
+          if (line === "" && part.value.endsWith("\n")) continue;
+          rows.push({ left: { text: "", color: "empty" }, right: { text: line, color: "added" } });
+        }
+      }
+    } else if (part.removed) {
+      // Removed lines not followed by added — show alone
+      let j = i + 1;
+      let paired = false;
+      if (j < diff.length && diff[j].added) {
+        // Will be paired in next iteration via the "added" branch above
+        paired = true;
+      }
+      if (!paired) {
+        for (const line of part.value.split("\n")) {
+          if (line === "" && part.value.endsWith("\n")) continue;
+          rows.push({ left: { text: line, color: "removed" }, right: { text: "", color: "empty" } });
+        }
+      }
+    } else {
+      // Unchanged
+      for (const line of part.value.split("\n")) {
+        if (line === "" && part.value.endsWith("\n")) continue;
+        rows.push({ left: { text: line, color: "neutral" }, right: { text: line, color: "neutral" } });
+      }
+    }
+    i++;
+  }
+  return rows;
+}
+
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   if (status === "success")
     return <CheckCircle size={16} className="text-success" />;
@@ -405,38 +466,60 @@ export default function OutputPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Backup Preview Dialog */}
+      {/* Backup Preview Dialog — side-by-side diff */}
       <Dialog open={backupPreviewOpen} onOpenChange={setBackupPreviewOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh]">
+        <DialogContent className="max-w-5xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>{t("page.backupPreview")}</DialogTitle>
             <p className="text-xs text-muted-foreground">{t("page.diffHint")}</p>
           </DialogHeader>
-          <div className="bg-background border border-border rounded-lg p-4 overflow-auto max-h-[60vh]">
-            {backupDiff.map((part, idx) => {
-              if (part.added) {
+          <div className="flex text-xs font-mono leading-5 border border-border rounded-lg overflow-hidden">
+            {/* Left: backup */}
+            <div className="flex-1 overflow-auto max-h-[60vh] bg-card">
+              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground">
+                Backup
+              </div>
+              {buildSideBySideRows(backupDiff).map((row, idx) => {
+                const leftColor =
+                  row.left.color === "removed"
+                    ? "bg-red-950/30 text-red-400"
+                    : row.left.color === "empty"
+                      ? "bg-muted/20"
+                      : "text-muted-foreground";
                 return (
-                  <div key={idx} className="bg-green-950/30 text-green-400 font-mono text-xs leading-5 pl-2">
-                    <span className="text-green-500 select-none mr-2">+</span>
-                    {part.value}
+                  <div
+                    key={idx}
+                    className={`px-3 py-0.5 ${leftColor}`}
+                  >
+                    {row.left.text || "\u00A0"}
                   </div>
                 );
-              }
-              if (part.removed) {
+              })}
+            </div>
+            {/* Divider */}
+            <div className="w-px bg-border" />
+            {/* Right: current */}
+            <div className="flex-1 overflow-auto max-h-[60vh] bg-card">
+              <div className="sticky top-0 bg-card border-b border-border px-3 py-1.5 font-semibold text-xs text-muted-foreground">
+                Current
+              </div>
+              {buildSideBySideRows(backupDiff).map((row, idx) => {
+                const rightColor =
+                  row.right.color === "added"
+                    ? "bg-green-950/30 text-green-400"
+                    : row.right.color === "empty"
+                      ? "bg-muted/20"
+                      : "text-muted-foreground";
                 return (
-                  <div key={idx} className="bg-red-950/30 text-red-400 font-mono text-xs leading-5 pl-2">
-                    <span className="text-red-500 select-none mr-2">-</span>
-                    {part.value}
+                  <div
+                    key={idx}
+                    className={`px-3 py-0.5 ${rightColor}`}
+                  >
+                    {row.right.text || "\u00A0"}
                   </div>
                 );
-              }
-              return (
-                <div key={idx} className="text-muted-foreground font-mono text-xs leading-5 pl-2">
-                  <span className="select-none mr-2 text-border"> </span>
-                  {part.value}
-                </div>
-              );
-            })}
+              })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

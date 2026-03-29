@@ -29,7 +29,7 @@
     "historyVersionsTitle": "Backup History",
     "noBackups": "No backup files found.",
     "backupPreview": "Diff vs Current",
-    "diffHint": "green = added in current · red = removed in current",
+    "diffHint": "red = removed from backup · green = added in current · left: backup · right: current",
     "rollback": "Rollback",
     "rollbackConfirm": "Restore this version to the Surge profile directory?",
     "rollbackSuccess": "Rollback successful",
