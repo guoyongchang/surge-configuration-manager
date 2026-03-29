@@ -5,7 +5,7 @@
     "extraNodes": "额外节点",
     "output": "输出",
     "settings": "设置",
-    "httpListen": "HTTP 监听",
+    "httpListen": "通用",
     "mitm": "MITM",
     "hosts": "HOST",
     "urlRewrites": "URL 重写",
