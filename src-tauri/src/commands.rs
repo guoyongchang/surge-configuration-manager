@@ -1625,10 +1625,11 @@ pub async fn check_sync_conflict(
     let mut changed_files = Vec::new();
 
     for path in added.iter().chain(modified.iter()) {
-        let cloud_content = client
-            .get_file_content(path)
-            .await
-            .map_err(|e| e.to_string())?;
+        // For added files, cloud content may not exist yet (404)
+        let cloud_content = match client.get_file_content(path).await {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
 
         let local_content = all_local_content.get(path).cloned().unwrap_or_default();
 
@@ -1645,10 +1646,10 @@ pub async fn check_sync_conflict(
     }
 
     for path in &removed {
-        let cloud_content = client
-            .get_file_content(path)
-            .await
-            .map_err(|e| e.to_string())?;
+        let cloud_content = match client.get_file_content(path).await {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
 
         let cloud_entry = cloud_manifest.files.get(path);
 
