@@ -1,103 +1,81 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DiffEditor } from "@monaco-editor/react";
-import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { SyncConflictInfo } from "@/types";
 
 interface Props {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  localContent: string;
-  cloudContent: string;
-  onKeepLocal: () => Promise<void>;
-  onKeepCloud: () => Promise<void>;
+  conflict: SyncConflictInfo;
+  onKeepLocal: () => void;
+  onKeepCloud: () => void;
+  loading?: boolean;
 }
 
-export function CloudSyncConflictDialog({
-  open,
-  onOpenChange,
-  localContent,
-  cloudContent,
-  onKeepLocal,
-  onKeepCloud,
-}: Props) {
+export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepCloud, loading }: Props) {
   const { t } = useTranslation();
-  const [resolving, setResolving] = useState(false);
-
-  const handle = async (fn: () => Promise<void>) => {
-    setResolving(true);
-    try {
-      await fn();
-      onOpenChange(false);
-    } catch (e) {
-      console.error("Conflict resolution failed:", e);
-    } finally {
-      setResolving(false);
-    }
-  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent style={{ maxWidth: "90vw" }} className="!w-[90vw] max-h-[85vh]">
+    <Dialog open={true}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("settings_cloudSync_conflictTitle")}</DialogTitle>
-          <p className="text-xs text-muted-foreground">{t("settings_cloudSync_conflictHint")}</p>
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-warning" />
+            <DialogTitle>{t("settings_cloudSync_conflictTitle")}</DialogTitle>
+          </div>
         </DialogHeader>
 
-        <div style={{ height: "55vh" }} className="border border-border rounded-lg overflow-hidden">
-          <DiffEditor
-            original={cloudContent}
-            modified={localContent}
-            language="json"
-            theme="vs-dark"
-            options={{
-              readOnly: true,
-              renderSideBySide: true,
-              scrollBeyondLastLine: false,
-              minimap: { enabled: false },
-              lineNumbers: "on",
-              folding: true,
-              wordWrap: "off",
-              automaticLayout: true,
-              fixedOverflowWidgets: true,
-            }}
-          />
+        <p className="text-sm text-muted-foreground">
+          {t("settings_cloudSync_conflictHint")}
+        </p>
+
+        <div className="space-y-4">
+          {conflict.changed_files.map((file) => (
+            <div key={file.path} className="border border-border rounded-md overflow-hidden">
+              <div className="bg-card px-3 py-2 text-xs font-mono text-muted-foreground border-b border-border">
+                {file.path}
+              </div>
+              <div className="grid grid-cols-2 gap-0">
+                <div className="border-r border-border">
+                  <div className="bg-card/50 px-3 py-1 text-xs text-info font-medium border-b border-border">
+                    Cloud
+                  </div>
+                  <pre className="p-3 text-xs overflow-x-auto max-h-48 font-mono whitespace-pre-wrap break-all">
+                    {formatJson(file.cloud_content)}
+                  </pre>
+                </div>
+                <div>
+                  <div className="bg-card/50 px-3 py-1 text-xs text-success font-medium border-b border-border">
+                    Local
+                  </div>
+                  <pre className="p-3 text-xs overflow-x-auto max-h-48 font-mono whitespace-pre-wrap break-all">
+                    {formatJson(file.local_content)}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="flex justify-between mt-4">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              disabled={resolving}
-              onClick={() => handle(onKeepCloud)}
-            >
-              {resolving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {t("settings_cloudSync_keepCloud")}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={resolving}
-              onClick={() => handle(onKeepLocal)}
-            >
-              {resolving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {t("settings_cloudSync_keepLocal")}
-            </Button>
-          </div>
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={resolving}
-          >
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" disabled={loading}>
             {t("settings_actions_cancel")}
+          </Button>
+          <Button onClick={onKeepCloud} disabled={loading} variant="outline">
+            {loading ? "..." : t("settings_cloudSync_keepCloud")}
+          </Button>
+          <Button onClick={onKeepLocal} disabled={loading}>
+            {loading ? "..." : t("settings_cloudSync_keepLocal")}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+function formatJson(json: string): string {
+  try {
+    return JSON.stringify(JSON.parse(json), null, 2);
+  } catch {
+    return json;
+  }
 }

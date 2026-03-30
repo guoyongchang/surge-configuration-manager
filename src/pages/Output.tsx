@@ -24,7 +24,7 @@ import {
 import { DiffEditor } from "@monaco-editor/react";
 import type { OutputConfig, BuildRecord, BackupInfo, CloudSyncSettings, SyncConflictInfo } from "@/types";
 import * as api from "@/lib/api";
-import { CloudSyncConflictDialog } from "@/components/CloudSyncConflictDialog";
+import CloudSyncConflictDialog from "@/components/CloudSyncConflictDialog";
 
 function StatusIcon({ status }: { status: BuildRecord["status"] }) {
   if (status === "success")
@@ -57,9 +57,9 @@ export default function OutputPage() {
   const [backupModified, setBackupModified] = useState("");
   const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
-  const [syncConflictOpen, setSyncConflictOpen] = useState(false);
   const [conflictInfo, setConflictInfo] = useState<SyncConflictInfo | null>(null);
   const [cloudSync, setCloudSync] = useState<CloudSyncSettings | null>(null);
+  const [syncResolving, setSyncResolving] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -102,7 +102,6 @@ export default function OutputPage() {
         const conflict = await api.checkSyncConflict();
         if (conflict) {
           setConflictInfo(conflict);
-          setSyncConflictOpen(true);
         } else {
           await api.syncToCloud();
           const cs = await api.getCloudSyncSettings();
@@ -142,15 +141,27 @@ export default function OutputPage() {
 
   const handleKeepLocal = async () => {
     if (!conflictInfo) return;
-    await api.syncToCloud();
-    const cs = await api.getCloudSyncSettings();
-    setCloudSync(cs);
+    setSyncResolving(true);
+    try {
+      await api.syncToCloud();
+      const cs = await api.getCloudSyncSettings();
+      setCloudSync(cs);
+      setConflictInfo(null);
+    } finally {
+      setSyncResolving(false);
+    }
   };
 
   const handleKeepCloud = async () => {
-    await api.syncFromCloud();
-    const cs = await api.getCloudSyncSettings();
-    setCloudSync(cs);
+    setSyncResolving(true);
+    try {
+      await api.syncFromCloud();
+      const cs = await api.getCloudSyncSettings();
+      setCloudSync(cs);
+      setConflictInfo(null);
+    } finally {
+      setSyncResolving(false);
+    }
   };
 
   if (!config) {
@@ -487,14 +498,12 @@ export default function OutputPage() {
       </Dialog>
 
       {/* Cloud Sync Conflict Dialog */}
-      {cloudSync?.enabled && (
+      {cloudSync?.enabled && conflictInfo && (
         <CloudSyncConflictDialog
-          open={syncConflictOpen}
-          onOpenChange={setSyncConflictOpen}
-          localContent={conflictInfo?.changed_files[0]?.local_content ?? ""}
-          cloudContent={conflictInfo?.changed_files[0]?.cloud_content ?? ""}
+          conflict={conflictInfo}
           onKeepLocal={handleKeepLocal}
           onKeepCloud={handleKeepCloud}
+          loading={syncResolving}
         />
       )}
     </div>
