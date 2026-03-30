@@ -305,7 +305,7 @@ impl CloudSyncClient {
     }
 
     /// Build local manifest from current AppData sections
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, dead_code)]
     pub fn build_local_manifest(
         &self,
         subscriptions_json: &str,
@@ -401,7 +401,8 @@ impl CloudSyncClient {
         &self,
         local: &CloudSyncManifest,
         cloud: &CloudSyncManifest,
-    ) -> Result<(Vec<String>, Vec<String>, Vec<String>), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(Vec<String>, Vec<String>, Vec<String>), Box<dyn std::error::Error + Send + Sync>>
+    {
         let mut added = Vec::new();
         let mut modified = Vec::new();
         let mut removed = Vec::new();
@@ -472,16 +473,7 @@ mod tests {
     #[test]
     fn test_build_local_manifest_includes_all_10_files() {
         let manifest = build_local_manifest(
-            r#"[]"#,
-            r#"[]"#,
-            r#"[]"#,
-            r#"[]"#,
-            r#"{}"#,
-            r#"[]"#,
-            r#"[]"#,
-            r#"{}"#,
-            r#"[]"#,
-            r#""#,
+            r#"[]"#, r#"[]"#, r#"[]"#, r#"[]"#, r#"{}"#, r#"[]"#, r#"[]"#, r#"{}"#, r#"[]"#, r#""#,
         );
         assert_eq!(manifest.version, 1);
         assert!(manifest.files.contains_key("subscriptions/data.json"));
@@ -492,7 +484,9 @@ mod tests {
         assert!(manifest.files.contains_key("hosts/data.json"));
         assert!(manifest.files.contains_key("url_rewrites/data.json"));
         assert!(manifest.files.contains_key("general_settings/data.json"));
-        assert!(manifest.files.contains_key("disabled_sub_rule_keys/data.json"));
+        assert!(manifest
+            .files
+            .contains_key("disabled_sub_rule_keys/data.json"));
         assert!(manifest.files.contains_key("mitm_section/data.json"));
         assert_eq!(manifest.files.len(), 10);
     }

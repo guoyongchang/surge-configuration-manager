@@ -5,11 +5,11 @@ use std::path::PathBuf;
 use tauri::State;
 use uuid::Uuid;
 
+use crate::cloud_sync::{build_local_manifest, CloudSyncClient, CloudSyncManifest};
 use crate::generator;
+use crate::models::FileChangeInfo;
 use crate::models::*;
 use crate::store::Store;
-use crate::cloud_sync::{build_local_manifest, CloudSyncClient, CloudSyncManifest};
-use crate::models::FileChangeInfo;
 use crate::subscription;
 
 #[derive(serde::Serialize)]
@@ -1267,7 +1267,8 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         let general_settings_json =
             serde_json::to_string_pretty(&data.general_settings).map_err(|e| e.to_string())?;
         let disabled_sub_rule_keys_json =
-            serde_json::to_string_pretty(&data.disabled_sub_rule_keys).map_err(|e| e.to_string())?;
+            serde_json::to_string_pretty(&data.disabled_sub_rule_keys)
+                .map_err(|e| e.to_string())?;
         let mitm_section_json =
             serde_json::to_string_pretty(&data.mitm_section).map_err(|e| e.to_string())?;
         (
@@ -1317,8 +1318,14 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         ("output/config.json".to_string(), output_config_json),
         ("hosts/data.json".to_string(), hosts_json),
         ("url_rewrites/data.json".to_string(), url_rewrites_json),
-        ("general_settings/data.json".to_string(), general_settings_json),
-        ("disabled_sub_rule_keys/data.json".to_string(), disabled_sub_rule_keys_json),
+        (
+            "general_settings/data.json".to_string(),
+            general_settings_json,
+        ),
+        (
+            "disabled_sub_rule_keys/data.json".to_string(),
+            disabled_sub_rule_keys_json,
+        ),
         ("mitm_section/data.json".to_string(), mitm_section_json),
     ]
     .into_iter()
@@ -1483,16 +1490,24 @@ pub async fn check_sync_conflict(
         let settings = data.cloud_sync_settings.clone();
 
         // Pre-serialize all section content to owned strings while holding the lock
-        let subscriptions_json = serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
-        let rules_remote_json = serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
-        let rules_individual_json = serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
+        let subscriptions_json =
+            serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json =
+            serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json =
+            serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
         let nodes_json = serde_json::to_string(&data.extra_nodes).map_err(|e| e.to_string())?;
-        let output_config_json = serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
+        let output_config_json =
+            serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
         let hosts_json = serde_json::to_string(&data.hosts).map_err(|e| e.to_string())?;
-        let url_rewrites_json = serde_json::to_string(&data.url_rewrites).map_err(|e| e.to_string())?;
-        let general_settings_json = serde_json::to_string(&data.general_settings).map_err(|e| e.to_string())?;
-        let disabled_sub_rule_keys_json = serde_json::to_string(&data.disabled_sub_rule_keys).map_err(|e| e.to_string())?;
-        let mitm_section_json = serde_json::to_string(&data.mitm_section).map_err(|e| e.to_string())?;
+        let url_rewrites_json =
+            serde_json::to_string(&data.url_rewrites).map_err(|e| e.to_string())?;
+        let general_settings_json =
+            serde_json::to_string(&data.general_settings).map_err(|e| e.to_string())?;
+        let disabled_sub_rule_keys_json =
+            serde_json::to_string(&data.disabled_sub_rule_keys).map_err(|e| e.to_string())?;
+        let mitm_section_json =
+            serde_json::to_string(&data.mitm_section).map_err(|e| e.to_string())?;
 
         let local_manifest_json = build_local_manifest(
             &subscriptions_json,
@@ -1516,10 +1531,18 @@ pub async fn check_sync_conflict(
             ("output/config.json".to_string(), output_config_json),
             ("hosts/data.json".to_string(), hosts_json),
             ("url_rewrites/data.json".to_string(), url_rewrites_json),
-            ("general_settings/data.json".to_string(), general_settings_json),
-            ("disabled_sub_rule_keys/data.json".to_string(), disabled_sub_rule_keys_json),
+            (
+                "general_settings/data.json".to_string(),
+                general_settings_json,
+            ),
+            (
+                "disabled_sub_rule_keys/data.json".to_string(),
+                disabled_sub_rule_keys_json,
+            ),
             ("mitm_section/data.json".to_string(), mitm_section_json),
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
 
         (settings, local_manifest_json, all_local_content)
     }; // lock dropped here
@@ -1535,8 +1558,10 @@ pub async fn check_sync_conflict(
         Err(_) => return Ok(None), // No cloud manifest = no conflict
     };
 
-    let local_manifest_json_str = serde_json::to_string(&local_manifest_json).map_err(|e| e.to_string())?;
-    let cloud_manifest_json_str = serde_json::to_string(&cloud_manifest).map_err(|e| e.to_string())?;
+    let local_manifest_json_str =
+        serde_json::to_string(&local_manifest_json).map_err(|e| e.to_string())?;
+    let cloud_manifest_json_str =
+        serde_json::to_string(&cloud_manifest).map_err(|e| e.to_string())?;
 
     let local_sha = CloudSyncManifest::compute_sha(&local_manifest_json_str);
     let cloud_sha = CloudSyncManifest::compute_sha(&cloud_manifest_json_str);
