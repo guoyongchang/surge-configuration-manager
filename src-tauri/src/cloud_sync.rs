@@ -320,9 +320,9 @@ fn base64_encode(input: &str) -> String {
 
 fn base64_decode(input: &str) -> Result<String, String> {
     use base64::Engine;
-    let trimmed = input.trim();
+    let cleaned: String = input.chars().filter(|c| !c.is_whitespace()).collect();
     base64::engine::general_purpose::STANDARD
-        .decode(trimmed)
+        .decode(&cleaned)
         .map_err(|e| format!("Base64 decode error: {}", e))
         .and_then(|bytes| {
             String::from_utf8(bytes).map_err(|e| format!("UTF-8 decode error: {}", e))
