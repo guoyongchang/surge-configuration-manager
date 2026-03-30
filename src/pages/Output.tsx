@@ -491,8 +491,8 @@ export default function OutputPage() {
         <CloudSyncConflictDialog
           open={syncConflictOpen}
           onOpenChange={setSyncConflictOpen}
-          localContent={conflictInfo?.local_content ?? ""}
-          cloudContent={conflictInfo?.cloud_content ?? ""}
+          localContent={conflictInfo?.changed_files[0]?.local_content ?? ""}
+          cloudContent={conflictInfo?.changed_files[0]?.cloud_content ?? ""}
           onKeepLocal={handleKeepLocal}
           onKeepCloud={handleKeepCloud}
         />

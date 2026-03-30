@@ -131,11 +131,18 @@ export interface CloudSyncState {
   status: string;
 }
 
-export interface SyncConflictInfo {
-  local_sha: string | null;
+export interface FileChangeInfo {
+  path: string;
   cloud_sha: string;
-  local_content: string;
+  local_sha: string;
   cloud_content: string;
+  local_content: string;
+}
+
+export interface SyncConflictInfo {
+  local_sha: string;
+  cloud_sha: string;
+  changed_files: FileChangeInfo[];
 }
 
 export interface CloudSyncManifestFileEntry {
