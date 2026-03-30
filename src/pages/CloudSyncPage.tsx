@@ -6,8 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { CloudSyncSettings } from "@/types";
+import type { CloudSyncSettings, SyncConflictInfo } from "@/types";
 import * as api from "@/lib/api";
+import CloudSyncConflictDialog from "@/components/CloudSyncConflictDialog";
+import ConfirmRestoreDialog from "@/components/ConfirmRestoreDialog";
 
 export default function CloudSyncPage() {
   const { t } = useTranslation();
@@ -25,6 +27,11 @@ export default function CloudSyncPage() {
   const [restoring, setRestoring] = useState(false);
   const [saved, setSaved] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+
+  // 冲突相关状态
+  const [conflict, setConflict] = useState<SyncConflictInfo | null>(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [conflictLoading, setConflictLoading] = useState(false);
 
   useEffect(() => {
     api.getCloudSyncSettings().then((cs) => {
@@ -49,7 +56,15 @@ export default function CloudSyncPage() {
   const handleSyncNow = async () => {
     setSyncing(true);
     setSyncError(null);
+    setConflict(null);
     try {
+      const conflictInfo = await api.checkSyncConflict();
+      if (conflictInfo) {
+        setConflict(conflictInfo);
+        setSyncing(false);
+        return;
+      }
+      // No conflict — push directly
       await api.syncToCloud();
       const cs = await api.getCloudSyncSettings();
       setCloudSync(cs);
@@ -60,10 +75,23 @@ export default function CloudSyncPage() {
     }
   };
 
-  const handleRestoreFromCloud = async () => {
+  const handleRestoreClick = () => {
+    setShowRestoreConfirm(true);
+  };
+
+  const handleRestoreConfirm = async () => {
+    setShowRestoreConfirm(false);
     setRestoring(true);
     setSyncError(null);
+    setConflict(null);
     try {
+      const conflictInfo = await api.checkSyncConflict();
+      if (conflictInfo) {
+        setConflict(conflictInfo);
+        setRestoring(false);
+        return;
+      }
+      // No conflict — restore directly
       await api.syncFromCloud();
       const cs = await api.getCloudSyncSettings();
       setCloudSync(cs);
@@ -73,6 +101,36 @@ export default function CloudSyncPage() {
       setRestoring(false);
     }
   };
+
+  const handleKeepLocal = async () => {
+    setConflictLoading(true);
+    try {
+      await api.syncToCloud();
+      setConflict(null);
+      const cs = await api.getCloudSyncSettings();
+      setCloudSync(cs);
+    } catch (e) {
+      setSyncError(String(e));
+    } finally {
+      setConflictLoading(false);
+    }
+  };
+
+  const handleKeepCloud = async () => {
+    setConflictLoading(true);
+    try {
+      await api.syncFromCloud();
+      setConflict(null);
+      const cs = await api.getCloudSyncSettings();
+      setCloudSync(cs);
+    } catch (e) {
+      setSyncError(String(e));
+    } finally {
+      setConflictLoading(false);
+    }
+  };
+
+  const isBusy = syncing || restoring;
 
   if (loading) {
     return (
@@ -162,7 +220,7 @@ export default function CloudSyncPage() {
           )}
 
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving} size="sm">
+            <Button onClick={handleSave} disabled={saving || isBusy} size="sm">
               {saving ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : saved ? (
@@ -173,13 +231,13 @@ export default function CloudSyncPage() {
               {saved ? tc("status.saved") : t("settings_cloudSync_saveBtn")}
             </Button>
             {cloudSync.enabled && (
-              <Button onClick={handleSyncNow} size="sm" disabled={syncing}>
+              <Button onClick={handleSyncNow} size="sm" disabled={isBusy}>
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 {t("settings_cloudSync_syncNow")}
               </Button>
             )}
             {cloudSync.enabled && (
-              <Button onClick={handleRestoreFromCloud} size="sm" disabled={restoring} variant="outline">
+              <Button onClick={handleRestoreClick} size="sm" disabled={isBusy} variant="outline">
                 {restoring ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                 {t("settings_cloudSync_restoreFromCloud")}
               </Button>
@@ -187,6 +245,21 @@ export default function CloudSyncPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmRestoreDialog
+        open={showRestoreConfirm}
+        onConfirm={handleRestoreConfirm}
+        onCancel={() => setShowRestoreConfirm(false)}
+      />
+
+      {conflict && (
+        <CloudSyncConflictDialog
+          conflict={conflict}
+          onKeepLocal={handleKeepLocal}
+          onKeepCloud={handleKeepCloud}
+          loading={conflictLoading}
+        />
+      )}
     </div>
   );
 }
