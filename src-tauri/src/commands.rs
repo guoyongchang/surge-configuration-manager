@@ -1224,6 +1224,8 @@ pub fn update_cloud_sync_settings(
 pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, String> {
     use std::collections::HashMap;
 
+    let _guard = store.sync_lock.lock().await;
+
     let settings = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         data.cloud_sync_settings.clone()
@@ -1365,6 +1367,8 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
         return Err("Cloud sync not configured".to_string());
     }
+
+    let _guard = store.sync_lock.lock().await;
 
     let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
 

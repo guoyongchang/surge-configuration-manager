@@ -2,12 +2,15 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use tokio::sync::Mutex as AsyncMutex;
+
 use crate::models::AppData;
 use crate::subscription::extract_rule_lines;
 
 pub struct Store {
     path: PathBuf,
     pub data: Mutex<AppData>,
+    pub sync_lock: AsyncMutex<()>,
 }
 
 impl Store {
@@ -33,6 +36,7 @@ impl Store {
         Store {
             path,
             data: Mutex::new(data),
+            sync_lock: AsyncMutex::new(()),
         }
     }
 
