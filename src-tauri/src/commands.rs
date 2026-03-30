@@ -1428,14 +1428,6 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     Ok(())
 }
 
-#[derive(serde::Serialize)]
-pub struct SyncConflictInfo {
-    pub local_sha: Option<String>,
-    pub cloud_sha: String,
-    pub local_content: String,
-    pub cloud_content: String,
-}
-
 #[tauri::command]
 pub async fn check_sync_conflict(
     store: State<'_, Store>,
@@ -1517,10 +1509,9 @@ pub async fn check_sync_conflict(
 
     if local_sha != cloud_sha {
         Ok(Some(SyncConflictInfo {
-            local_sha: Some(local_sha),
+            local_sha,
             cloud_sha,
-            local_content: local_manifest_json,
-            cloud_content: cloud_manifest_json,
+            changed_files: vec![],
         }))
     } else {
         Ok(None)

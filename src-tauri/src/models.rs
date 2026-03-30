@@ -187,6 +187,24 @@ pub struct CloudSyncSettings {
     pub last_synced_at: Option<DateTime<Utc>>,
 }
 
+/// Describes a single changed file in a sync conflict
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileChangeInfo {
+    pub path: String,
+    pub cloud_sha: String,
+    pub local_sha: String,
+    pub cloud_content: String,
+    pub local_content: String,
+}
+
+/// Sync conflict information with file-level change details
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncConflictInfo {
+    pub local_sha: String,
+    pub cloud_sha: String,
+    pub changed_files: Vec<FileChangeInfo>,
+}
+
 /// Sync status for cloud operations
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
