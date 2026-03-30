@@ -1244,6 +1244,9 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         output_config_json,
         hosts_json,
         url_rewrites_json,
+        general_settings_json,
+        disabled_sub_rule_keys_json,
+        mitm_section_json,
     ) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
         let subscriptions_json =
@@ -1259,6 +1262,12 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         let hosts_json = serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
         let url_rewrites_json =
             serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
+        let general_settings_json =
+            serde_json::to_string_pretty(&data.general_settings).map_err(|e| e.to_string())?;
+        let disabled_sub_rule_keys_json =
+            serde_json::to_string_pretty(&data.disabled_sub_rule_keys).map_err(|e| e.to_string())?;
+        let mitm_section_json =
+            serde_json::to_string_pretty(&data.mitm_section).map_err(|e| e.to_string())?;
         (
             subscriptions_json,
             rules_remote_json,
@@ -1267,11 +1276,14 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
             output_config_json,
             hosts_json,
             url_rewrites_json,
+            general_settings_json,
+            disabled_sub_rule_keys_json,
+            mitm_section_json,
         )
     };
 
-    // Build local manifest
-    let local_manifest = client.build_local_manifest(
+    // Build local manifest using standalone function (10 sections)
+    let local_manifest = crate::cloud_sync::build_local_manifest(
         &subscriptions_json,
         &rules_remote_json,
         &rules_individual_json,
@@ -1279,6 +1291,9 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         &output_config_json,
         &hosts_json,
         &url_rewrites_json,
+        &general_settings_json,
+        &disabled_sub_rule_keys_json,
+        &mitm_section_json,
     );
 
     // Get cloud manifest (if exists)
@@ -1300,6 +1315,9 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         ("output/config.json".to_string(), output_config_json),
         ("hosts/data.json".to_string(), hosts_json),
         ("url_rewrites/data.json".to_string(), url_rewrites_json),
+        ("general_settings/data.json".to_string(), general_settings_json),
+        ("disabled_sub_rule_keys/data.json".to_string(), disabled_sub_rule_keys_json),
+        ("mitm_section/data.json".to_string(), mitm_section_json),
     ]
     .into_iter()
     .collect();
