@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Cloud, Loader2, RefreshCw, Save } from "lucide-react";
+import { Cloud, Download, Loader2, RefreshCw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function CloudSyncPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [saved, setSaved] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -56,6 +57,20 @@ export default function CloudSyncPage() {
       setSyncError(String(e));
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleRestoreFromCloud = async () => {
+    setRestoring(true);
+    setSyncError(null);
+    try {
+      await api.syncFromCloud();
+      const cs = await api.getCloudSyncSettings();
+      setCloudSync(cs);
+    } catch (e) {
+      setSyncError(String(e));
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -161,6 +176,12 @@ export default function CloudSyncPage() {
               <Button onClick={handleSyncNow} size="sm" disabled={syncing}>
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 {t("settings_cloudSync_syncNow")}
+              </Button>
+            )}
+            {cloudSync.enabled && (
+              <Button onClick={handleRestoreFromCloud} size="sm" disabled={restoring} variant="outline">
+                {restoring ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                {t("settings_cloudSync_restoreFromCloud")}
               </Button>
             )}
           </div>

@@ -242,6 +242,7 @@
   "settings_cloudSync_lastSynced": "Last synced",
   "settings_cloudSync_saveBtn": "Save Settings",
   "settings_cloudSync_syncNow": "Sync Now",
+  "settings_cloudSync_restoreFromCloud": "Restore from Cloud",
   "settings_cloudSync_conflictTitle": "Sync Conflict Detected",
   "settings_cloudSync_conflictHint": "Both local and cloud have changes. Choose which version to keep:",
   "settings_cloudSync_keepLocal": "Keep Local",
