@@ -1327,6 +1327,8 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
     let local_manifest_json =
         serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
 
+    // Push files with rollback on partial failure
+    let mut pushed: Vec<String> = Vec::new();
     for path in &changed_paths {
         // Skip cloud-only files (no local content to push)
         if !local_manifest.files.contains_key(path) {
@@ -1334,7 +1336,20 @@ pub async fn sync_to_cloud(store: State<'_, Store>) -> Result<CloudSyncState, St
         }
         let content = file_contents.get(path).map(|s| s.as_str()).unwrap_or("");
         // put_file queries current SHA from GitHub internally
-        client.put_file(path, content, None).await?;
+        match client.put_file(path, content, None).await {
+            Ok(_) => {
+                pushed.push(path.clone());
+            }
+            Err(e) => {
+                // Rollback: revert already-pushed files in reverse order
+                for rollback_path in pushed.iter().rev() {
+                    if let Ok(cloud_content) = client.get_file_content(rollback_path).await {
+                        let _ = client.put_file(rollback_path, &cloud_content, None).await;
+                    }
+                }
+                return Err(format!("Failed to push {}: {}", path, e));
+            }
+        }
     }
 
     // Push manifest - put_file handles SHA lookup internally
