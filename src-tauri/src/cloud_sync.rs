@@ -70,6 +70,84 @@ impl Default for CloudSyncManifest {
     }
 }
 
+/// Build local manifest from current AppData sections (standalone function with 10 sections)
+#[allow(clippy::too_many_arguments)]
+pub fn build_local_manifest(
+    subscriptions_json: &str,
+    rules_remote_json: &str,
+    rules_individual_json: &str,
+    nodes_json: &str,
+    output_config_json: &str,
+    hosts_json: &str,
+    url_rewrites_json: &str,
+    general_settings_json: &str,
+    disabled_sub_rule_keys_json: &str,
+    mitm_section_json: &str,
+) -> CloudSyncManifest {
+    let mut manifest = CloudSyncManifest::new();
+    manifest.files.insert(
+        "subscriptions/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(subscriptions_json),
+        },
+    );
+    manifest.files.insert(
+        "rules/remote.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(rules_remote_json),
+        },
+    );
+    manifest.files.insert(
+        "rules/individual.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(rules_individual_json),
+        },
+    );
+    manifest.files.insert(
+        "nodes/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(nodes_json),
+        },
+    );
+    manifest.files.insert(
+        "output/config.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(output_config_json),
+        },
+    );
+    manifest.files.insert(
+        "hosts/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(hosts_json),
+        },
+    );
+    manifest.files.insert(
+        "url_rewrites/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(url_rewrites_json),
+        },
+    );
+    manifest.files.insert(
+        "general_settings/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(general_settings_json),
+        },
+    );
+    manifest.files.insert(
+        "disabled_sub_rule_keys/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(disabled_sub_rule_keys_json),
+        },
+    );
+    manifest.files.insert(
+        "mitm_section/data.json".to_string(),
+        ManifestFileEntry {
+            sha: CloudSyncManifest::compute_sha(mitm_section_json),
+        },
+    );
+    manifest
+}
+
 pub struct CloudSyncClient {
     client: Client,
     pat: String,
@@ -220,6 +298,12 @@ impl CloudSyncClient {
         base64_decode(&content.content)
     }
 
+    /// Fetch and parse the manifest.json file from GitHub
+    pub async fn fetch_manifest(&self) -> Result<CloudSyncManifest, String> {
+        let content = self.get_file_content("manifest.json").await?;
+        serde_json::from_str(&content).map_err(|e| format!("Parse manifest error: {}", e))
+    }
+
     /// Build local manifest from current AppData sections
     #[allow(clippy::too_many_arguments)]
     pub fn build_local_manifest(
@@ -310,6 +394,42 @@ impl CloudSyncClient {
         }
 
         changed
+    }
+
+    /// Like diff_manifests but returns added, modified, and removed file paths separately.
+    pub async fn diff_manifests_detail(
+        &self,
+        local: &CloudSyncManifest,
+        cloud: &CloudSyncManifest,
+    ) -> Result<(Vec<String>, Vec<String>, Vec<String>), Box<dyn std::error::Error + Send + Sync>> {
+        let mut added = Vec::new();
+        let mut modified = Vec::new();
+        let mut removed = Vec::new();
+
+        // Files in cloud but not in local → removed locally (cloud has it, local doesn't)
+        for path in cloud.files.keys() {
+            if !local.files.contains_key(path) {
+                removed.push(path.clone());
+            }
+        }
+
+        // Files in local but not in cloud → added locally
+        for path in local.files.keys() {
+            if !cloud.files.contains_key(path) {
+                added.push(path.clone());
+            }
+        }
+
+        // Files in both but SHA differs → modified
+        for (path, local_entry) in local.files.iter() {
+            if let Some(cloud_entry) = cloud.files.get(path) {
+                if local_entry.sha != cloud_entry.sha {
+                    modified.push(path.clone());
+                }
+            }
+        }
+
+        Ok((added, modified, removed))
     }
 }
 

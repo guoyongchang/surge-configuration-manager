@@ -8,6 +8,8 @@ use uuid::Uuid;
 use crate::generator;
 use crate::models::*;
 use crate::store::Store;
+use crate::cloud_sync::{build_local_manifest, CloudSyncClient, CloudSyncManifest};
+use crate::models::FileChangeInfo;
 use crate::subscription;
 
 #[derive(serde::Serialize)]
@@ -1439,90 +1441,123 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
 pub async fn check_sync_conflict(
     store: State<'_, Store>,
 ) -> Result<Option<SyncConflictInfo>, String> {
-    let settings = {
+    let (settings, local_manifest_json, all_local_content) = {
         let data = store.data.lock().map_err(|e| e.to_string())?;
-        data.cloud_sync_settings.clone()
+        let settings = data.cloud_sync_settings.clone();
+
+        // Pre-serialize all section content to owned strings while holding the lock
+        let subscriptions_json = serde_json::to_string(&data.subscriptions).map_err(|e| e.to_string())?;
+        let rules_remote_json = serde_json::to_string(&data.remote_rule_sets).map_err(|e| e.to_string())?;
+        let rules_individual_json = serde_json::to_string(&data.individual_rules).map_err(|e| e.to_string())?;
+        let nodes_json = serde_json::to_string(&data.extra_nodes).map_err(|e| e.to_string())?;
+        let output_config_json = serde_json::to_string(&data.output_config).map_err(|e| e.to_string())?;
+        let hosts_json = serde_json::to_string(&data.hosts).map_err(|e| e.to_string())?;
+        let url_rewrites_json = serde_json::to_string(&data.url_rewrites).map_err(|e| e.to_string())?;
+        let general_settings_json = serde_json::to_string(&data.general_settings).map_err(|e| e.to_string())?;
+        let disabled_sub_rule_keys_json = serde_json::to_string(&data.disabled_sub_rule_keys).map_err(|e| e.to_string())?;
+        let mitm_section_json = serde_json::to_string(&data.mitm_section).map_err(|e| e.to_string())?;
+
+        let local_manifest_json = build_local_manifest(
+            &subscriptions_json,
+            &rules_remote_json,
+            &rules_individual_json,
+            &nodes_json,
+            &output_config_json,
+            &hosts_json,
+            &url_rewrites_json,
+            &general_settings_json,
+            &disabled_sub_rule_keys_json,
+            &mitm_section_json,
+        );
+
+        // Collect all local content by path for later retrieval
+        let all_local_content: std::collections::HashMap<String, String> = [
+            ("subscriptions/data.json".to_string(), subscriptions_json),
+            ("rules/remote.json".to_string(), rules_remote_json),
+            ("rules/individual.json".to_string(), rules_individual_json),
+            ("nodes/data.json".to_string(), nodes_json),
+            ("output/config.json".to_string(), output_config_json),
+            ("hosts/data.json".to_string(), hosts_json),
+            ("url_rewrites/data.json".to_string(), url_rewrites_json),
+            ("general_settings/data.json".to_string(), general_settings_json),
+            ("disabled_sub_rule_keys/data.json".to_string(), disabled_sub_rule_keys_json),
+            ("mitm_section/data.json".to_string(), mitm_section_json),
+        ].into_iter().collect();
+
+        (settings, local_manifest_json, all_local_content)
+    }; // lock dropped here
+
+    if !settings.enabled {
+        return Err("Cloud sync is not enabled".to_string());
+    }
+
+    let client = CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+
+    let cloud_manifest = match client.fetch_manifest().await {
+        Ok(m) => m,
+        Err(_) => return Ok(None), // No cloud manifest = no conflict
     };
 
-    if !settings.enabled || settings.github_pat.is_none() || settings.repo_url.is_none() {
+    let local_manifest_json_str = serde_json::to_string(&local_manifest_json).map_err(|e| e.to_string())?;
+    let cloud_manifest_json_str = serde_json::to_string(&cloud_manifest).map_err(|e| e.to_string())?;
+
+    let local_sha = CloudSyncManifest::compute_sha(&local_manifest_json_str);
+    let cloud_sha = CloudSyncManifest::compute_sha(&cloud_manifest_json_str);
+
+    if local_sha == cloud_sha {
         return Ok(None);
     }
 
-    let client = crate::cloud_sync::CloudSyncClient::new(&settings).map_err(|e| e.to_string())?;
+    // Get changed file details
+    let (added, modified, removed) = client
+        .diff_manifests_detail(&local_manifest_json, &cloud_manifest)
+        .await
+        .map_err(|e| e.to_string())?;
 
-    // Build local manifest
-    let (
-        subscriptions_json,
-        rules_remote_json,
-        rules_individual_json,
-        nodes_json,
-        output_config_json,
-        hosts_json,
-        url_rewrites_json,
-    ) = {
-        let data = store.data.lock().map_err(|e| e.to_string())?;
-        let subscriptions_json =
-            serde_json::to_string_pretty(&data.subscriptions).map_err(|e| e.to_string())?;
-        let rules_remote_json =
-            serde_json::to_string_pretty(&data.remote_rule_sets).map_err(|e| e.to_string())?;
-        let rules_individual_json =
-            serde_json::to_string_pretty(&data.individual_rules).map_err(|e| e.to_string())?;
-        let nodes_json =
-            serde_json::to_string_pretty(&data.extra_nodes).map_err(|e| e.to_string())?;
-        let output_config_json =
-            serde_json::to_string_pretty(&data.output_config).map_err(|e| e.to_string())?;
-        let hosts_json = serde_json::to_string_pretty(&data.hosts).map_err(|e| e.to_string())?;
-        let url_rewrites_json =
-            serde_json::to_string_pretty(&data.url_rewrites).map_err(|e| e.to_string())?;
-        (
-            subscriptions_json,
-            rules_remote_json,
-            rules_individual_json,
-            nodes_json,
-            output_config_json,
-            hosts_json,
-            url_rewrites_json,
-        )
-    };
+    let mut changed_files = Vec::new();
 
-    let local_manifest = client.build_local_manifest(
-        &subscriptions_json,
-        &rules_remote_json,
-        &rules_individual_json,
-        &nodes_json,
-        &output_config_json,
-        &hosts_json,
-        &url_rewrites_json,
-    );
+    for path in added.iter().chain(modified.iter()) {
+        let cloud_content = client
+            .get_file_content(path)
+            .await
+            .map_err(|e| e.to_string())?;
 
-    // Get cloud manifest
-    let cloud_manifest_json = match client.get_file_content("manifest.json").await {
-        Ok(content) => content,
-        Err(_) => return Ok(None), // No cloud data = no conflict
-    };
+        let local_content = all_local_content.get(path).cloned().unwrap_or_default();
 
-    let _cloud_manifest: crate::cloud_sync::CloudSyncManifest =
-        match serde_json::from_str(&cloud_manifest_json) {
-            Ok(m) => m,
-            Err(_) => return Ok(None),
-        };
+        let cloud_entry = cloud_manifest.files.get(path);
+        let local_entry = local_manifest_json.files.get(path);
 
-    let local_manifest_json =
-        serde_json::to_string_pretty(&local_manifest).map_err(|e| e.to_string())?;
-
-    // Compute manifest SHA using CloudSyncManifest::compute_sha
-    let local_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&local_manifest_json);
-    let cloud_sha = crate::cloud_sync::CloudSyncManifest::compute_sha(&cloud_manifest_json);
-
-    if local_sha != cloud_sha {
-        Ok(Some(SyncConflictInfo {
-            local_sha,
-            cloud_sha,
-            changed_files: vec![],
-        }))
-    } else {
-        Ok(None)
+        changed_files.push(FileChangeInfo {
+            path: path.clone(),
+            cloud_sha: cloud_entry.map(|e| e.sha.clone()).unwrap_or_default(),
+            local_sha: local_entry.map(|e| e.sha.clone()).unwrap_or_default(),
+            cloud_content,
+            local_content,
+        });
     }
+
+    for path in &removed {
+        let cloud_content = client
+            .get_file_content(path)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let cloud_entry = cloud_manifest.files.get(path);
+
+        changed_files.push(FileChangeInfo {
+            path: path.clone(),
+            cloud_sha: cloud_entry.map(|e| e.sha.clone()).unwrap_or_default(),
+            local_sha: String::new(),
+            cloud_content,
+            local_content: String::new(),
+        });
+    }
+
+    Ok(Some(SyncConflictInfo {
+        local_sha,
+        cloud_sha,
+        changed_files,
+    }))
 }
 
 fn shellexpand_tilde(path: &str) -> String {
