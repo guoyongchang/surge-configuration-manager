@@ -1425,6 +1425,13 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     }
     store.save()?;
 
+    {
+        let mut data = store.data.lock().map_err(|e| e.to_string())?;
+        data.cloud_sync_settings.last_synced_at = Some(chrono::Utc::now());
+        drop(data);
+        store.save().map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }
 
