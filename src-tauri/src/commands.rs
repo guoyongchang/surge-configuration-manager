@@ -1649,13 +1649,17 @@ pub async fn check_sync_conflict(
     let mut changed_files = Vec::new();
 
     for path in modified.iter() {
-        // For added files, cloud content may not exist yet (404)
         let cloud_content = match client.get_file_content(path).await {
             Ok(c) => c,
             Err(_) => continue,
         };
 
         let local_content = all_local_content.get(path).cloned().unwrap_or_default();
+
+        // Skip if content is actually identical (just SHA calculation differed due to formatting)
+        if cloud_content == local_content {
+            continue;
+        }
 
         let cloud_entry = cloud_manifest.files.get(path);
         let local_entry = local_manifest_json.files.get(path);
@@ -1667,6 +1671,11 @@ pub async fn check_sync_conflict(
             cloud_content,
             local_content,
         });
+    }
+
+    // If no files have actual content differences, no conflict
+    if changed_files.is_empty() {
+        return Ok(None);
     }
 
     Ok(Some(SyncConflictInfo {
