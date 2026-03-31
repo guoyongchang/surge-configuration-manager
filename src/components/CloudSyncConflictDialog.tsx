@@ -17,7 +17,10 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
 
   return (
     <Dialog open={true}>
-      <DialogContent className="!w-[80vw] max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        style={{ width: "80vw", maxWidth: "80vw" }}
+        className="!w-[80vw] max-h-[85vh] overflow-y-auto"
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle size={18} className="text-warning" />
