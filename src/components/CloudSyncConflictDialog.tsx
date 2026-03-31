@@ -36,8 +36,17 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
         <div className="space-y-4">
           {conflict.changed_files.map((file) => (
             <div key={file.path} className="border border-border rounded-md overflow-hidden">
-              <div className="bg-card px-3 py-2 text-xs font-mono text-muted-foreground border-b border-border">
-                {file.path}
+              <div className="bg-card px-3 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between">
+                <span>{file.path}</span>
+              </div>
+              {/* Side labels */}
+              <div className="grid grid-cols-2 bg-muted/30 border-b border-border">
+                <div className="px-4 py-1.5 text-xs font-semibold text-info">
+                  {t("settings_cloudSync_cloudHeader")}
+                </div>
+                <div className="px-4 py-1.5 text-xs font-semibold text-success border-l border-border">
+                  {t("settings_cloudSync_localHeader")}
+                </div>
               </div>
               <div style={{ height: "40vh" }} className="overflow-hidden">
                 <DiffEditor
@@ -55,9 +64,7 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
                     wordWrap: "off",
                     automaticLayout: true,
                     fixedOverflowWidgets: true,
-                    originalHeader: t("settings_cloudSync_cloudHeader") as string,
-                    modifiedHeader: t("settings_cloudSync_localHeader") as string,
-                  } as any}
+                  }}
                 />
               </div>
             </div>
