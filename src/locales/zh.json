@@ -242,6 +242,8 @@
   "settings_cloudSync_restoreFromCloud": "从云端恢复",
   "settings_cloudSync_conflictTitle": "检测到同步冲突",
   "settings_cloudSync_conflictHint": "本地和云端都有变更。请选择保留哪个版本：",
+  "settings_cloudSync_cloudHeader": "云端（左侧）",
+  "settings_cloudSync_localHeader": "本地（右侧）",
   "settings_cloudSync_keepLocal": "保留本地",
   "settings_cloudSync_keepCloud": "保留云端",
   "settings_cloudSync_restoreConfirmTitle": "确认从云端恢复？",

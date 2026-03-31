@@ -245,6 +245,8 @@
   "settings_cloudSync_restoreFromCloud": "Restore from Cloud",
   "settings_cloudSync_conflictTitle": "Sync Conflict Detected",
   "settings_cloudSync_conflictHint": "Both local and cloud have changes. Choose which version to keep:",
+  "settings_cloudSync_cloudHeader": "Cloud (Left Side)",
+  "settings_cloudSync_localHeader": "Local (Right Side)",
   "settings_cloudSync_keepLocal": "Keep Local",
   "settings_cloudSync_keepCloud": "Keep Cloud",
   "settings_cloudSync_restoreConfirmTitle": "Restore from Cloud?",
