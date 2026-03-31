@@ -24,6 +24,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     expect(screen.getByText("settings_cloudSync_conflictTitle")).toBeInTheDocument();
@@ -35,6 +36,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     expect(screen.getByText("settings_cloudSync_conflictHint")).toBeInTheDocument();
@@ -46,6 +48,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     expect(screen.getByText("subscriptions/data.json")).toBeInTheDocument();
@@ -57,6 +60,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     // Monaco DiffEditor renders in a container div - we verify it exists by checking
@@ -76,6 +80,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={onKeepLocal}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     await user.click(screen.getByText("settings_cloudSync_keepLocal"));
@@ -90,6 +95,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={onKeepCloud}
+        onClose={vi.fn()}
       />
     );
     await user.click(screen.getByText("settings_cloudSync_keepCloud"));
@@ -102,6 +108,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={mockConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
         loading={true}
       />
     );
@@ -143,6 +150,7 @@ describe("CloudSyncConflictDialog", () => {
         conflict={multiConflict}
         onKeepLocal={vi.fn()}
         onKeepCloud={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     expect(screen.getByText("subscriptions/data.json")).toBeInTheDocument();

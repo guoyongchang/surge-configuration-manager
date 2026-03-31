@@ -9,14 +9,15 @@ interface Props {
   conflict: SyncConflictInfo;
   onKeepLocal: () => void;
   onKeepCloud: () => void;
+  onClose: () => void;
   loading?: boolean;
 }
 
-export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepCloud, loading }: Props) {
+export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepCloud, onClose, loading }: Props) {
   const { t } = useTranslation();
 
   return (
-    <Dialog open={true}>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         style={{ width: "80vw", maxWidth: "80vw" }}
         className="!w-[80vw] max-h-[85vh] overflow-y-auto"
@@ -62,7 +63,7 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" disabled={loading}>
+          <Button variant="outline" disabled={loading} onClick={onClose}>
             {t("settings_actions_cancel")}
           </Button>
           <Button onClick={onKeepCloud} disabled={loading} variant="outline">

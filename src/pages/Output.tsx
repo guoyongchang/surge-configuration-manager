@@ -503,6 +503,7 @@ export default function OutputPage() {
           conflict={conflictInfo}
           onKeepLocal={handleKeepLocal}
           onKeepCloud={handleKeepCloud}
+          onClose={() => setConflictInfo(null)}
           loading={syncResolving}
         />
       )}

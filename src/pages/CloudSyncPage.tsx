@@ -257,6 +257,7 @@ export default function CloudSyncPage() {
           conflict={conflict}
           onKeepLocal={handleKeepLocal}
           onKeepCloud={handleKeepCloud}
+          onClose={() => setConflict(null)}
           loading={conflictLoading}
         />
       )}
