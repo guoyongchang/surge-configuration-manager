@@ -1656,8 +1656,9 @@ pub async fn check_sync_conflict(
 
         let local_content = all_local_content.get(path).cloned().unwrap_or_default();
 
-        // Skip if content is actually identical (just SHA calculation differed due to formatting)
-        if cloud_content == local_content {
+        // Skip if content is actually identical after JSON normalization
+        // (handles formatting differences like whitespace and key order)
+        if json_contents_equal(&cloud_content, &local_content) {
             continue;
         }
 
@@ -1683,6 +1684,27 @@ pub async fn check_sync_conflict(
         cloud_sha,
         changed_files,
     }))
+}
+
+/// Compare two JSON strings for semantic equality (ignoring formatting differences).
+/// Returns true if they represent the same JSON object/array/value.
+fn json_contents_equal(a: &str, b: &str) -> bool {
+    // Fast path: if strings are identical, skip parsing
+    if a == b {
+        return true;
+    }
+    // Both empty → equal
+    if a.is_empty() && b.is_empty() {
+        return true;
+    }
+    // Try parsing both as JSON and compare the parsed values
+    match (
+        serde_json::from_str::<serde_json::Value>(a),
+        serde_json::from_str::<serde_json::Value>(b),
+    ) {
+        (Ok(va), Ok(vb)) => va == vb,
+        _ => false,
+    }
 }
 
 fn shellexpand_tilde(path: &str) -> String {
