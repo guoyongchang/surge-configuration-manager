@@ -1,1 +1,5 @@
-pnpm check-i18n && pnpm lint
+# Frontend checks
+pnpm check-i18n && pnpm lint && ./node_modules/.bin/tsc --noEmit && pnpm test
+
+# Rust checks
+cd src-tauri && cargo fmt -- --check && cargo clippy -- -D warnings && cargo test

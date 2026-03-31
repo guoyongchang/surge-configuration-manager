@@ -1404,7 +1404,8 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let subscriptions: Vec<crate::models::Subscription> =
         if cloud_manifest.files.contains_key("subscriptions/data.json") {
             match client.get_file_content("subscriptions/data.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid subscriptions: {}", e))?,
+                Ok(content) => serde_json::from_str(&content)
+                    .map_err(|e| format!("Invalid subscriptions: {}", e))?,
                 Err(_) => Vec::new(),
             }
         } else {
@@ -1414,7 +1415,8 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let remote_rule_sets: Vec<crate::models::RemoteRuleSet> =
         if cloud_manifest.files.contains_key("rules/remote.json") {
             match client.get_file_content("rules/remote.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid remote rules: {}", e))?,
+                Ok(content) => serde_json::from_str(&content)
+                    .map_err(|e| format!("Invalid remote rules: {}", e))?,
                 Err(_) => Vec::new(),
             }
         } else {
@@ -1424,7 +1426,8 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let individual_rules: Vec<crate::models::IndividualRule> =
         if cloud_manifest.files.contains_key("rules/individual.json") {
             match client.get_file_content("rules/individual.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid individual rules: {}", e))?,
+                Ok(content) => serde_json::from_str(&content)
+                    .map_err(|e| format!("Invalid individual rules: {}", e))?,
                 Err(_) => Vec::new(),
             }
         } else {
@@ -1434,7 +1437,9 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let extra_nodes: Vec<crate::models::ExtraNode> =
         if cloud_manifest.files.contains_key("nodes/data.json") {
             match client.get_file_content("nodes/data.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid nodes: {}", e))?,
+                Ok(content) => {
+                    serde_json::from_str(&content).map_err(|e| format!("Invalid nodes: {}", e))?
+                }
                 Err(_) => Vec::new(),
             }
         } else {
@@ -1444,7 +1449,8 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let output_config: crate::models::OutputConfig =
         if cloud_manifest.files.contains_key("output/config.json") {
             match client.get_file_content("output/config.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid output config: {}", e))?,
+                Ok(content) => serde_json::from_str(&content)
+                    .map_err(|e| format!("Invalid output config: {}", e))?,
                 Err(_) => crate::models::OutputConfig::default(),
             }
         } else {
@@ -1454,7 +1460,9 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let hosts: Vec<crate::models::HostEntry> =
         if cloud_manifest.files.contains_key("hosts/data.json") {
             match client.get_file_content("hosts/data.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid hosts: {}", e))?,
+                Ok(content) => {
+                    serde_json::from_str(&content).map_err(|e| format!("Invalid hosts: {}", e))?
+                }
                 Err(_) => Vec::new(),
             }
         } else {
@@ -1464,42 +1472,51 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
     let url_rewrites: Vec<crate::models::UrlRewriteEntry> =
         if cloud_manifest.files.contains_key("url_rewrites/data.json") {
             match client.get_file_content("url_rewrites/data.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid url_rewrites: {}", e))?,
+                Ok(content) => serde_json::from_str(&content)
+                    .map_err(|e| format!("Invalid url_rewrites: {}", e))?,
                 Err(_) => Vec::new(),
             }
         } else {
             Vec::new()
         };
 
-    let general_settings: crate::models::GeneralSettings =
-        if cloud_manifest.files.contains_key("general_settings/data.json") {
-            match client.get_file_content("general_settings/data.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid general_settings: {}", e))?,
-                Err(_) => crate::models::GeneralSettings::default(),
-            }
-        } else {
-            crate::models::GeneralSettings::default()
-        };
+    let general_settings: crate::models::GeneralSettings = if cloud_manifest
+        .files
+        .contains_key("general_settings/data.json")
+    {
+        match client.get_file_content("general_settings/data.json").await {
+            Ok(content) => serde_json::from_str(&content)
+                .map_err(|e| format!("Invalid general_settings: {}", e))?,
+            Err(_) => crate::models::GeneralSettings::default(),
+        }
+    } else {
+        crate::models::GeneralSettings::default()
+    };
 
-    let disabled_sub_rule_keys: Vec<String> =
-        if cloud_manifest.files.contains_key("disabled_sub_rule_keys/data.json") {
-            match client.get_file_content("disabled_sub_rule_keys/data.json").await {
-                Ok(content) => serde_json::from_str(&content).map_err(|e| format!("Invalid disabled_sub_rule_keys: {}", e))?,
-                Err(_) => Vec::new(),
-            }
-        } else {
-            Vec::new()
-        };
+    let disabled_sub_rule_keys: Vec<String> = if cloud_manifest
+        .files
+        .contains_key("disabled_sub_rule_keys/data.json")
+    {
+        match client
+            .get_file_content("disabled_sub_rule_keys/data.json")
+            .await
+        {
+            Ok(content) => serde_json::from_str(&content)
+                .map_err(|e| format!("Invalid disabled_sub_rule_keys: {}", e))?,
+            Err(_) => Vec::new(),
+        }
+    } else {
+        Vec::new()
+    };
 
-    let mitm_section: String =
-        if cloud_manifest.files.contains_key("mitm_section/data.json") {
-            match client.get_file_content("mitm_section/data.json").await {
-                Ok(content) => content,
-                Err(_) => String::new(),
-            }
-        } else {
-            String::new()
-        };
+    let mitm_section: String = if cloud_manifest.files.contains_key("mitm_section/data.json") {
+        client
+            .get_file_content("mitm_section/data.json")
+            .await
+            .unwrap_or_default()
+    } else {
+        String::new()
+    };
 
     // Update local store
     {
