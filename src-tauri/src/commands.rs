@@ -1617,14 +1617,21 @@ pub async fn check_sync_conflict(
     }
 
     // Get changed file details
-    let (added, modified, removed) = client
+    let (_added, modified, _removed) = client
         .diff_manifests_detail(&local_manifest_json, &cloud_manifest)
         .await
         .map_err(|e| e.to_string())?;
 
+    // Only report conflict if there are actual modifications (same file changed on both sides).
+    // Added files (local has, cloud doesn't) and removed files (cloud has, local doesn't)
+    // are one-sided changes that can be resolved by pushing or pulling without conflict.
+    if modified.is_empty() {
+        return Ok(None);
+    }
+
     let mut changed_files = Vec::new();
 
-    for path in added.iter().chain(modified.iter()) {
+    for path in modified.iter() {
         // For added files, cloud content may not exist yet (404)
         let cloud_content = match client.get_file_content(path).await {
             Ok(c) => c,
@@ -1642,23 +1649,6 @@ pub async fn check_sync_conflict(
             local_sha: local_entry.map(|e| e.sha.clone()).unwrap_or_default(),
             cloud_content,
             local_content,
-        });
-    }
-
-    for path in &removed {
-        let cloud_content = match client.get_file_content(path).await {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-
-        let cloud_entry = cloud_manifest.files.get(path);
-
-        changed_files.push(FileChangeInfo {
-            path: path.clone(),
-            cloud_sha: cloud_entry.map(|e| e.sha.clone()).unwrap_or_default(),
-            local_sha: String::new(),
-            cloud_content,
-            local_content: String::new(),
         });
     }
 

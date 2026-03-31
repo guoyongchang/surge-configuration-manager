@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
+import { DiffEditor } from "@monaco-editor/react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { SyncConflictInfo } from "@/types";
@@ -16,7 +17,7 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
 
   return (
     <Dialog open={true}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="!w-[80vw] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle size={18} className="text-warning" />
@@ -34,23 +35,24 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
               <div className="bg-card px-3 py-2 text-xs font-mono text-muted-foreground border-b border-border">
                 {file.path}
               </div>
-              <div className="grid grid-cols-2 gap-0">
-                <div className="border-r border-border">
-                  <div className="bg-card/50 px-3 py-1 text-xs text-info font-medium border-b border-border">
-                    Cloud
-                  </div>
-                  <pre className="p-3 text-xs overflow-x-auto max-h-48 font-mono whitespace-pre-wrap break-all">
-                    {formatJson(file.cloud_content)}
-                  </pre>
-                </div>
-                <div>
-                  <div className="bg-card/50 px-3 py-1 text-xs text-success font-medium border-b border-border">
-                    Local
-                  </div>
-                  <pre className="p-3 text-xs overflow-x-auto max-h-48 font-mono whitespace-pre-wrap break-all">
-                    {formatJson(file.local_content)}
-                  </pre>
-                </div>
+              <div style={{ height: "40vh" }} className="overflow-hidden">
+                <DiffEditor
+                  original={formatJson(file.cloud_content)}
+                  modified={formatJson(file.local_content)}
+                  language="json"
+                  theme="vs-dark"
+                  options={{
+                    readOnly: true,
+                    renderSideBySide: true,
+                    scrollBeyondLastLine: false,
+                    minimap: { enabled: false },
+                    lineNumbers: "on",
+                    folding: true,
+                    wordWrap: "off",
+                    automaticLayout: true,
+                    fixedOverflowWidgets: true,
+                  }}
+                />
               </div>
             </div>
           ))}
