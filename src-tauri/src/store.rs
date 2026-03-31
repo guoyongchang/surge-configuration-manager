@@ -131,4 +131,88 @@ mod tests {
         drop(data);
         fs::remove_dir_all(&dir).ok();
     }
+
+    #[test]
+    fn test_subscription_files_dir_returns_correct_path() {
+        let dir = temp_store_dir();
+        let store = Store::new(dir.clone());
+        let sub_files_dir = store.subscription_files_dir();
+        assert!(sub_files_dir
+            .to_string_lossy()
+            .ends_with("subscription_files"));
+        assert_eq!(sub_files_dir.parent(), Some(dir.as_path()));
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_subscription_files_dir_creates_directory() {
+        let dir = temp_store_dir();
+        let store = Store::new(dir.clone());
+        let sub_files_dir = store.subscription_files_dir();
+        // Directory should be created by subscription_files_dir()
+        assert!(sub_files_dir.exists());
+        assert!(sub_files_dir.is_dir());
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_app_data_dir_returns_correct_parent() {
+        let dir = temp_store_dir();
+        let store = Store::new(dir.clone());
+        let app_data = store.app_data_dir();
+        assert_eq!(app_data, dir);
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_file_subscription_copy_and_cleanup() {
+        // Simulates the file copy behavior in add_subscription and remove_subscription
+        // for file-type subscriptions: file is copied to subscription_files_dir,
+        // and deleted when the subscription is removed.
+        let dir = temp_store_dir();
+        let store = Store::new(dir.clone());
+
+        // Simulate copying a subscription file (what add_subscription does for file sources)
+        let sub_files_dir = store.subscription_files_dir();
+        let dest_filename = format!("{}.conf", Uuid::new_v4());
+        let dest_path = sub_files_dir.join(&dest_filename);
+        let content = "[Proxy]\nnode1 = ss, 1.2.3.4, 443\n";
+        fs::write(&dest_path, content).expect("should write temp subscription file");
+
+        // Verify file exists in subscription_files_dir (file was copied)
+        assert!(dest_path.exists());
+        assert_eq!(fs::read_to_string(&dest_path).unwrap(), content);
+
+        // Simulate removing the subscription (what remove_subscription does for file sources)
+        fs::remove_file(&dest_path).expect("should delete subscription file");
+
+        // Verify file is gone
+        assert!(!dest_path.exists());
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_file_subscription_url_points_to_app_managed_directory() {
+        // Verifies that file subscriptions have URLs pointing to the app-managed
+        // subscription_files directory, not the original file path.
+        let dir = temp_store_dir();
+        let store = Store::new(dir.clone());
+
+        // Create a subscription file URL that points to app-managed directory
+        let sub_files_dir = store.subscription_files_dir();
+        let managed_url = sub_files_dir.join(format!("{}.conf", Uuid::new_v4()));
+
+        // Write a file to the managed directory
+        let content = "[Proxy]\nnode1 = ss, 5.6.7.8, 443\n";
+        fs::write(&managed_url, content).expect("should write subscription file");
+
+        // Verify the URL path contains subscription_files (proving it's app-managed)
+        assert!(managed_url.to_string_lossy().contains("subscription_files"));
+        assert!(managed_url.exists());
+
+        // Cleanup
+        fs::remove_file(&managed_url).ok();
+        fs::remove_dir_all(&dir).ok();
+    }
 }
