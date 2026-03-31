@@ -769,7 +769,7 @@ pub fn update_general_settings(
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct AdvancedSections {
-    pub mitm: String,
+    pub mitm: MitmSection,
     pub hosts: Vec<HostEntry>,
     pub url_rewrites: Vec<UrlRewriteEntry>,
 }
@@ -1518,6 +1518,11 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
         String::new()
     };
 
+    let mitm_section_parsed: MitmSection =
+        serde_json::from_str(&mitm_section).unwrap_or_else(|_| MitmSection {
+            content: mitm_section.clone(),
+        });
+
     // Update local store
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
@@ -1530,7 +1535,7 @@ pub async fn sync_from_cloud(store: State<'_, Store>) -> Result<(), String> {
         data.url_rewrites = url_rewrites;
         data.general_settings = general_settings;
         data.disabled_sub_rule_keys = disabled_sub_rule_keys;
-        data.mitm_section = mitm_section;
+        data.mitm_section = mitm_section_parsed;
     }
     store.save()?;
 

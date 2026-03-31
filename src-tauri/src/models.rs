@@ -216,6 +216,44 @@ pub enum SyncStatus {
     Error(String),
 }
 
+/// MITM section content stored as an object { "content": "..." } for clarity.
+/// Backward compatible: deserializes from both old "" string and new {"content":""} object.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct MitmSection {
+    pub content: String,
+}
+
+impl From<String> for MitmSection {
+    fn from(s: String) -> Self {
+        MitmSection { content: s }
+    }
+}
+
+impl From<MitmSection> for String {
+    fn from(m: MitmSection) -> Self {
+        m.content
+    }
+}
+
+impl<'de> Deserialize<'de> for MitmSection {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum RawMitmSection {
+            Object { content: String },
+            String(String),
+        }
+        let raw = RawMitmSection::deserialize(deserializer)?;
+        match raw {
+            RawMitmSection::Object { content } => Ok(MitmSection { content }),
+            RawMitmSection::String(s) => Ok(MitmSection { content: s }),
+        }
+    }
+}
+
 /// A single host entry for the [Host] section
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HostEntry {
@@ -248,7 +286,7 @@ pub struct AppData {
     pub output_config: OutputConfig,
     pub build_history: Vec<BuildRecord>,
     /// Extra sections like [MITM] stored as raw text
-    pub mitm_section: String,
+    pub mitm_section: MitmSection,
     /// Structured host entries for the [Host] section
     #[serde(default)]
     pub hosts: Vec<HostEntry>,

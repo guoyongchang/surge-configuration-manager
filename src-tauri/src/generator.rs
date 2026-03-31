@@ -155,9 +155,9 @@ pub fn generate_config(data: &AppData) -> String {
     }
 
     // [MITM]
-    if !data.mitm_section.is_empty() {
+    if !data.mitm_section.content.is_empty() {
         out.push_str("[MITM]\n");
-        out.push_str(&data.mitm_section);
+        out.push_str(&data.mitm_section.content);
         out.push('\n');
     }
 
@@ -415,7 +415,9 @@ HK-01 = ss, 1.2.3.4, 443
     #[test]
     fn test_mitm_section_included_when_set() {
         let mut data = AppData::default();
-        data.mitm_section = "hostname = example.com".to_string();
+        data.mitm_section = MitmSection {
+            content: "hostname = example.com".to_string(),
+        };
         let conf = generate_config(&data);
         assert!(conf.contains("[MITM]\n"));
         assert!(conf.contains("hostname = example.com"));
