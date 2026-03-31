@@ -54,6 +54,13 @@ impl Store {
             .expect("store path has no parent")
             .to_path_buf()
     }
+
+    /// Returns the subscription files directory (app_data_dir/subscription_files/).
+    pub fn subscription_files_dir(&self) -> PathBuf {
+        let dir = self.app_data_dir().join("subscription_files");
+        fs::create_dir_all(&dir).ok();
+        dir
+    }
 }
 
 #[cfg(test)]

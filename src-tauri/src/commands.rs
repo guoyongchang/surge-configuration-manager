@@ -83,6 +83,19 @@ pub async fn add_subscription(
         SubSource::Url => subscription::fetch_subscription(&url).await?,
     };
 
+    // For file sources, copy to app-managed directory
+    let stored_url = match st {
+        SubSource::File => {
+            let dest_dir = store.subscription_files_dir();
+            let dest_filename = format!("{}.conf", Uuid::new_v4());
+            let dest_path = dest_dir.join(&dest_filename);
+            std::fs::write(&dest_path, &content)
+                .map_err(|e| format!("Failed to copy subscription file: {}", e))?;
+            dest_path.to_string_lossy().to_string()
+        }
+        SubSource::Url => url.clone(),
+    };
+
     if !subscription::is_valid_subscription_content(&content) {
         return Err(
             "Content is not a valid Surge subscription (no [Proxy] section with nodes found)"
@@ -90,7 +103,7 @@ pub async fn add_subscription(
         );
     }
 
-    let sub = subscription::parse_subscription(&name, &url, st, &content);
+    let sub = subscription::parse_subscription(&name, &stored_url, st, &content);
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
         data.subscriptions.push(sub.clone());
@@ -159,6 +172,30 @@ pub async fn refresh_subscription(
 #[tauri::command]
 pub fn remove_subscription(id: String, store: State<'_, Store>) -> Result<(), String> {
     let uuid = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+
+    // Check if it's a file subscription and delete the copy
+    let is_file_sub = {
+        let data = store.data.lock().map_err(|e| e.to_string())?;
+        data.subscriptions
+            .iter()
+            .find(|s| s.id == uuid)
+            .map(|s| s.source_type == SubSource::File)
+            .unwrap_or(false)
+    };
+
+    if is_file_sub {
+        let sub_url = {
+            let data = store.data.lock().map_err(|e| e.to_string())?;
+            data.subscriptions
+                .iter()
+                .find(|s| s.id == uuid)
+                .map(|s| s.url.clone())
+        };
+        if let Some(url) = sub_url {
+            std::fs::remove_file(&url).ok(); // Ignore errors if file already gone
+        }
+    }
+
     {
         let mut data = store.data.lock().map_err(|e| e.to_string())?;
         data.subscriptions.retain(|s| s.id != uuid);
