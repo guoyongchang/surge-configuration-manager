@@ -36,8 +36,12 @@ export default function CloudSyncConflictDialog({ conflict, onKeepLocal, onKeepC
         <div className="space-y-4">
           {conflict.changed_files.map((file) => (
             <div key={file.path} className="border border-border rounded-md overflow-hidden">
-              <div className="bg-card px-3 py-2 text-xs font-mono text-muted-foreground border-b border-border">
-                {file.path}
+              <div className="bg-card px-3 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between">
+                <span>{file.path}</span>
+                <div className="flex gap-4 text-xs font-sans">
+                  <span className="text-info font-medium">☁️ 云端版本 (Cloud)</span>
+                  <span className="text-success font-medium">💻 本地版本 (Local)</span>
+                </div>
               </div>
               <div style={{ height: "40vh" }} className="overflow-hidden">
                 <DiffEditor
