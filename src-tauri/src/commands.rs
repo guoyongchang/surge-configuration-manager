@@ -1656,6 +1656,12 @@ pub async fn check_sync_conflict(
 
         let local_content = all_local_content.get(path).cloned().unwrap_or_default();
 
+        // Skip if cloud content is empty (user hasn't synced this field to cloud yet)
+        // This avoids false conflicts when cloud has no data for a field
+        if cloud_content.is_empty() {
+            continue;
+        }
+
         // Skip if content is actually identical after JSON normalization
         // (handles formatting differences like whitespace and key order)
         if json_contents_equal(&cloud_content, &local_content) {
